@@ -1,4 +1,15 @@
-__all__ = ['Admin']
+__all__ = ['Admin', 'admin_middleware_factory']
+
+
+async def admin_middleware_factory(app, handler):
+    async def admin_middleware(request):
+        try:
+            response = await handler(request)
+        except Exception as e:
+            raise e
+        return response
+
+    return admin_middleware
 
 
 class Admin:
@@ -7,7 +18,7 @@ class Admin:
         self._app = app
         self._loop = loop
         self._resources = []
-        self.url = url or 'admin'
+        self._url = url or 'admin'
         self.static_url_path = static_url_path
 
     @property

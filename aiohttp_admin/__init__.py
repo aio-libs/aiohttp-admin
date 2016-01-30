@@ -29,17 +29,17 @@ def gather_tempalte_folder(template_folder):
 
 
 def setup(app, url=None, static_url_path=None, template_folder=None):
-
-    app.router.add_static('/static/admin',
+    loop = app.loop
+    app.router.add_static('/admin/static',
                           path=str(PROJ_ROOT / 'static'),
                           name='admin.static')
-
     tf = gather_tempalte_folder(template_folder)
+
     # init aiohttp_jinja plugin
     loader = jinja2.FileSystemLoader(tf)
     aiohttp_jinja2.setup(app, loader=loader, app_key=TEMPLATE_APP_KEY)
 
-    admin = Admin(app, url=url, static_url_path=static_url_path)
+    admin = Admin(app, url=url, static_url_path=static_url_path, loop=loop)
     # add support for multiple admins sites
     app[APP_KEY] = admin
     return admin
