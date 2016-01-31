@@ -1,16 +1,50 @@
+import operator as _operator
 import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
 from ..utils import json_response, validate_query
-import operator as _operator
+
 
 def to_column(name, table):
     c = getattr(table.c, name)
     return c
 
-def op(name):
-    return getattr(_operator, name)
+
+def op(name, column):
+    if name == 'in':
+        def comparator(column, v):
+            return column.in_(v)
+    elif name == 'like':
+        def comparator(column, v):
+            return column.like(v)
+    elif name == 'eq':
+        comparator = _operator.eq
+    elif name == 'ne':
+        comparator = _operator.en
+    elif name == 'le':
+        comparator = _operator.le
+    elif name == 'lt':
+        comparator = _operator.lt
+    elif name == 'ge':
+        comparator == _operator.ge
+    elif name == 'gt':
+        comparator == _operator.gt
+    return comparator
+
+
+def create_filter(table, filter):
+    query = table.select()
+    for column, operation in filter.items():
+        c = to_column(column, table)
+        if isinstance(operation, dict):
+            for op_name, value in operation.items():
+                f = op(op_name, column)(c, value)
+                query = query.where(f)
+        else:
+            query = query.where(column == operation)
+    return query
+
 
 class SAResource(AbstractResource):
 
@@ -19,7 +53,7 @@ class SAResource(AbstractResource):
         self._pg = db
         self._table = table
         self._primary_key = primary_key
-        self._pk = getattr(self.table.c, primary_key)
+        self._pk = to_column(primary_key, self._table) 
 
     @property
     def pg(self):
@@ -29,18 +63,9 @@ class SAResource(AbstractResource):
     def table(self):
         return self._table
 
+    @property
     def pk(self):
         return self._pk
-
-    def _create_filter(self, query, filter):
-        for column, operation in filter.items():
-            c = to_column(column, self.table)
-            if isinstance(operation, dict):
-                for k, v in operation.items():
-                    f = op(k)(c, v)
-                    query = query.where(f)
-            else:
-                query = query.where(column == operation)
 
     async def list(self, request):
         q = validate_query(request.GET)
@@ -48,7 +73,7 @@ class SAResource(AbstractResource):
         page = q['_page']
         sort_field = q['_sortField']
         per_page = q['_perPage']
-        filters = q['_filters']
+        filters = q.get('_filters')
 
         # TODO: add sorting support
         # sort_dir = q['_sortDir']
@@ -57,13 +82,13 @@ class SAResource(AbstractResource):
         limit = per_page
 
         async with self.pg.acquire() as conn:
-            query = self.table.select()
-            import ipdb
-            ipdb.set_trace()
-            zz = self._create_filter(query, filters)
+            if filters:
+                query = create_filter(self.table, filters)
+            else:
+                query = self.table.select()
             count = await conn.scalar(
                 sa.select([sa.func.count()])
-                .select_from(self.table))
+                .select_from(query.alias('foo')))
 
             cursor = await conn.execute(
                 query
@@ -79,6 +104,8 @@ class SAResource(AbstractResource):
         return json_response(entities, headers=headers)
 
     async def detail(self, request):
+        import ipdb
+        ipdb.set_trace()
         entity_id = request.match_info['entity_id']
 
         async with self.pg.acquire() as conn:
@@ -107,7 +134,8 @@ class SAResource(AbstractResource):
         payload = await request.json()
         async with self.pg.acquire() as conn:
             row = await conn.execute(
-                self.table.select().where(self.pk == entity_id)
+                self.table.select()
+                .where(self.pk == entity_id)
             )
             rec = await row.first()
             if not rec:
