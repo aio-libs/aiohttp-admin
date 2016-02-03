@@ -4,8 +4,7 @@ FLAGS=
 
 
 flake:
-	pyflakes aiohttp_admin tests examples setup.py
-	pep8 aiohttp_admin tests examples setup.py
+	flake8 aiohttp_admin tests demos setup.py
 
 test: flake
 	py.test -s $(FLAGS) ./tests/

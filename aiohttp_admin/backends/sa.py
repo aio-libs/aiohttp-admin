@@ -53,7 +53,7 @@ class SAResource(AbstractResource):
         self._pg = db
         self._table = table
         self._primary_key = primary_key
-        self._pk = to_column(primary_key, self._table) 
+        self._pk = to_column(primary_key, self._table)
 
     @property
     def pg(self):
