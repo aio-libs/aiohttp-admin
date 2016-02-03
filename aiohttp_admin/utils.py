@@ -1,10 +1,9 @@
 import json
 from functools import partial
 from datetime import datetime, date
-import operator
 
-from aiohttp import web
 import trafaret as t
+from aiohttp import web
 
 
 __all__ = ['json_response']
@@ -43,8 +42,6 @@ ListQuery = t.Dict({
     OptKey('_sortDir'): t.Enum('DESC', 'ASC'),
     OptKey('_filters'): t.Mapping(t.String, Filter | SimpleType)
 })
-
-
 
 
 def validate_query(query):
