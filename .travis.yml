@@ -1,0 +1,20 @@
+language: python
+sudo: false
+python:
+  - 3.5
+
+install:
+  - pip install --upgrade setuptools
+  - pip install coveralls
+  - pip install -Ur requirements-dev.txt
+  - python setup.py develop
+
+script:
+  make cov
+after_success:
+  coveralls
+
+env:
+  matrix:
+    - PYTHONASYNCIODEBUG=x
+    - PYTHONASYNCIODEBUG=
