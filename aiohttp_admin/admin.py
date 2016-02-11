@@ -14,12 +14,11 @@ async def admin_middleware_factory(app, handler):
 
 class Admin:
 
-    def __init__(self, app, *, url=None, static_url_path=None, loop):
+    def __init__(self, app, *, url=None, loop):
         self._app = app
         self._loop = loop
         self._resources = []
         self._url = url or 'admin'
-        self.static_url_path = static_url_path
 
     @property
     def app(self):
