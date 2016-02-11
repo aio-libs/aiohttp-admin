@@ -2,7 +2,7 @@ import json
 from aiohttp import web
 
 
-class AdminRESTError(web.HTTPBadRequest):
+class AdminRESTError(web.HTTPError):
     status_code = 500
     error = "Unknown Error"
 
