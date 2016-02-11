@@ -1,7 +1,8 @@
+import abc
 from abc import abstractmethod
 
 
-class AbstractResource:
+class AbstractResource(metaclass=abc.ABCMeta):
 
     def __init__(self, url=None):
         class_name = self.__class__.__name__.lower()
