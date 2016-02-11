@@ -41,7 +41,7 @@ def setup(app, url=None, static_url_path=None, template_folder=None):
     loader = jinja2.FileSystemLoader(tf)
     aiohttp_jinja2.setup(app, loader=loader, app_key=TEMPLATE_APP_KEY)
 
-    admin = Admin(app, url=url, static_url_path=static_url_path, loop=loop)
+    admin = Admin(app, url=url, loop=loop)
     # add support for multiple admins sites
     app[APP_KEY] = admin
     return admin
