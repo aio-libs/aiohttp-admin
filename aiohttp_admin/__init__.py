@@ -30,7 +30,9 @@ def gather_tempalte_folder(template_folder):
 
 def setup(app, url=None, static_url_path=None, template_folder=None):
     loop = app.loop
-    app.router.add_static('/admin/static',
+    url = url or 'admin'
+    static_url_path = static_url_path or '/admin/static'
+    app.router.add_static(static_url_path,
                           path=str(PROJ_ROOT / 'static'),
                           name='admin.static')
     tf = gather_tempalte_folder(template_folder)
