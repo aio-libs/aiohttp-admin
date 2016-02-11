@@ -104,8 +104,6 @@ class SAResource(AbstractResource):
         return json_response(entities, headers=headers)
 
     async def detail(self, request):
-        import ipdb
-        ipdb.set_trace()
         entity_id = request.match_info['entity_id']
 
         async with self.pg.acquire() as conn:
