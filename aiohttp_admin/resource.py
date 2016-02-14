@@ -29,7 +29,7 @@ class AbstractResource(metaclass=abc.ABCMeta):
         pass
 
     def setup(self, app, base_url):
-        url = '/{}/{}'.format(base_url, self._url)
+        url = '{}/{}'.format(base_url, self._url)
         url_id = url + '/{entity_id}'
         add_route = app.router.add_route
         add_route('GET', url, self.list)
