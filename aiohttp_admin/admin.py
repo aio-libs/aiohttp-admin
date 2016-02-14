@@ -1,3 +1,7 @@
+import aiohttp_jinja2
+from .consts import TEMPLATE_APP_KEY
+
+
 __all__ = ['Admin', 'admin_middleware_factory']
 
 
@@ -10,6 +14,11 @@ async def admin_middleware_factory(app, handler):
         return response
 
     return admin_middleware
+
+
+@aiohttp_jinja2.template('admin.html', app_key=TEMPLATE_APP_KEY)
+async def index_handler(request):
+    return {}
 
 
 class Admin:
