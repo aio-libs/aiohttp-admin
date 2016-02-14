@@ -6,8 +6,8 @@ from ..exceptions import ObjectNotFound
 from ..utils import json_response, validate_query
 
 
-def to_column(name, table):
-    c = getattr(table.c, name)
+def to_column(column_name, table):
+    c = table.c[column_name]
     return c
 
 
@@ -17,7 +17,7 @@ def op(name, column):
             return column.in_(v)
     elif name == 'like':
         def comparator(column, v):
-            return column.like(v)
+            return column.like(v + '%')
     elif name == 'eq':
         comparator = _operator.eq
     elif name == 'ne':
@@ -35,14 +35,17 @@ def op(name, column):
 
 def create_filter(table, filter):
     query = table.select()
-    for column, operation in filter.items():
-        c = to_column(column, table)
+
+    for column_name, operation in filter.items():
+        column = to_column(column_name, table)
+
         if isinstance(operation, dict):
             for op_name, value in operation.items():
-                f = op(op_name, column)(c, value)
+                f = op(op_name, column)(column, value)
                 query = query.where(f)
         else:
-            query = query.where(column == operation)
+            value = operation
+            query = query.where(column == value)
     return query
 
 
@@ -80,7 +83,6 @@ class SAResource(AbstractResource):
 
         offset = (page - 1) * per_page
         limit = per_page
-
         async with self.pg.acquire() as conn:
             if filters:
                 query = create_filter(self.table, filters)
@@ -108,21 +110,23 @@ class SAResource(AbstractResource):
 
         async with self.pg.acquire() as conn:
             resp = await conn.execute(
-                self.table.select()
-                .where(self.pk == entity_id))
+                self.table.select().where(self.pk == entity_id))
             rec = await resp.first()
+
         if not rec:
             raise ObjectNotFound()
+
         entity = dict(rec)
         return json_response(entity)
 
     async def create(self, request):
         data = await request.json()
+
         async with self.pg.acquire() as conn:
             rec = await conn.execute(
-                self.table.insert().values(data)
-                .returning(*self.table.c))
+                self.table.insert().values(data).returning(*self.table.c))
             row = await rec.first()
+
         entity = dict(row)
         return json_response(entity)
 
