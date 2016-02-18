@@ -1,6 +1,8 @@
 import abc
 from abc import abstractmethod
 
+from .utils import json_response, validate_query
+
 
 class AbstractResource(metaclass=abc.ABCMeta):
 
@@ -10,23 +12,31 @@ class AbstractResource(metaclass=abc.ABCMeta):
 
     @abstractmethod
     async def list(self, request):
-        pass
+        q = validate_query(request.GET)
+        assert q
+        return json_response({})
 
     @abstractmethod
     async def detail(self, request):
-        pass
+        entity_id = request.match_info['entity_id']
+        assert entity_id
+        return json_response({})
 
     @abstractmethod
     async def create(self, request):
-        pass
+        return json_response({})
 
     @abstractmethod
     async def update(self, request):
-        pass
+        entity_id = request.match_info['entity_id']
+        assert entity_id
+        return json_response({})
 
     @abstractmethod
     async def delete(self, request):
-        pass
+        entity_id = request.match_info['entity_id']
+        assert entity_id
+        return json_response({})
 
     def setup(self, app, base_url):
         url = '{}/{}'.format(base_url, self._url)
