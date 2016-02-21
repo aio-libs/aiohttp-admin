@@ -1,52 +1,12 @@
-import operator as _operator
 import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
 from ..utils import json_response, validate_query
+from .sa_utils import validator_from_table, create_filter
 
 
-def to_column(column_name, table):
-    c = table.c[column_name]
-    return c
-
-
-def op(name, column):
-    if name == 'in':
-        def comparator(column, v):
-            return column.in_(v)
-    elif name == 'like':
-        def comparator(column, v):
-            return column.like(v + '%')
-    elif name == 'eq':
-        comparator = _operator.eq
-    elif name == 'ne':
-        comparator = _operator.en
-    elif name == 'le':
-        comparator = _operator.le
-    elif name == 'lt':
-        comparator = _operator.lt
-    elif name == 'ge':
-        comparator == _operator.ge
-    elif name == 'gt':
-        comparator == _operator.gt
-    return comparator
-
-
-def create_filter(table, filter):
-    query = table.select()
-
-    for column_name, operation in filter.items():
-        column = to_column(column_name, table)
-
-        if isinstance(operation, dict):
-            for op_name, value in operation.items():
-                f = op(op_name, column)(column, value)
-                query = query.where(f)
-        else:
-            value = operation
-            query = query.where(column == value)
-    return query
+__all__ = ['SAResource']
 
 
 class SAResource(AbstractResource):
@@ -56,7 +16,10 @@ class SAResource(AbstractResource):
         self._pg = db
         self._table = table
         self._primary_key = primary_key
-        self._pk = to_column(primary_key, self._table)
+        self._pk = table.c[primary_key]
+
+        self._create_validator = validator_from_table(table, skip_pk=True)
+        self._update_validator = validator_from_table(table, skip_pk=False)
 
     @property
     def pg(self):
@@ -120,7 +83,8 @@ class SAResource(AbstractResource):
         return json_response(entity)
 
     async def create(self, request):
-        data = await request.json()
+        payload = await request.json()
+        data = self._create_validator(payload)
 
         async with self.pg.acquire() as conn:
             rec = await conn.execute(
@@ -134,6 +98,8 @@ class SAResource(AbstractResource):
         entity_id = request.match_info['entity_id']
 
         payload = await request.json()
+        data = self._create_validator(payload)
+
         async with self.pg.acquire() as conn:
             row = await conn.execute(
                 self.table.select()
@@ -145,7 +111,7 @@ class SAResource(AbstractResource):
 
             row = await conn.execute(
                 self.table.update()
-                .values(payload)
+                .values(data)
                 .returning(*self.table.c)
                 .where(self.pk == entity_id))
             rec = await row.first()

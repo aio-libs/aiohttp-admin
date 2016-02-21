@@ -1,4 +1,5 @@
 import functools
+import operator as _operator
 
 import sqlalchemy as sa
 import trafaret as t
@@ -6,7 +7,7 @@ from trafaret.contrib.rfc_3339 import DateTime
 from sqlalchemy.dialects import postgresql
 
 
-__all__ = ['validator_from_table']
+__all__ = ['validator_from_table', 'create_filter']
 
 
 def buield_trafaret(sa_type, **kwargs):
@@ -79,3 +80,48 @@ def validator_from_table(table, skip_pk=False):
         traf_field = build_field(column)
         trafaret[key] = traf_field
     return t.Dict(trafaret)
+
+
+def to_column(column_name, table):
+    c = table.c[column_name]
+    return c
+
+
+def op(operation, column):
+    if operation == 'in':
+        def comparator(column, v):
+            return column.in_(v)
+    elif operation == 'like':
+        def comparator(column, v):
+            return column.like(v + '%')
+    elif operation == 'eq':
+        comparator = _operator.eq
+    elif operation == 'ne':
+        comparator = _operator.en
+    elif operation == 'le':
+        comparator = _operator.le
+    elif operation == 'lt':
+        comparator = _operator.lt
+    elif operation == 'ge':
+        comparator == _operator.ge
+    elif operation == 'gt':
+        comparator == _operator.gt
+    else:
+        raise ValueError('Operation {} not supported'.format(operation))
+    return comparator
+
+
+def create_filter(table, filter):
+    query = table.select()
+
+    for column_name, operation in filter.items():
+        column = to_column(column_name, table)
+
+        if isinstance(operation, dict):
+            for op_name, value in operation.items():
+                f = op(op_name, column)(column, value)
+                query = query.where(f)
+        else:
+            value = operation
+            query = query.where(column == value)
+    return query
