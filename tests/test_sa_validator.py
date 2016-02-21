@@ -60,7 +60,7 @@ def test_validation(table):
 def test_validation_bad_input(table):
     traf = validator_from_table(table, skip_pk=False)
     with pytest.raises(t.DataError):
-        data = {'id': 'not a string',
+        data = {'id': 'not a string',  # not valid data
                 'title': 'title string',
                 'body': 'body text',
                 'views': 42,
