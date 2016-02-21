@@ -65,5 +65,4 @@ def unused_port():
     return f
 
 
-
 pytest_plugins = ['db_fixtures', 'rest_fixtures']

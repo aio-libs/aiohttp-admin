@@ -26,9 +26,8 @@ class SiteHandler:
         return {}
 
 
-def setup_admin(app, pg):
-    template_folder = str(TEMPLATES_ROOT)
-    admin = aiohttp_admin.setup(app=app, template_folder=template_folder)
+def setup_admin(app, pg, admin_config_path):
+    admin = aiohttp_admin.setup(app, admin_config_path)
 
     admin.add_resource(SAResource(pg, db.post, url='posts'))
     admin.add_resource(SAResource(pg, db.tag, url='tags'))
@@ -59,8 +58,8 @@ async def init(loop):
     # init modules
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT)))
-
-    setup_admin(app, pg)
+    admin_config = str(PROJ_ROOT / 'static' / 'js')
+    setup_admin(app, pg, admin_config)
 
     # setup views and routes
     handler = SiteHandler(pg)
