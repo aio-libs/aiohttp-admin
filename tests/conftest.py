@@ -54,3 +54,16 @@ def pytest_runtest_setup(item):
     if 'run_loop' in item.keywords and 'loop' not in item.fixturenames:
         # inject an event loop fixture for all async tests
         item.fixturenames.append('loop')
+
+
+@pytest.fixture
+def unused_port():
+    def f():
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('127.0.0.1', 0))
+            return s.getsockname()[1]
+    return f
+
+
+
+pytest_plugins = ['db_fixtures', 'rest_fixtures']
