@@ -1,4 +1,6 @@
 import asyncio
+import gc
+import socket
 import pytest
 
 
@@ -9,7 +11,11 @@ def loop(request):
     asyncio.set_event_loop(None)
 
     def fin():
-        loop.close()
+        if not loop._closed:
+            loop.call_soon(loop.stop)
+            loop.run_forever()
+            loop.close()
+            gc.collect()
         asyncio.set_event_loop(old_loop)
 
     request.addfinalizer(fin)
