@@ -3,3 +3,8 @@ pytest
 pytest-cov
 coverage
 ipdb
+aiopg
+aiomysql
+motor
+sqlalchemy
+python-dateutil
