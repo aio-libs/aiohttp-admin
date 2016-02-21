@@ -8,16 +8,25 @@ from aiohttp import web
 from .exceptions import JsonValidaitonError
 from .consts import TEMPLATES_ROOT
 
+try:
+    from bson import ObjectId
+except ImportError:
+    ObjectId = None
+
 
 __all__ = ['json_response', 'validate_query', 'gather_template_folders']
 
 
 def json_datetime_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
-
     if isinstance(obj, (datetime, date)):
         serial = obj.isoformat()
         return serial
+
+    if ObjectId is not None and isinstance(obj, ObjectId):
+        # TODO: try to use bson.json_util instead
+        return str(obj)
+
     raise TypeError("Type not serializable")
 
 
