@@ -19,7 +19,7 @@
 (function () {
     "use strict";
 
-    var app = angular.module('myApp', ['ng-admin']);
+    var app = angular.module('aiohttp_admin', ['ng-admin']);
 
     // Admin definition
     app.config(['NgAdminConfigurationProvider', function (NgAdminConfigurationProvider) {
