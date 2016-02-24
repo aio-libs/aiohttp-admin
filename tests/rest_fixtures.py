@@ -1,6 +1,7 @@
 import json
 
 import aiohttp
+from aiohttp import web
 import pytest
 
 
@@ -30,20 +31,20 @@ class JsonRestError(RestClientError):
 
 class AdminRESTClient:
 
-    def __init__(self, url, loop):
+    def __init__(self, url, *, admin_prefix=None, loop):
         self._loop = loop
         self._url = url
+        self._admin_prefix = admin_prefix or 'admin'
         self._session = aiohttp.ClientSession(loop=loop)
 
     async def request(self, method, path, data=None, params=None,
                       headers=None, json_dumps=True):
         if json_dumps and (data is not None):
             data = json.dumps(data).encode('utf-8')
-
-        resp = await self._session.request(method, self._api_url + path,
+        url = '{}/{}/{}'.format(self._url, self._admin_prefix, path)
+        resp = await self._session.request(method, url,
                                            params=params, data=data,
-                                           headers=headers,
-                                           loop=self._loop)
+                                           headers=headers)
         body = await resp.read()
         if resp.status in (200, 201):
             jsoned = await resp.json()
@@ -65,8 +66,13 @@ class AdminRESTClient:
     async def create(self, data):
         pass
 
-    async def list(self, resource, offset, limit, filter):
-        answer = await self.request("POST", resource)
+    async def detail(self, resource, entity_id):
+        path = '{}/{}'.format(resource, entity_id)
+        answer = await self.request("GET", path)
+        return answer
+
+    async def list(self, resource, offset=0, limit=30, filter=None):
+        answer = await self.request("GET", resource)
         return answer
 
     async def update(self, data):
@@ -76,12 +82,40 @@ class AdminRESTClient:
         pass
 
 
-@pytest.fixture
-def api(request, loop, base_url):
-    client = AdminRESTClient(base_url, loop)
+@pytest.yield_fixture
+def create_server(loop, unused_port):
+    app = handler = srv = None
 
-    def fin():
-        client.close()
+    async def create(*, debug=False, ssl_ctx=None, proto='http'):
+        nonlocal app, handler, srv
+        app = web.Application(loop=loop)
+        port = unused_port()
+        handler = app.make_handler(debug=debug, keep_alive_on=False)
+        srv = await loop.create_server(handler, '127.0.0.1', port, ssl=ssl_ctx)
+        if ssl_ctx:
+            proto += 's'
+        url = "{}://127.0.0.1:{}".format(proto, port)
+        return app, url
 
-    request.addfinalizer(fin)
-    return client
+    yield create
+
+
+@pytest.yield_fixture
+def create_app_and_client(create_server, loop):
+    client = None
+
+    async def maker(*, server_params=None, client_params=None):
+        nonlocal client
+        if server_params is None:
+            server_params = {}
+        server_params.setdefault('debug', False)
+        server_params.setdefault('ssl_ctx', None)
+        app, url = await create_server(**server_params)
+        if client_params is None:
+            client_params = {}
+        # TODO: pass client_params here
+        client = AdminRESTClient(url, loop=loop)
+        return app, client
+
+    yield maker
+    client.close()
