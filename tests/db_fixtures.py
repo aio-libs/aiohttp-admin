@@ -68,37 +68,34 @@ def sa_table():
 
 
 @pytest.fixture
-def table(request, sa_table, postgres, loop):
-    async def f():
+def create_table(request, sa_table, postgres, loop):
+    async def f(rows):
         create_expr = CreateTable(sa_table)
         drop_expr = DropTable(sa_table)
         async with postgres.acquire() as conn:
+            # TODO: move drop expr to finalizer
             await conn.execute(drop_expr)
             await conn.execute(create_expr)
-            query1 = sa_table.insert().values({
-                'title': 'title field',
-                'category': 'category field',
-                'body': 'body field',
-                'views': 42,
-                'average_note': 7.8,
-                'pictures': {'foo': 'bar'},
-                'published_at': datetime.datetime.now(),
-                'tags': [1, 2, 3],
-                'status': 'c',
-            })
-            query2 = sa_table.insert().values({
-                'title': 'title field 2',
-                'body': 'body field',
-                'views': 43,
-                'average_note': 7.8,
-                'pictures': {'foo': 'bar'},
-                'published_at': datetime.datetime.now(),
-                'tags': [5, 6, 7],
-            })
+            values = []
+            for i in range(rows):
+                values.append({
+                    'title': 'title {}'.format(i),
+                    'category': 'category field {}'.format(i),
+                    'body': 'body field {}'.format(i),
+                    'views': i,
+                    'average_note': i * 0.1,
+                    'pictures': {'foo': 'bar', 'i': i},
+                    'published_at': datetime.datetime.now(),
+                    'tags': [i + 1, i + 2],
+                    'status': 'c'})
+            query1 = sa_table.insert().values(values)
             await conn.execute(query1)
-            await conn.execute(query2)
-    loop.run_until_complete(f())
-    return sa_table
+        return sa_table
+
+    def fin():
+        pass
+    request.addfinalizer(fin)
+    return f
 
 
 @pytest.fixture
