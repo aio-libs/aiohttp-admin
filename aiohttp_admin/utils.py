@@ -51,8 +51,8 @@ Filter = t.Dict({
 
 SimpleType = t.Int | t.Bool | t.String | t.Float
 ListQuery = t.Dict({
-    t.Key('_page', default=1): t.Int[0:],
-    t.Key('_perPage', default=30): t.Int[0:],
+    t.Key('_page', default=1): t.Int[1:],
+    t.Key('_perPage', default=30): t.Int[1:],
     OptKey('_sortField', default='id'): t.String,
     OptKey('_sortDir'): t.Enum('DESC', 'ASC'),
     OptKey('_filters'): t.Mapping(t.String, Filter | SimpleType)
