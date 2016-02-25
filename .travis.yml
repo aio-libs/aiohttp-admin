@@ -10,7 +10,7 @@ services:
 
 install:
   - pip install --upgrade setuptools
-  - pip install coveralls- postgresql
+  - pip install coveralls
   - pip install -Ur requirements-dev.txt
   - python setup.py develop
 

@@ -4,7 +4,6 @@ import sys
 from setuptools import setup, find_packages
 
 
-install_requires = []
 
 PY_VER = sys.version_info
 
@@ -15,7 +14,14 @@ if not PY_VER >= (3, 5):
 def read(f):
     return open(os.path.join(os.path.dirname(__file__), f)).read().strip()
 
-extras_require = {}
+
+install_requires = ['aiohttp',
+                    'trafaret',
+                    'aiohttp_jinja2',
+                    'pyyaml']
+
+extras_require = {'sa': ['sqlalchemy'],
+                  'motor': ['motor']}
 
 
 def read_version():
