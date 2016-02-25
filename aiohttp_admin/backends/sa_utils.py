@@ -111,6 +111,27 @@ def op(operation, column):
     return comparator
 
 
+comparator_map = {
+    sa.sql.sqltypes.String: ['eq', 'nq', 'like'],
+    sa.sql.sqltypes.Text: ['eq', 'nq', 'like'],
+    sa.sql.sqltypes.Integer: ['eq', 'nq', 'lt', 'le', 'gt', 'ge', 'in'],
+    sa.sql.sqltypes.Float: ['eq', 'nq', 'lt', 'le', 'gt', 'ge'],
+    sa.sql.sqltypes.Date: ['eq', 'nq', 'lt', 'le', 'gt', 'ge'],
+}
+
+
+def check_comparator(column, comparator):
+    # TODO: fix error messages and types
+    if column.type not in comparator_map:
+        msg = 'Filtering for column type {} not supported'.format(column.type)
+        raise Exception(msg)
+
+    if comparator not in comparator_map[column.type]:
+        msg = 'Filtering for column type {} not supported'.format(column.type)
+        raise Exception(msg)
+
+
+# TODO: simplify this monster
 def create_filter(table, filter):
     query = table.select()
 
@@ -119,6 +140,7 @@ def create_filter(table, filter):
 
         if isinstance(operation, dict):
             for op_name, value in operation.items():
+                check_comparator(column, op_name)
                 f = op(op_name, column)(column, value)
                 query = query.where(f)
         else:
