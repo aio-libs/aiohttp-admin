@@ -10,7 +10,7 @@ from sqlalchemy.dialects import postgresql
 __all__ = ['validator_from_table', 'create_filter']
 
 
-def buield_trafaret(sa_type, **kwargs):
+def build_trafaret(sa_type, **kwargs):
 
     if isinstance(sa_type, sa.sql.sqltypes.Enum):
         trafaret = t.Enum(*sa_type.enums, **kwargs)
@@ -42,7 +42,7 @@ def buield_trafaret(sa_type, **kwargs):
 
     # Add PG related JSON and ARRAY
     elif isinstance(sa_type, postgresql.ARRAY):
-        item_trafaret = buield_trafaret(sa_type.item_type)
+        item_trafaret = build_trafaret(sa_type.item_type)
         trafaret = t.List(item_trafaret)
 
     else:
@@ -62,7 +62,7 @@ def build_key(name, default):
 
 
 def build_field(column):
-    field = buield_trafaret(column.type)
+    field = build_trafaret(column.type)
     if column.nullable:
         field |= t.Null
     return field
