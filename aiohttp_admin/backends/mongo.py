@@ -62,7 +62,7 @@ class MotorResource(AbstractResource):
         q = validate_query(request.GET)
 
         page = q['_page']
-        sort_field = q['_sortField']
+        # sort_field = q['_sortField']
         per_page = q['_perPage']
         filters = q.get('_filters')
 
@@ -76,8 +76,6 @@ class MotorResource(AbstractResource):
         query = {}
         cursor = self._collection.find(query).skip(offset).limit(limit)
         entities = await cursor.to_list(limit)
-        import ipdb
-        ipdb.set_trace()
         count = await self._collection.find(query).count()
         headers = {'X-Total-Count': str(count)}
         return json_response(entities, headers=headers)
@@ -103,10 +101,11 @@ class MotorResource(AbstractResource):
         entity_id = request.match_info['entity_id']
         payload = await request.json()
         data = self._create_validator(payload)
-
+        assert entity_id
         entity = dict(data)
         return json_response(entity)
 
     async def delete(self, request):
         entity_id = request.match_info['entity_id']
+        assert entity_id
         return json_response({'status': 'deleted'})
