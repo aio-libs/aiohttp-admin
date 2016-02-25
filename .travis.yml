@@ -3,11 +3,24 @@ sudo: false
 python:
   - 3.5
 
+services:
+  - mysql
+  - postgresql
+  - mongo
+
 install:
   - pip install --upgrade setuptools
-  - pip install coveralls
+  - pip install coveralls- postgresql
   - pip install -Ur requirements-dev.txt
   - python setup.py develop
+
+before_script:
+  - psql -c "create database admindemo_blog;" -U postgres
+  - psql -c "create user admindemo_user with password 'admindemo_user';" -U postgres
+  - psql -c "grant all privileges on database admindemo_user to aiopadmindemo_blog;" -U postgres
+  - psql -c "create extension hstore;" -U postgres -d aiopg
+  - mysql -e 'SELECT VERSION()'
+  - mysql -e 'DROP DATABASE IF EXISTS admindemo_blog; create database admindemo_blog  DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;'
 
 script:
   make cov
