@@ -4,6 +4,8 @@ import aiohttp
 from aiohttp import web
 import pytest
 
+from aiohttp_admin.utils import jsonify
+
 
 class RestClientError(Exception):
     """Base exception class for RESTClient"""
@@ -40,7 +42,7 @@ class AdminRESTClient:
     async def request(self, method, path, data=None, params=None,
                       headers=None, json_dumps=True):
         if json_dumps and (data is not None):
-            data = json.dumps(data).encode('utf-8')
+            data = jsonify(data).encode('utf-8')
         url = '{}/{}/{}'.format(self._url, self._admin_prefix, path)
         resp = await self._session.request(method, url,
                                            params=params, data=data,
