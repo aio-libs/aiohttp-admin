@@ -63,8 +63,9 @@ class AdminRESTClient:
         if self._session:
             self._session.close()
 
-    async def create(self, data):
-        pass
+    async def create(self, resource, data):
+        answer = await self.request("POST", resource, data=data)
+        return answer
 
     async def detail(self, resource, entity_id):
         path = '{}/{}'.format(resource, entity_id)
