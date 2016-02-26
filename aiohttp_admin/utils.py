@@ -30,9 +30,9 @@ def json_datetime_serial(obj):
     raise TypeError("Type not serializable")
 
 
-_dumps = partial(json.dumps, default=json_datetime_serial)
+jsonify = partial(json.dumps, default=json_datetime_serial)
 
-json_response = partial(web.json_response, dumps=_dumps)
+json_response = partial(web.json_response, dumps=jsonify)
 
 
 OptKey = partial(t.Key, optional=True)
@@ -66,7 +66,7 @@ def validate_query(query):
         try:
             f = json.loads(filters)
         except ValueError as e:
-            raise t.DataError('_filters can not be serialised') from e
+            raise t.DataError('_filters can not be serialized') from e
         else:
             query_dict['_filters'] = f
 
