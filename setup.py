@@ -4,7 +4,6 @@ import sys
 from setuptools import setup, find_packages
 
 
-
 PY_VER = sys.version_info
 
 if not PY_VER >= (3, 5):
@@ -20,8 +19,9 @@ install_requires = ['aiohttp',
                     'aiohttp_jinja2',
                     'pyyaml']
 
-extras_require = {'sa': ['sqlalchemy'],
-                  'motor': ['motor']}
+extras_require = {'motor': ['motor'],
+                  'aiopg': ['aiopg', 'sqlalchemy'],
+                  'aiomysql': ['aiomysql', 'sqlalchemy']}
 
 
 def read_version():
