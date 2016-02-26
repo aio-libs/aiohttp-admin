@@ -74,7 +74,10 @@ def create_table(request, sa_table, postgres, loop):
         drop_expr = DropTable(sa_table)
         async with postgres.acquire() as conn:
             # TODO: move drop expr to finalizer
-            await conn.execute(drop_expr)
+            try:
+                await conn.execute(drop_expr)
+            except:
+                pass
             await conn.execute(create_expr)
             values = []
             for i in range(rows):
