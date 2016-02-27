@@ -3,10 +3,15 @@ sudo: false
 python:
   - 3.5
 
+addons:
+  postgresql: 9.4
+  mysql: 5.6
+
+
 services:
   - mysql
   - postgresql
-  - mongo
+  - mongodb
 
 install:
   - pip install --upgrade setuptools
