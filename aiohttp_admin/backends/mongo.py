@@ -1,4 +1,5 @@
 import re
+from bson import ObjectId
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
@@ -82,7 +83,7 @@ class MotorResource(AbstractResource):
 
     async def detail(self, request):
         entity_id = request.match_info['entity_id']
-        query = {self._primary_key: entity_id}
+        query = {self._primary_key: ObjectId(entity_id)}
         doc = await self._collection.find_one(query)
         if not doc:
             raise ObjectNotFound()
