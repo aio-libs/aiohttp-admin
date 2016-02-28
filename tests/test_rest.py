@@ -67,3 +67,34 @@ async def test_create(create_table, loop, postgres, create_admin):
     assert len(row_list) == rows + 1
     assert 'id' in resp
     assert resp['title'] == entity['title']
+
+
+@pytest.mark.run_loop
+async def test_update(create_table, loop, postgres, create_admin):
+    admin, client = await create_admin()
+    rows = 1
+    resource = 'test_post'
+    await create_table(rows)
+
+    entity = {'title': 'updated title',
+              'category': 'category field',
+              'body': 'body field',
+              'views': 88,
+              'average_note': 0.7,
+              'pictures': {'x': 1},
+              'published_at': '2016-02-27T22:33:04.549649',
+              'tags': [1, 2, 3],
+              'status': 'c'}
+
+    resp = await client.list(resource)
+    assert len(resp) == 1
+    entity_id = resp[0]['id']
+
+    new_entity = await client.update(resource, entity_id, entity)
+    entity['id'] = entity_id
+    assert new_entity == entity
+
+    resp = await client.list(resource)
+    assert len(resp) == 1
+    new_entity = resp[0]
+    assert new_entity == entity
