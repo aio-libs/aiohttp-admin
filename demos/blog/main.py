@@ -49,7 +49,7 @@ async def setup_pg(app, conf, loop):
 
 async def init(loop):
     # load config from yaml file
-    conf = load_config(str(PROJ_ROOT / 'config' / 'polls.yaml'))
+    conf = load_config(str(PROJ_ROOT / 'config' / 'dev.yaml'))
 
     # setup application and extensions
     app = web.Application(loop=loop)
