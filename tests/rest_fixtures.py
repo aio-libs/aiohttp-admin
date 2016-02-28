@@ -85,11 +85,15 @@ class AdminRESTClient:
         answer = await self.request("GET", resource, params=query)
         return answer
 
-    async def update(self, data):
-        pass
+    async def update(self, resource, entity_id, data):
+        path = '{}/{}'.format(resource, entity_id)
+        answer = await self.request("PUT", path, data=data)
+        return answer
 
-    async def delete(self, entity_id):
-        pass
+    async def delete(self, resource, entity_id):
+        path = '{}/{}'.format(resource, entity_id)
+        answer = await self.request("DELETE", path)
+        return answer
 
 
 @pytest.yield_fixture
