@@ -1,12 +1,16 @@
 import datetime
 
-import pytest
 import aiopg.sa
 import motor.motor_asyncio as aiomotor
-
+import pytest
 import sqlalchemy as sa
-from sqlalchemy.schema import CreateTable, DropTable
+import trafaret as t
+
+from bson import ObjectId
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.schema import CreateTable, DropTable
+from trafaret.contrib.object_id import MongoId
+from trafaret.contrib.rfc_3339 import DateTime
 
 
 @pytest.fixture
@@ -111,6 +115,24 @@ def mongo_conf():
 
 
 @pytest.fixture
+def document_schema():
+    choices = ['a', 'b', 'c']
+    schema = t.Dict({
+        t.Key('_id'): MongoId,
+        t.Key('title'): t.String(max_length=200),
+        t.Key('category'): t.String(max_length=200),
+        t.Key('body'): t.String,
+        t.Key('views'): t.Int,
+        t.Key('average_note'): t.Float,
+        t.Key('pictures'): t.Dict({}).allow_extra('*'),
+        t.Key('published_at'): DateTime,
+        t.Key('tags'): t.List(t.Int),
+        t.Key('status'): t.Enum(*choices),
+    })
+    return schema
+
+
+@pytest.fixture
 def mongo(request, loop, mongo_conf):
 
     async def init_mogo(conf, loop):
@@ -130,3 +152,37 @@ def mongo(request, loop, mongo_conf):
 
     db = mongo_conf['database']
     return conn[db]
+
+
+@pytest.fixture
+def mongo_collection(mongo):
+    name = 'posts'
+    return mongo[name]
+
+
+@pytest.fixture
+def create_document(request, document_schema, mongo_collection, loop):
+    async def f(rows):
+        values = []
+        await mongo_collection.drop()
+        for i in range(rows):
+            values.append(document_schema({
+                '_id': ObjectId(),
+                'title': 'mongo title {}'.format(i),
+                'category': 'category field {}'.format(i),
+                'body': 'body field {}'.format(i),
+                'views': i,
+                'average_note': i * 0.1,
+                'pictures': {'foo': 'bar', 'i': i},
+                'published_at': datetime.datetime.now(),
+                'tags': [i + 1, i + 2],
+                'status': 'c'}))
+        for doc in values:
+            await mongo_collection.insert(doc)
+        return sa_table
+
+    # TODO: fix finalizer
+    def fin():
+        pass
+    request.addfinalizer(fin)
+    return f
