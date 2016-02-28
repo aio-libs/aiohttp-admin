@@ -98,3 +98,21 @@ async def test_update(create_table, loop, postgres, create_admin):
     assert len(resp) == 1
     new_entity = resp[0]
     assert new_entity == entity
+
+
+@pytest.mark.run_loop
+async def test_delete(create_table, loop, postgres, create_admin):
+    rows = 5
+    resource = 'test_post'
+    await create_table(rows)
+    admin, client = await create_admin()
+
+    all_rows = await client.list(resource, page=1, per_page=30)
+    assert len(all_rows) == rows
+    all_ids = {r['id'] for r in all_rows}
+
+    for entity_id in all_ids:
+        await client.delete(resource, entity_id)
+
+    all_rows = await client.list(resource, page=1, per_page=30)
+    assert len(all_rows) == 0
