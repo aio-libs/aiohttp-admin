@@ -113,6 +113,14 @@ def create_server(loop, unused_port):
 
     yield create
 
+    async def finish():
+        await handler.finish_connections()
+        await app.finish()
+        srv.close()
+        await srv.wait_closed()
+
+    loop.run_until_complete(finish())
+
 
 @pytest.yield_fixture
 def create_app_and_client(create_server, loop):
