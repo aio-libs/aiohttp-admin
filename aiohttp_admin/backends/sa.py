@@ -22,7 +22,7 @@ class SAResource(AbstractResource):
         self._update_validator = validator_from_table(table, skip_pk=False)
 
     @property
-    def pg(self):
+    def pool(self):
         return self._pg
 
     @property
@@ -46,7 +46,7 @@ class SAResource(AbstractResource):
 
         offset = (page - 1) * per_page
         limit = per_page
-        async with self.pg.acquire() as conn:
+        async with self.pool.acquire() as conn:
             if filters:
                 query = create_filter(self.table, filters)
             else:
@@ -71,7 +71,7 @@ class SAResource(AbstractResource):
     async def detail(self, request):
         entity_id = request.match_info['entity_id']
 
-        async with self.pg.acquire() as conn:
+        async with self.pool.acquire() as conn:
             resp = await conn.execute(
                 self.table.select().where(self.pk == entity_id))
             rec = await resp.first()
@@ -86,7 +86,7 @@ class SAResource(AbstractResource):
         payload = await request.json()
         data = validate_payload(payload, self._create_validator)
 
-        async with self.pg.acquire() as conn:
+        async with self.pool.acquire() as conn:
             rec = await conn.execute(
                 self.table.insert().values(data).returning(*self.table.c))
             row = await rec.first()
@@ -100,7 +100,8 @@ class SAResource(AbstractResource):
         payload = await request.json()
         data = validate_payload(payload, self._create_validator)
 
-        async with self.pg.acquire() as conn:
+        # TODO: execute in transaction?
+        async with self.pool.acquire() as conn:
             row = await conn.execute(
                 self.table.select()
                 .where(self.pk == entity_id)
@@ -122,7 +123,7 @@ class SAResource(AbstractResource):
     async def delete(self, request):
         entity_id = request.match_info['entity_id']
 
-        async with self.pg.acquire() as conn:
+        async with self.pool.acquire() as conn:
             await conn.execute(
                 self.table.delete().where(self.pk == entity_id))
 
