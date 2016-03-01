@@ -78,9 +78,15 @@ def validate_query(query):
     return q
 
 
-def validate_payload(payload, schema):
+def validate_payload(raw_payload, schema):
+    payload = raw_payload.decode(encoding='UTF-8')
     try:
-        data = schema(payload)
+        parsed = json.loads(payload)
+    except ValueError:
+        raise JsonValidaitonError('Payload is not json serialisable')
+
+    try:
+        data = schema(parsed)
     except t.DataError as exc:
         raise JsonValidaitonError(**exc.as_dict())
     return data
