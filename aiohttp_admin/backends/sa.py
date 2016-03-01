@@ -2,7 +2,7 @@ import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_query
+from ..utils import json_response, validate_query, validate_payload
 from .sa_utils import validator_from_table, create_filter
 
 
@@ -84,7 +84,7 @@ class SAResource(AbstractResource):
 
     async def create(self, request):
         payload = await request.json()
-        data = self._create_validator(payload)
+        data = validate_payload(payload, self._create_validator)
 
         async with self.pg.acquire() as conn:
             rec = await conn.execute(
@@ -98,7 +98,7 @@ class SAResource(AbstractResource):
         entity_id = request.match_info['entity_id']
 
         payload = await request.json()
-        data = self._create_validator(payload)
+        data = validate_payload(payload, self._create_validator)
 
         async with self.pg.acquire() as conn:
             row = await conn.execute(
@@ -123,7 +123,6 @@ class SAResource(AbstractResource):
         entity_id = request.match_info['entity_id']
 
         async with self.pg.acquire() as conn:
-
             await conn.execute(
                 self.table.delete().where(self.pk == entity_id))
 

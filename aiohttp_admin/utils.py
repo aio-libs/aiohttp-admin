@@ -78,6 +78,14 @@ def validate_query(query):
     return q
 
 
+def validate_payload(payload, schema):
+    try:
+        data = schema(payload)
+    except t.DataError as exc:
+        raise JsonValidaitonError(**exc.as_dict())
+    return data
+
+
 def gather_template_folders(template_folder):
     # gather template folders: default and provided
     if not isinstance(template_folder, list):
