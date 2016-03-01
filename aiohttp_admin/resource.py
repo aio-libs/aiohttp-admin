@@ -11,29 +11,29 @@ class AbstractResource(metaclass=abc.ABCMeta):
         self._url = url or class_name
 
     @abstractmethod
-    async def list(self, request):
+    async def list(self, request):  # pragma: no cover
         q = validate_query(request.GET)
         assert q
         return json_response({})
 
     @abstractmethod
-    async def detail(self, request):
+    async def detail(self, request):  # pragma: no cover
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
 
     @abstractmethod
-    async def create(self, request):
+    async def create(self, request):  # pragma: no cover
         return json_response({})
 
     @abstractmethod
-    async def update(self, request):
+    async def update(self, request):  # pragma: no cover
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
 
     @abstractmethod
-    async def delete(self, request):
+    async def delete(self, request):  # pragma: no cover
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
