@@ -3,18 +3,7 @@ import aiohttp_jinja2
 from .consts import TEMPLATE_APP_KEY, APP_KEY
 
 
-__all__ = ['Admin', 'admin_middleware_factory']
-
-
-async def admin_middleware_factory(app, handler):
-    async def admin_middleware(request):
-        try:
-            response = await handler(request)
-        except Exception as e:
-            raise e
-        return response
-
-    return admin_middleware
+__all__ = ['Admin', 'get_admin']
 
 
 def get_admin(app, *, app_key=APP_KEY):
