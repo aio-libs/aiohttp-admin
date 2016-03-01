@@ -77,7 +77,8 @@ class SAResource(AbstractResource):
             rec = await resp.first()
 
         if not rec:
-            raise ObjectNotFound()
+            msg = 'Entity with id: {} not found'.format(entity_id)
+            raise ObjectNotFound(msg)
 
         entity = dict(rec)
         return json_response(entity)
@@ -108,7 +109,8 @@ class SAResource(AbstractResource):
             )
             rec = await row.first()
             if not rec:
-                raise ObjectNotFound()
+                msg = 'Entity with id: {} not found'.format(entity_id)
+                raise ObjectNotFound(msg)
 
             row = await conn.execute(
                 self.table.update()
