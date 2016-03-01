@@ -17,9 +17,8 @@ class SAResource(AbstractResource):
         self._table = table
         self._primary_key = primary_key
         self._pk = table.c[primary_key]
-
-        self._create_validator = validator_from_table(table, skip_pk=True)
-        self._update_validator = validator_from_table(table, skip_pk=False)
+        # TODO: do we ability to pass custom validator for table?
+        self._validator = validator_from_table(table, skip_pk=True)
 
     @property
     def pool(self):
@@ -84,8 +83,8 @@ class SAResource(AbstractResource):
         return json_response(entity)
 
     async def create(self, request):
-        payload = await request.json()
-        data = validate_payload(payload, self._create_validator)
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._validator)
 
         async with self.pool.acquire() as conn:
             rec = await conn.execute(
@@ -98,8 +97,8 @@ class SAResource(AbstractResource):
     async def update(self, request):
         entity_id = request.match_info['entity_id']
 
-        payload = await request.json()
-        data = validate_payload(payload, self._create_validator)
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._validator)
 
         # TODO: execute in transaction?
         async with self.pool.acquire() as conn:
