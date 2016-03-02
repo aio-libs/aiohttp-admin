@@ -1,46 +1,12 @@
-import re
 from bson import ObjectId
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_query
+from ..utils import json_response, validate_query, validate_payload
+from .mongo_utils import create_validator, create_filter
 
 
 __all__ = ['MotorResource']
-
-
-def op(filter, field, operation, value):
-    if operation == 'in':
-        filter[field] = {'$in': value}
-    elif operation == 'like':
-        filter[field] = {'$regex': '^{}'.format(re.escape(value))}
-    elif operation == 'eq':
-        filter[field] = {'$eq': value}
-    elif operation == 'ne':
-        filter[field] = {'$not': value}
-    elif operation == 'le':
-        filter[field] = {'$lte': value}
-    elif operation == 'lt':
-        filter[field] = {'$lt': value}
-    elif operation == 'ge':
-        filter[field] = {'$gt': value}
-    elif operation == 'gt':
-        filter[field] = {'$gte': value}
-    else:
-        raise ValueError('Operation not supported {}'.format(operation))
-    return filter
-
-
-def create_filter(filter):
-    query = {}
-    for field_name, operation in filter.items():
-        if isinstance(operation, dict):
-            for op_name, value in operation.items():
-                query = op(query, field_name, op_name, value)
-        else:
-            value = operation
-            query[field_name] = value
-    return query
 
 
 class MotorResource(AbstractResource):
@@ -49,15 +15,7 @@ class MotorResource(AbstractResource):
         super().__init__(url)
         self._collection = collection
         self._primary_key = primary_key
-        self._validator = schema
-
-    @property
-    def db(self):
-        return self._db
-
-    @property
-    def pk(self):
-        return self._pk
+        self._schema = create_validator(schema, primary_key)
 
     async def list(self, request):
         q = validate_query(request.GET)
@@ -72,9 +30,11 @@ class MotorResource(AbstractResource):
 
         offset = (page - 1) * per_page
         limit = per_page
+
+        query = {}
         if filters:
             query = create_filter(filters)
-        query = {}
+
         cursor = self._collection.find(query).skip(offset).limit(limit)
         entities = await cursor.to_list(limit)
         count = await self._collection.find(query).count()
