@@ -38,18 +38,18 @@ json_response = partial(web.json_response, dumps=jsonify)
 OptKey = partial(t.Key, optional=True)
 
 
+SimpleType = t.Int | t.Bool | t.String | t.Float
 Filter = t.Dict({
-    OptKey('in'): t.List(t.String),
-    OptKey('gt'): t.String,
-    OptKey('ge'): t.String,
-    OptKey('lt'): t.String,
-    OptKey('le'): t.String,
-    OptKey('ne'): t.String,
-    OptKey('eq'): t.String,
-    OptKey('like'): t.String,
+    OptKey('in'): t.List(SimpleType),
+    OptKey('gt'): SimpleType,
+    OptKey('ge'): SimpleType,
+    OptKey('lt'): SimpleType,
+    OptKey('le'): SimpleType,
+    OptKey('ne'): SimpleType,
+    OptKey('eq'): SimpleType,
+    OptKey('like'): SimpleType,
 })
 
-SimpleType = t.Int | t.Bool | t.String | t.Float
 ListQuery = t.Dict({
     t.Key('_page', default=1): t.Int[1:],
     t.Key('_perPage', default=30): t.Int[1:],
@@ -69,7 +69,6 @@ def validate_query(query):
             raise t.DataError('_filters can not be serialized') from e
         else:
             query_dict['_filters'] = f
-
     try:
         q = ListQuery(query_dict)
     except t.DataError as exc:

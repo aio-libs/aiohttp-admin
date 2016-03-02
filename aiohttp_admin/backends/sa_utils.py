@@ -15,11 +15,12 @@ def build_trafaret(sa_type, **kwargs):
     if isinstance(sa_type, sa.sql.sqltypes.Enum):
         trafaret = t.Enum(*sa_type.enums, **kwargs)
 
-    elif isinstance(sa_type, sa.sql.sqltypes.String):
-        trafaret = t.String(max_length=sa_type.length, **kwargs)
-
+    # check for Text should be before String
     elif isinstance(sa_type, sa.sql.sqltypes.Text):
         trafaret = t.String(**kwargs)
+
+    elif isinstance(sa_type, sa.sql.sqltypes.String):
+        trafaret = t.String(max_length=sa_type.length, **kwargs)
 
     elif isinstance(sa_type, sa.sql.sqltypes.Integer):
         trafaret = t.Int(**kwargs)
@@ -97,40 +98,42 @@ def op(operation, column):
     elif operation == 'eq':
         comparator = _operator.eq
     elif operation == 'ne':
-        comparator = _operator.en
+        comparator = _operator.ne
     elif operation == 'le':
         comparator = _operator.le
     elif operation == 'lt':
         comparator = _operator.lt
     elif operation == 'ge':
-        comparator == _operator.ge
+        comparator = _operator.ge
     elif operation == 'gt':
-        comparator == _operator.gt
+        comparator = _operator.gt
     else:
         raise ValueError('Operation {} not supported'.format(operation))
     return comparator
 
 
+# TODO: fix comparators, keys should be something better
 comparator_map = {
-    sa.sql.sqltypes.String: ['eq', 'nq', 'like'],
-    sa.sql.sqltypes.Text: ['eq', 'nq', 'like'],
-    sa.sql.sqltypes.Integer: ['eq', 'nq', 'lt', 'le', 'gt', 'ge', 'in'],
-    sa.sql.sqltypes.Float: ['eq', 'nq', 'lt', 'le', 'gt', 'ge'],
-    sa.sql.sqltypes.Date: ['eq', 'nq', 'lt', 'le', 'gt', 'ge'],
+    sa.sql.sqltypes.String: ['eq', 'ne', 'like'],
+    sa.sql.sqltypes.Text: ['eq', 'ne', 'like'],
+    sa.sql.sqltypes.Integer: ['eq', 'ne', 'lt', 'le', 'gt', 'ge', 'in'],
+    sa.sql.sqltypes.Float: ['eq', 'ne', 'lt', 'le', 'gt', 'ge'],
+    sa.sql.sqltypes.Date: ['eq', 'ne', 'lt', 'le', 'gt', 'ge'],
 }
 
 
 def check_comparator(column, comparator):
     # TODO: fix error messages and types
-    if column.type not in comparator_map:
+    if type(column.type) not in comparator_map:
         msg = 'Filtering for column type {} not supported'.format(column.type)
         raise Exception(msg)
 
-    if comparator not in comparator_map[column.type]:
+    if comparator not in comparator_map[type(column.type)]:
         msg = 'Filtering for column type {} not supported'.format(column.type)
         raise Exception(msg)
 
 
+# TODO: validate that value supplied in filter has same type as in table
 # TODO: simplify this monster
 def create_filter(table, filter):
     query = table.select()
