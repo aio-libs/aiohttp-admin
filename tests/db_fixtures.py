@@ -84,6 +84,7 @@ def create_table(request, sa_table, postgres, loop):
                 pass
             await conn.execute(create_expr)
             values = []
+            # TODO: dry things, should be one function for sa and mongo
             for i in range(rows):
                 values.append({
                     'title': 'title {}'.format(i),

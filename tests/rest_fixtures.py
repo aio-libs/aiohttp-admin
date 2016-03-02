@@ -1,8 +1,8 @@
 import json
 
 import aiohttp
-from aiohttp import web
 import pytest
+from aiohttp import web
 
 from aiohttp_admin.utils import jsonify
 
@@ -65,13 +65,13 @@ class AdminRESTClient:
         if self._session:
             self._session.close()
 
-    async def create(self, resource, data):
-        answer = await self.request("POST", resource, data=data)
+    async def create(self, resource, data, **kw):
+        answer = await self.request("POST", resource, data=data, *kw)
         return answer
 
-    async def detail(self, resource, entity_id):
+    async def detail(self, resource, entity_id, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("GET", path)
+        answer = await self.request("GET", path, **kw)
         return answer
 
     async def list(self, resource, page=1, per_page=30, sort_field='id',
@@ -85,9 +85,9 @@ class AdminRESTClient:
         answer = await self.request("GET", resource, params=query)
         return answer
 
-    async def update(self, resource, entity_id, data):
+    async def update(self, resource, entity_id, data, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("PUT", path, data=data)
+        answer = await self.request("PUT", path, data=data, **kw)
         return answer
 
     async def delete(self, resource, entity_id):
