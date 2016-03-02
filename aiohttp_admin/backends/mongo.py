@@ -84,19 +84,24 @@ class MotorResource(AbstractResource):
     async def detail(self, request):
         entity_id = request.match_info['entity_id']
         query = {self._primary_key: ObjectId(entity_id)}
+
         doc = await self._collection.find_one(query)
         if not doc:
-            raise ObjectNotFound()
+            msg = 'Entity with id: {} not found'.format(entity_id)
+            raise ObjectNotFound(msg)
 
         entity = dict(doc)
         return json_response(entity)
 
     async def create(self, request):
-        payload = await request.json()
-        data = self._create_validator(payload)
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._schema)
 
-        entity = dict(data)
-        return json_response(entity)
+        entity_id = await self._collection.insert(data)
+        query = {self._primary_key: ObjectId(entity_id)}
+        doc = await self._collection.find_one(query)
+
+        return json_response(doc)
 
     async def update(self, request):
         entity_id = request.match_info['entity_id']
@@ -115,5 +120,7 @@ class MotorResource(AbstractResource):
 
     async def delete(self, request):
         entity_id = request.match_info['entity_id']
-        assert entity_id
+        # TODO: fix ObjectId is not always valid case
+        query = {self._primary_key: ObjectId(entity_id)}
+        await self._collection.remove(query)
         return json_response({'status': 'deleted'})
