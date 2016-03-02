@@ -28,10 +28,6 @@ class SAResource(AbstractResource):
     def table(self):
         return self._table
 
-    @property
-    def pk(self):
-        return self._pk
-
     async def list(self, request):
         q = validate_query(request.GET)
 
@@ -72,7 +68,7 @@ class SAResource(AbstractResource):
 
         async with self.pool.acquire() as conn:
             resp = await conn.execute(
-                self.table.select().where(self.pk == entity_id))
+                self.table.select().where(self._pk == entity_id))
             rec = await resp.first()
 
         if not rec:
@@ -104,7 +100,7 @@ class SAResource(AbstractResource):
         async with self.pool.acquire() as conn:
             row = await conn.execute(
                 self.table.select()
-                .where(self.pk == entity_id)
+                .where(self._pk == entity_id)
             )
             rec = await row.first()
             if not rec:
@@ -115,7 +111,7 @@ class SAResource(AbstractResource):
                 self.table.update()
                 .values(data)
                 .returning(*self.table.c)
-                .where(self.pk == entity_id))
+                .where(self._pk == entity_id))
             rec = await row.first()
 
         entity = dict(rec)
@@ -126,6 +122,6 @@ class SAResource(AbstractResource):
 
         async with self.pool.acquire() as conn:
             await conn.execute(
-                self.table.delete().where(self.pk == entity_id))
+                self.table.delete().where(self._pk == entity_id))
 
         return json_response({'status': 'deleted'})
