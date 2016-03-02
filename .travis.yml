@@ -6,6 +6,7 @@ python:
 addons:
   postgresql: 9.4
   mysql: 5.6
+  mongodb: 2.6
 
 
 services:
