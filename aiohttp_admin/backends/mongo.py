@@ -100,11 +100,18 @@ class MotorResource(AbstractResource):
 
     async def update(self, request):
         entity_id = request.match_info['entity_id']
-        payload = await request.json()
-        data = self._create_validator(payload)
-        assert entity_id
-        entity = dict(data)
-        return json_response(entity)
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._schema)
+        query = {self._primary_key: ObjectId(entity_id)}
+
+        doc = await self._collection.find_and_modify(
+            query, {"$set": data}, upsert=False, new=True)
+
+        if not doc:
+            msg = 'Entity with id: {} not found'.format(entity_id)
+            raise ObjectNotFound(msg)
+
+        return json_response(doc)
 
     async def delete(self, request):
         entity_id = request.match_info['entity_id']
