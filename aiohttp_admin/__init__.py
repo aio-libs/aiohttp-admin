@@ -21,13 +21,13 @@ def setup(app, admin_conf_path, url=None, static_url=None,
 
     # setup routes
     url = url or '/admin'
-    static_url = static_url or '/admin/static'
+    static_url = static_url or '/static'
 
     app.router.add_route('GET', url, admin.index_handler, name='admin.index')
     app.router.add_static(static_url,
                           path=str(PROJ_ROOT / 'static'),
                           name='admin.static')
-    app.router.add_static('/admin/config',
+    app.router.add_static(static_url,
                           path=admin_conf_path,
                           name='admin.config')
 
