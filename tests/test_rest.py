@@ -109,25 +109,37 @@ async def test_list_pagination(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
 @pytest.mark.run_loop
-async def test_list_filtering(create_admin, loop):
+async def test_list_filtering_by_pk(create_admin, loop):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
-    # primary_key = admin._resources[0]._primary_key
+    primary_key = admin._resources[0]._primary_key
 
     num_entities = 25
     await create_entities(num_entities)
     all_rows = await client.list(resource, page=1, per_page=30)
     assert len(all_rows) == num_entities
 
-    # entity = all_rows[0]
-    # entity_id = entity[primary_key]
+    entity = all_rows[0]
+    entity_id = entity[primary_key]
 
     # filter by primary key
-    # filters = {primary_key: entity_id}
-    # resp = await client.list(resource, page=1, per_page=30, filters=filters)
-    # assert len(resp) == 1
-    # assert entity == resp[0]
+    filters = {primary_key: entity_id}
+    resp = await client.list(resource, page=1, per_page=30, filters=filters)
+    assert len(resp) == 1
+    assert entity == resp[0]
+
+
+@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.run_loop
+async def test_list_filtering(create_admin, loop):
+    resource = 'posts'
+    admin, client, create_entities = await create_admin(resource)
+
+    num_entities = 25
+    await create_entities(num_entities)
+    all_rows = await client.list(resource, page=1, per_page=30)
+    assert len(all_rows) == num_entities
 
     filters = {'views': 5}
     resp = await client.list(resource, page=1, per_page=30, filters=filters)
