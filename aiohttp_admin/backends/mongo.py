@@ -21,12 +21,11 @@ class MotorResource(AbstractResource):
         q = validate_query(request.GET)
 
         page = q['_page']
-        # sort_field = q['_sortField']
         per_page = q['_perPage']
-        filters = q.get('_filters')
 
-        # TODO: add sorting support
-        # sort_dir = q['_sortDir']
+        sort_field = q.get('_sortField', self._primary_key)
+        sort_dir = q['_sortDir']
+        filters = q.get('_filters')
 
         offset = (page - 1) * per_page
         limit = per_page
@@ -34,6 +33,12 @@ class MotorResource(AbstractResource):
         query = {}
         if filters:
             query = create_filter(filters)
+        sort_direction = ASCENDING if sort_dir == ASC else DESCENDING
+
+        cursor = (self._collection.find(query)
+                  .skip(offset)
+                  .limit(limit)
+                  .sort(sort_field, sort_direction))
 
         cursor = self._collection.find(query).skip(offset).limit(limit)
         entities = await cursor.to_list(limit)

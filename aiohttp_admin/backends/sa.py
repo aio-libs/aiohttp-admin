@@ -32,12 +32,11 @@ class SAResource(AbstractResource):
         q = validate_query(request.GET)
 
         page = q['_page']
-        sort_field = q['_sortField']
+        sort_field = q.get('_sortField', self._primary_key)
         per_page = q['_perPage']
-        filters = q.get('_filters')
+        sort_dir = q['_sortDir']
 
-        # TODO: add sorting support
-        # sort_dir = q['_sortDir']
+        filters = q.get('_filters')
 
         offset = (page - 1) * per_page
         limit = per_page
@@ -50,11 +49,12 @@ class SAResource(AbstractResource):
                 sa.select([sa.func.count()])
                 .select_from(query.alias('foo')))
 
+            sort_dir = sa.asc if sort_dir == 'ASC' else sa.desc
             cursor = await conn.execute(
                 query
                 .offset(offset)
                 .limit(limit)
-                .order_by(sort_field))
+                .order_by(sort_dir(sort_field)))
 
             recs = await cursor.fetchall()
 

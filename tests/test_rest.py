@@ -132,6 +132,30 @@ async def test_list_filtering_by_pk(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
 @pytest.mark.run_loop
+async def test_list_sorting(create_admin, loop):
+    resource = 'posts'
+    admin, client, create_entities = await create_admin(resource)
+    num_entities = 25
+    await create_entities(num_entities)
+
+    rows = await client.list(resource, page=1, per_page=30, sort_field='views',
+                             sort_dir='ASC')
+
+    assert len(rows) == num_entities
+    sorted_values = [r['views'] for r in rows]
+    expected = list(range(0, num_entities))
+    assert sorted_values == expected
+
+    rows = await client.list(resource, page=1, per_page=30, sort_field='views',
+                             sort_dir='DESC')
+
+    assert len(rows) == num_entities
+    sorted_values = [r['views'] for r in rows]
+    assert sorted_values == expected[::-1]
+
+
+@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.run_loop
 async def test_list_filtering(create_admin, loop):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
