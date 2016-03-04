@@ -3,8 +3,10 @@ import operator as _operator
 
 import sqlalchemy as sa
 import trafaret as t
-from trafaret.contrib.rfc_3339 import DateTime
 from sqlalchemy.dialects import postgresql
+from trafaret.contrib.rfc_3339 import DateTime
+
+from ..exceptions import JsonValidaitonError
 
 
 __all__ = ['validator_from_table', 'create_filter']
@@ -133,6 +135,19 @@ def check_comparator(column, comparator):
         raise Exception(msg)
 
 
+def check_value(column, value):
+    trafaret = build_trafaret(column.type)
+    try:
+        if isinstance(value, list):
+            value = [trafaret.check_and_return(v) for v in value]
+        else:
+            value = trafaret.check_and_return(value)
+
+    except t.DataError as exc:
+        raise JsonValidaitonError(**exc.as_dict())
+    return value
+
+
 # TODO: validate that value supplied in filter has same type as in table
 # TODO: simplify this monster
 def create_filter(table, filter):
@@ -144,9 +159,12 @@ def create_filter(table, filter):
         if isinstance(operation, dict):
             for op_name, value in operation.items():
                 check_comparator(column, op_name)
-                f = op(op_name, column)(column, value)
+                value = check_value(column, value)
+                do_compare = op(op_name, column)
+                f = do_compare(column, value)
                 query = query.where(f)
         else:
             value = operation
+            value = check_value(column, value)
             query = query.where(column == value)
     return query
