@@ -7,9 +7,13 @@ from sqlalchemy.dialects import postgresql
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
+from ..utils import validate_query as _validate_query
 
 
 __all__ = ['validator_from_table', 'create_filter']
+
+
+AnyDict = t.Dict({}).allow_extra('*')
 
 
 def build_trafaret(sa_type, **kwargs):
@@ -41,7 +45,7 @@ def build_trafaret(sa_type, **kwargs):
 
     # Add PG related JSON and ARRAY
     elif isinstance(sa_type, postgresql.JSON):
-        trafaret = t.Dict({}).allow_extra('*')
+        trafaret = AnyDict | t.List(AnyDict)
 
     # Add PG related JSON and ARRAY
     elif isinstance(sa_type, postgresql.ARRAY):
@@ -71,10 +75,10 @@ def build_field(column):
     return field
 
 
-def validator_from_table(table, skip_pk=False):
+def validator_from_table(table, primary_key, skip_pk=False):
     trafaret = {}
     for name, column in table.c.items():
-        if column.primary_key and skip_pk:
+        if skip_pk and column.name == primary_key:
             continue
         key = name
         default = column.server_default
@@ -82,7 +86,7 @@ def validator_from_table(table, skip_pk=False):
 
         traf_field = build_field(column)
         trafaret[key] = traf_field
-    return t.Dict(trafaret)
+    return t.Dict(trafaret).ignore_extra(primary_key)
 
 
 def to_column(column_name, table):
@@ -168,3 +172,22 @@ def create_filter(table, filter):
             value = check_value(column, value)
             query = query.where(column == value)
     return query
+
+
+def validate_query(query, table):
+    possible_columns = set(c for c in table.c.keys())
+    q = _validate_query(query)
+    sort_field = q.get('_sortField')
+
+    filters = q.get('_filters', [])
+    columns = [field_name for field_name in filters]
+
+    if sort_field is not None:
+        columns.append(sort_field)
+
+    not_valid = set(columns).difference(possible_columns)
+    if not_valid:
+        column_list = ', '.join(not_valid)
+        msg = 'Columns: {} do not present in resource'.format(column_list)
+        raise JsonValidaitonError(msg)
+    return q

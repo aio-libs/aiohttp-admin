@@ -2,8 +2,8 @@ import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_query, validate_payload
-from .sa_utils import validator_from_table, create_filter
+from ..utils import json_response, validate_payload
+from .sa_utils import validator_from_table, create_filter, validate_query
 
 
 __all__ = ['SAResource']
@@ -18,7 +18,10 @@ class SAResource(AbstractResource):
         self._primary_key = primary_key
         self._pk = table.c[primary_key]
         # TODO: do we ability to pass custom validator for table?
-        self._validator = validator_from_table(table, skip_pk=True)
+        self._create_validator = validator_from_table(table, primary_key,
+                                                      skip_pk=True)
+        self._update_validator = validator_from_table(table, primary_key,
+                                                      skip_pk=True)
 
     @property
     def pool(self):
@@ -29,7 +32,7 @@ class SAResource(AbstractResource):
         return self._table
 
     async def list(self, request):
-        q = validate_query(request.GET)
+        q = validate_query(request.GET, self._table)
 
         page = q['_page']
         sort_field = q.get('_sortField', self._primary_key)
@@ -80,7 +83,7 @@ class SAResource(AbstractResource):
 
     async def create(self, request):
         raw_payload = await request.read()
-        data = validate_payload(raw_payload, self._validator)
+        data = validate_payload(raw_payload, self._create_validator)
 
         async with self.pool.acquire() as conn:
             rec = await conn.execute(
@@ -92,9 +95,8 @@ class SAResource(AbstractResource):
 
     async def update(self, request):
         entity_id = request.match_info['entity_id']
-
         raw_payload = await request.read()
-        data = validate_payload(raw_payload, self._validator)
+        data = validate_payload(raw_payload, self._update_validator)
 
         # TODO: execute in transaction?
         async with self.pool.acquire() as conn:
