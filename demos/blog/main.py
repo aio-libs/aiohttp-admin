@@ -32,6 +32,7 @@ def setup_admin(app, pg, admin_config_path):
     admin.add_resource(SAResource(pg, db.post, url='posts'))
     admin.add_resource(SAResource(pg, db.tag, url='tags'))
     admin.add_resource(SAResource(pg, db.comment, url='comments'))
+    admin.add_static()
     return admin
 
 
@@ -59,7 +60,8 @@ async def init(loop):
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT)))
     admin_config = str(PROJ_ROOT / 'static' / 'js')
-    setup_admin(app, pg, admin_config)
+    # setup_admin(app, pg, admin_config)
+    setup_admin(app, pg, None)
 
     # setup views and routes
     handler = SiteHandler(pg)

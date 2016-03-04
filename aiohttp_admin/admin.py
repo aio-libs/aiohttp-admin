@@ -18,6 +18,7 @@ class Admin:
         self._resources = []
         self._url = url or '/admin'
         self._name = name or 'aiohttp_admin'
+        self._entities = []
 
     @property
     def app(self):
@@ -34,3 +35,17 @@ class Admin:
     @aiohttp_jinja2.template('admin.html', app_key=TEMPLATE_APP_KEY)
     async def index_handler(self, request):
         return {'name': self._name}
+
+    @aiohttp_jinja2.template('config.js', app_key=TEMPLATE_APP_KEY)
+    async def config_handler(self, request):
+        print('render config.js')
+        print(self._resources)
+        print(self._entities)
+        return {'name': self._name, 'entities': self._entities}
+
+    def add_static(self):
+        for resource in self._resources:
+            self._entities.append({
+                'url': resource.url,
+                'name': resource.table.name
+            })

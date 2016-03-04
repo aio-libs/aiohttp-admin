@@ -29,6 +29,10 @@ class SAResource(AbstractResource):
         return self._table
 
     @property
+    def url(self):
+        return self._url
+
+    @property
     def pk(self):
         return self._pk
 
@@ -129,3 +133,6 @@ class SAResource(AbstractResource):
                 self.table.delete().where(self.pk == entity_id))
 
         return json_response({'status': 'deleted'})
+
+    def get_columns(self):
+        pass

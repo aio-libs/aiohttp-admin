@@ -11,7 +11,7 @@ __all__ = ['Admin', 'setup', 'get_admin']
 __version__ = '0.0.1'
 
 
-def setup(app, admin_conf_path, url=None, static_url=None,
+def setup(app, admin_conf_path=None, url=None, static_url=None,
           template_folder=None, name=None, app_key=APP_KEY):
     loop = app.loop
 
@@ -21,15 +21,22 @@ def setup(app, admin_conf_path, url=None, static_url=None,
 
     # setup routes
     url = url or '/admin'
-    static_url = static_url or '/static'
+    static_url = static_url or '/admin/static'
+    config_url = '/admin/static/js/config.js'
 
     app.router.add_route('GET', url, admin.index_handler, name='admin.index')
+    if admin_conf_path:
+        app.router.add_static(static_url,
+                              path=admin_conf_path,
+                              name='admin.config')
+    else:
+        app.router.add_route('GET',
+                             config_url,
+                             admin.config_handler,
+                             name='admin.config')
     app.router.add_static(static_url,
                           path=str(PROJ_ROOT / 'static'),
                           name='admin.static')
-    app.router.add_static(static_url,
-                          path=admin_conf_path,
-                          name='admin.config')
 
     # init aiohttp_jinja plugin
     tf = gather_template_folders(template_folder)
