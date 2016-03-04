@@ -74,14 +74,15 @@ class AdminRESTClient:
         answer = await self.request("GET", path, **kw)
         return answer
 
-    async def list(self, resource, page=1, per_page=30, sort_field='id',
-                   sort_dir='DESC', filters=None):
+    async def list(self, resource, page=1, per_page=30, sort_field=None,
+                   sort_dir=None, filters=None):
         f = json.dumps(filters or {})
-        query = {'_page': page,
-                 '_perPage': per_page,
-                 '_sortField': sort_field,
-                 '_sortDir': sort_dir,
-                 '_filters': f}
+
+        query = {'_page': page, '_perPage': per_page, '_filters': f}
+
+        sort_field and query.update({'_sortField': sort_field})
+        sort_dir and query.update({'_sortDir': sort_dir})
+
         answer = await self.request("GET", resource, params=query)
         return answer
 
