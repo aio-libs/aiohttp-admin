@@ -1,9 +1,10 @@
+from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_query, validate_payload
-from .mongo_utils import create_validator, create_filter
+from ..utils import json_response, validate_payload, ASC
+from .mongo_utils import create_validator, create_filter, validate_query
 
 
 __all__ = ['MotorResource']
@@ -15,10 +16,11 @@ class MotorResource(AbstractResource):
         super().__init__(url)
         self._collection = collection
         self._primary_key = primary_key
-        self._schema = create_validator(schema, primary_key)
+        self._schema = schema
+        self._update_schema = create_validator(schema, primary_key)
 
     async def list(self, request):
-        q = validate_query(request.GET)
+        q = validate_query(request.GET, self._schema)
 
         page = q['_page']
         per_page = q['_perPage']
@@ -32,7 +34,8 @@ class MotorResource(AbstractResource):
 
         query = {}
         if filters:
-            query = create_filter(filters)
+            query = create_filter(filters, self._schema)
+
         sort_direction = ASCENDING if sort_dir == ASC else DESCENDING
 
         cursor = (self._collection.find(query)
@@ -40,7 +43,6 @@ class MotorResource(AbstractResource):
                   .limit(limit)
                   .sort(sort_field, sort_direction))
 
-        cursor = self._collection.find(query).skip(offset).limit(limit)
         entities = await cursor.to_list(limit)
         count = await self._collection.find(query).count()
         headers = {'X-Total-Count': str(count)}
@@ -60,7 +62,7 @@ class MotorResource(AbstractResource):
 
     async def create(self, request):
         raw_payload = await request.read()
-        data = validate_payload(raw_payload, self._schema)
+        data = validate_payload(raw_payload, self._update_schema)
 
         entity_id = await self._collection.insert(data)
         query = {self._primary_key: ObjectId(entity_id)}
@@ -71,7 +73,7 @@ class MotorResource(AbstractResource):
     async def update(self, request):
         entity_id = request.match_info['entity_id']
         raw_payload = await request.read()
-        data = validate_payload(raw_payload, self._schema)
+        data = validate_payload(raw_payload, self._update_schema)
         query = {self._primary_key: ObjectId(entity_id)}
 
         doc = await self._collection.find_and_modify(
