@@ -10,11 +10,12 @@ from .consts import TEMPLATES_ROOT
 
 try:
     from bson import ObjectId
-except ImportError:
+except ImportError:  # pragma: no cover
     ObjectId = None
 
 
-__all__ = ['json_response', 'validate_query', 'gather_template_folders']
+__all__ = ['json_response', 'jsonify', 'validate_query', 'validate_payload',
+           'gather_template_folders']
 
 
 def json_datetime_serial(obj):
@@ -64,19 +65,25 @@ ListQuery = t.Dict({
 
 
 def validate_query(query):
+    """Validate query arguments in list request.
+
+    :param query: mapping with pagination and filtering iformation
+    """
     query_dict = dict(query)
     filters = query_dict.pop('_filters', None)
     if filters:
         try:
             f = json.loads(filters)
-        except ValueError as e:
-            raise t.DataError('_filters can not be serialized') from e
+        except ValueError:
+            msg = '_filters field can not be serialized'
+            raise JsonValidaitonError(msg)
         else:
             query_dict['_filters'] = f
     try:
         q = ListQuery(query_dict)
     except t.DataError as exc:
-        raise JsonValidaitonError(**exc.as_dict())
+        msg = '_filters query invalid'
+        raise JsonValidaitonError(msg, **exc.as_dict())
 
     return q
 

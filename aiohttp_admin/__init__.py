@@ -17,7 +17,7 @@ def setup(app, admin_conf_path, url=None, static_url=None,
 
     admin = Admin(app, url=url, name=name, loop=loop)
     # add support for multiple admins sites
-    app[APP_KEY] = admin
+    app[app_key] = admin
 
     # setup routes
     url = url or '/admin'
