@@ -1,9 +1,10 @@
 import json
 import pytest
+import trafaret as t
 
 from bson import ObjectId
 
-from aiohttp_admin.utils import validate_query, jsonify
+from aiohttp_admin.utils import validate_query, jsonify, validate_payload
 from aiohttp_admin.exceptions import JsonValidaitonError
 
 
@@ -36,7 +37,6 @@ def test_validate_query_filters_is_not_json():
 
     with pytest.raises(JsonValidaitonError) as ctx:
         validate_query(query)
-
     error = json.loads(ctx.value.text)
     assert error['error'] == '_filters field can not be serialized'
 
@@ -57,7 +57,47 @@ def test_jsonify():
     assert jsoned == '{"foo": "bar"}'
 
 
-def test_object_id():
+def test_jsonify_object_id():
     obj = {'foo': ObjectId('1' * 24)}
     jsoned = jsonify(obj)
     assert jsoned == '{"foo": "111111111111111111111111"}'
+
+
+def test_jsonify_failed():
+    with pytest.raises(TypeError):
+        jsonify(object())
+
+
+def test_validate_payload():
+    raw_data = b'{"foo": "bar"}'
+    schema = t.Dict({
+        t.Key('foo'): t.Atom('bar')
+    })
+    data = validate_payload(raw_data, schema)
+    assert data == {'foo': 'bar'}
+
+
+def test_validate_payload_not_json():
+    raw_data = b'foo=bar'
+    schema = t.Dict({
+        t.Key('foo'): t.Atom('bar')
+    })
+
+    with pytest.raises(JsonValidaitonError) as ctx:
+        validate_payload(raw_data, schema)
+
+    error = json.loads(ctx.value.text)
+    assert error['error'] == 'Payload is not json serialisable'
+
+
+def test_validate_payload_not_valid_schema():
+    raw_data = b'{"baz": "bar"}'
+    schema = t.Dict({
+        t.Key('foo'): t.Atom('bar')
+    })
+
+    with pytest.raises(JsonValidaitonError) as ctx:
+        validate_payload(raw_data, schema)
+
+    error = json.loads(ctx.value.text)
+    assert error['error'] == 'Json in payload invalid'
