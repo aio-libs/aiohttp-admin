@@ -1,5 +1,25 @@
 (function () {
     "use strict";
+    var onSubmitError = function(error, form, progression, notification) {
+            // mark fields based on errors from the response
+            if (!('error_details' in error.data)){
+                return true;
+            }
+            _.mapObject(error.data.error_details, function(error_msg, field_name) {
+                if (form[field_name]) {
+                    form[field_name].$valid = false;
+                }
+                return {}
+            });
+            // stop the progress bar
+            progression.done();
+            // add a notification
+            notification.log(`Some values are invalid, see details in the form`,
+                             { addnCls: 'humane-flatty-error' });
+            // cancel the default action (default error messages)
+            return false;
+        }
+
 
     var app = angular.module('aiohttp_admin', ['ng-admin']);
 
@@ -49,6 +69,7 @@
                 nga.field('question_text', 'wysiwyg'),
                 nga.field('pub_date', 'date')
             ]);
+        question.creationView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
 
         question.editionView()
             .title('Edit question')
@@ -70,6 +91,7 @@
                     .sortDir('DESC')
                     .listActions(['edit']),
             ]);
+        question.editionView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
 
         question.showView()
             .fields([
@@ -135,6 +157,8 @@
                     })
             ]);
 
+        choice.creationView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+
         choice.editionView()
             .fields(
                 nga.field('id')
@@ -142,6 +166,7 @@
                 .label('id'),
                 choice.creationView().fields()
             );
+        choice.editionView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
 
         choice.deletionView()
             .title('Deletion confirmation');
