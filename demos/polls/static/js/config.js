@@ -10,6 +10,17 @@
             .debug(true)
             .baseApiUrl('/admin/');
 
+        admin.errorMessage(function (response) {
+            var msg = '<p>Oops error occured with status code: ' + response.status + '</p>\n';
+
+            if ('error_details' in response.data ){
+                msg += '<code>';
+                msg += JSON.stringify(response.data.error_details, null, 2);
+                msg += '</code>';
+            }
+            return msg;
+        });
+
         var question = nga.entity('question');
         var choice = nga.entity('choice');
 
