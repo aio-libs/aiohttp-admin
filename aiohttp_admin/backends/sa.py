@@ -6,10 +6,10 @@ from ..utils import json_response, validate_payload
 from .sa_utils import validator_from_table, create_filter, validate_query
 
 
-__all__ = ['SAResource']
+__all__ = ['PGResource', 'MySQLResource']
 
 
-class SAResource(AbstractResource):
+class PGResource(AbstractResource):
 
     def __init__(self, db, table, primary_key='id', url=None):
         super().__init__(url)
@@ -68,7 +68,6 @@ class SAResource(AbstractResource):
 
     async def detail(self, request):
         entity_id = request.match_info['entity_id']
-
         async with self.pool.acquire() as conn:
             resp = await conn.execute(
                 self.table.select().where(self._pk == entity_id))
@@ -89,6 +88,7 @@ class SAResource(AbstractResource):
             rec = await conn.execute(
                 self.table.insert().values(data).returning(*self.table.c))
             row = await rec.first()
+            await conn.execute('commit;')
 
         entity = dict(row)
         return json_response(entity)
@@ -115,6 +115,7 @@ class SAResource(AbstractResource):
                 .returning(*self.table.c)
                 .where(self._pk == entity_id))
             rec = await row.first()
+            await conn.execute('commit;')
 
         entity = dict(rec)
         return json_response(entity)
@@ -125,5 +126,58 @@ class SAResource(AbstractResource):
         async with self.pool.acquire() as conn:
             await conn.execute(
                 self.table.delete().where(self._pk == entity_id))
+            await conn.execute('commit;')
 
         return json_response({'status': 'deleted'})
+
+
+class MySQLResource(PGResource):
+
+    async def create(self, request):
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._create_validator)
+
+        async with self.pool.acquire() as conn:
+            rec = await conn.execute(self.table.insert().values(data))
+            new_entity_id = rec.lastrowid
+            resp = await conn.execute(
+                self.table.select()
+                .where(self._pk == new_entity_id))
+            rec = await resp.first()
+            await conn.execute('commit;')
+
+        entity = dict(rec)
+        return json_response(entity)
+
+    async def update(self, request):
+        entity_id = request.match_info['entity_id']
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, self._update_validator)
+
+        # TODO: execute in transaction?
+        async with self.pool.acquire() as conn:
+            row = await conn.execute(
+                self.table.select()
+                .where(self._pk == entity_id)
+            )
+            rec = await row.first()
+            if not rec:
+                msg = 'Entity with id: {} not found'.format(entity_id)
+                raise ObjectNotFound(msg)
+
+            await conn.execute(
+                self.table.update()
+                .values(data)
+                .where(self._pk == entity_id))
+
+            await conn.execute('commit;')
+            resp = await conn.execute(
+                self.table.select()
+                .where(self._pk == entity_id))
+            rec = await resp.first()
+
+        entity = dict(rec)
+        return json_response(entity)
+
+        entity = dict(rec)
+        return json_response(entity)
