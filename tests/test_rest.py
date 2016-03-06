@@ -1,39 +1,43 @@
 import pytest
 import aiohttp_admin
-from aiohttp_admin.backends.sa import SAResource
+from aiohttp_admin.backends.sa import PGResource, MySQLResource
 from aiohttp_admin.backends.mongo import MotorResource
-
-
-@pytest.fixture
-def admin_type():
-    return 'sa'
 
 
 @pytest.fixture
 def create_admin(loop, admin_type, create_app_and_client,
                  mongo_collection, document_schema, create_document,
-                 postgres, sa_table, create_table):
+                 postgres, mysql, sa_table, create_table):
 
-    async def sa(resource_name='test_post'):
+    async def pg_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
         admin = aiohttp_admin.setup(app, './')
-        admin.add_resource(SAResource(postgres, sa_table, url=resource_name))
+        admin.add_resource(PGResource(postgres, sa_table, url=resource_name))
         return admin, client, create_table
 
-    async def mongo(resource_name='test_post'):
+    async def mysql_admin(resource_name='test_post'):
+        app, client = await create_app_and_client()
+        admin = aiohttp_admin.setup(app, './')
+        admin.add_resource(MySQLResource(mysql, sa_table, url=resource_name))
+        return admin, client, create_table
+
+    async def mongo_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MotorResource(mongo_collection, document_schema,
                                          url=resource_name))
         return admin, client, create_document
+
     if admin_type == 'mongo':
-        f = mongo
+        f = mongo_admin
+    elif admin_type == 'mysql':
+        f = mysql_admin
     else:
-        f = sa
+        f = pg_admin
     return f
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_basic_rest(create_admin, loop):
     resource = 'posts'
@@ -51,7 +55,7 @@ async def test_basic_rest(create_admin, loop):
     assert entity == resp[0]
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_detail_entity_that_not_exists(create_admin, loop):
     resource = 'posts'
@@ -83,7 +87,7 @@ async def test_detail_entity_that_not_exists(create_admin, loop):
     assert err.error_json == err_dict
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_list_pagination(create_admin, loop):
     resource = 'posts'
@@ -107,7 +111,7 @@ async def test_list_pagination(create_admin, loop):
     assert set(all_ids) == set(paged_ids)
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_list_filtering_by_pk(create_admin, loop):
     resource = 'posts'
@@ -130,7 +134,7 @@ async def test_list_filtering_by_pk(create_admin, loop):
     assert entity == resp[0]
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_list_text_like_filtering(create_admin, loop):
     resource = 'posts'
@@ -151,7 +155,7 @@ async def test_list_text_like_filtering(create_admin, loop):
     assert len(resp) == 6
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_list_sorting(create_admin, loop):
     resource = 'posts'
@@ -175,7 +179,7 @@ async def test_list_sorting(create_admin, loop):
     assert sorted_values == expected[::-1]
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_list_filtering(create_admin, loop):
     resource = 'posts'
@@ -221,7 +225,7 @@ async def test_list_filtering(create_admin, loop):
     assert len(resp) == 3
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_create(create_admin, loop):
     resource = 'posts'
@@ -237,10 +241,12 @@ async def test_create(create_admin, loop):
               'body': 'body field',
               'views': 42,
               'average_note': 0.1,
-              'pictures': {'foo': 'bar', 'i': 5},
-              'published_at': '2016-02-27T22:33:04.549000',
-              'tags': [1, 2, 3],
-              'status': 'c'}
+              # 'pictures': {'foo': 'bar', 'i': 5},
+              'published_at': '2016-02-27T22:33:04',
+              # 'tags': [1, 2, 3],
+              'status': 'c',
+              'visible': True}
+
     resp = await client.create(resource, entity)
     row_list = await client.list(resource)
     assert len(row_list) == num_entities + 1
@@ -248,7 +254,7 @@ async def test_create(create_admin, loop):
     assert resp['title'] == entity['title']
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_update(create_admin, loop):
     resource = 'posts'
@@ -264,10 +270,11 @@ async def test_update(create_admin, loop):
               'body': 'body field',
               'views': 88,
               'average_note': 0.7,
-              'pictures': {'x': 1},
-              'published_at': '2016-02-27T22:33:04.549000',
-              'tags': [1, 2, 3],
-              'status': 'c'}
+              # 'pictures': {'x': 1},
+              'published_at': '2016-02-27T22:33:04',
+              # 'tags': [1, 2, 3],
+              'status': 'c',
+              'visible': True}
 
     resp = await client.list(resource)
     assert len(resp) == 1
@@ -283,7 +290,7 @@ async def test_update(create_admin, loop):
     assert new_entity == entity
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_update_deleted_entity(create_admin, loop):
     resource = 'posts'
@@ -303,10 +310,11 @@ async def test_update_deleted_entity(create_admin, loop):
               'body': 'body field',
               'views': 88,
               'average_note': 0.7,
-              'pictures': {'x': 1},
-              'published_at': '2016-02-27T22:33:04.549000',
-              'tags': [1, 2, 3],
-              'status': 'c'}
+              # 'pictures': {'x': 1},
+              'published_at': '2016-02-27T22:33:04',
+              # 'tags': [1, 2, 3],
+              'status': 'c',
+              'visible': True}
 
     with pytest.raises(Exception) as ctx:
         await client.update(resource, entity_id, entity)
@@ -317,7 +325,7 @@ async def test_update_deleted_entity(create_admin, loop):
     assert err.error_json == err_dict
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_update_not_valid_payload(create_admin, loop):
     resource = 'posts'
@@ -351,7 +359,7 @@ async def test_update_not_valid_payload(create_admin, loop):
     assert foo_error == 'foo is not allowed key'
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_delete(create_admin, loop):
     resource = 'posts'
@@ -373,7 +381,7 @@ async def test_delete(create_admin, loop):
     assert len(all_rows) == 0
 
 
-@pytest.mark.parametrize('admin_type', ['sa', 'mongo'])
+@pytest.mark.parametrize('admin_type', ['pg', 'mysql', 'mongo'])
 @pytest.mark.run_loop
 async def test_delete_entity_that_not_exists(create_admin, loop):
     resource = 'posts'
