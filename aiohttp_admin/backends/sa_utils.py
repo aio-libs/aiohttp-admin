@@ -160,17 +160,17 @@ def create_filter(table, filter):
     for column_name, operation in filter.items():
         column = to_column(column_name, table)
 
-        if isinstance(operation, dict):
-            for op_name, value in operation.items():
-                check_comparator(column, op_name)
-                value = check_value(column, value)
-                do_compare = op(op_name, column)
-                f = do_compare(column, value)
-                query = query.where(f)
-        else:
+        if not isinstance(operation, dict):
             value = operation
+            operation = {'eq': value}
+
+        for op_name, value in operation.items():
+            check_comparator(column, op_name)
             value = check_value(column, value)
-            query = query.where(column == value)
+            do_compare = op(op_name, column)
+            f = do_compare(column, value)
+            query = query.where(f)
+
     return query
 
 
