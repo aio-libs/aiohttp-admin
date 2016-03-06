@@ -1,16 +1,32 @@
 import datetime
 
 import aiopg.sa
+import aiomysql.sa
 import motor.motor_asyncio as aiomotor
 import pytest
 import sqlalchemy as sa
 import trafaret as t
 
 from bson import ObjectId
-from sqlalchemy.dialects import postgresql
+# from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable, DropTable
 from trafaret.contrib.object_id import MongoId
 from trafaret.contrib.rfc_3339 import DateTime
+
+
+@pytest.fixture
+def admin_type():
+    # 'pg', 'mysql', 'mongo'
+    return 'pg'
+
+
+@pytest.fixture
+def database(admin_type, mysql, postgres):
+    if admin_type == 'mysql':
+        f = mysql
+    else:
+        f = postgres
+    return f
 
 
 @pytest.fixture
@@ -23,6 +39,40 @@ def pg_conf():
             "minsize": 1,
             "maxsize": 3}
     return conf
+
+
+@pytest.fixture
+def mysql_conf():
+    conf = {"db": "admindemo_blog",
+            "user": "root",
+            "host": "127.0.0.1",
+            "password": None,
+            "port": 3306,
+            "minsize": 1,
+            "maxsize": 3}
+    return conf
+
+
+@pytest.fixture
+def mysql(request, loop, mysql_conf):
+    async def init_mysql(conf, loop):
+        engine = await aiomysql.sa.create_engine(
+            db=conf['db'],
+            user=conf['user'],
+            password=conf['password'],
+            host=conf['host'],
+            port=conf['port'],
+            minsize=conf['minsize'],
+            maxsize=conf['maxsize'],
+            loop=loop)
+        return engine
+    engine = loop.run_until_complete(init_mysql(mysql_conf, loop))
+
+    def fin():
+        engine.close()
+        loop.run_until_complete(engine.wait_closed())
+    request.addfinalizer(fin)
+    return engine
 
 
 @pytest.fixture
@@ -59,12 +109,13 @@ def sa_table():
         sa.Column('body', sa.Text, nullable=False),
         sa.Column('views', sa.Integer, nullable=False),
         sa.Column('average_note', sa.Float, nullable=False),
-        sa.Column('pictures', postgresql.JSON, server_default='{}'),
+        # sa.Column('pictures', postgresql.JSON, server_default='{}'),
         sa.Column('published_at', sa.DateTime, nullable=False),
-        sa.Column('tags', postgresql.ARRAY(sa.Integer), server_default='{}'),
+        # sa.Column('tags', postgresql.ARRAY(sa.Integer), server_default='{}'),
         sa.Column('status',
                   sa.Enum(*choices, name="enum_name", native_enum=False),
                   server_default="a", nullable=False),
+        sa.Column('visible', sa.Boolean, nullable=False),
 
         # Indexes #
         sa.PrimaryKeyConstraint('id', name='post_id_pkey'))
@@ -72,11 +123,11 @@ def sa_table():
 
 
 @pytest.fixture
-def create_table(request, sa_table, postgres, loop):
+def create_table(request, sa_table, database, loop):
     async def f(rows):
         create_expr = CreateTable(sa_table)
         drop_expr = DropTable(sa_table)
-        async with postgres.acquire() as conn:
+        async with database.acquire() as conn:
             # TODO: move drop expr to finalizer
             try:
                 await conn.execute(drop_expr)
@@ -92,12 +143,15 @@ def create_table(request, sa_table, postgres, loop):
                     'body': 'body field {}'.format(i),
                     'views': i,
                     'average_note': i * 0.1,
-                    'pictures': {'foo': 'bar', 'i': i},
+                    # 'pictures': {'foo': 'bar', 'i': i},
                     'published_at': datetime.datetime.now(),
-                    'tags': [i + 1, i + 2],
-                    'status': 'c'})
+                    # 'tags': [i + 1, i + 2],
+                    'status': 'c',
+                    'visible': bool(i % 2),
+                })
             query1 = sa_table.insert().values(values)
             await conn.execute(query1)
+            await conn.execute('commit;')
         return sa_table
 
     def fin():
@@ -125,10 +179,11 @@ def document_schema():
         t.Key('body'): t.String,
         t.Key('views'): t.Int,
         t.Key('average_note'): t.Float,
-        t.Key('pictures'): t.Dict({}).allow_extra('*'),
+        # t.Key('pictures'): t.Dict({}).allow_extra('*'),
         t.Key('published_at'): DateTime,
-        t.Key('tags'): t.List(t.Int),
+        # t.Key('tags'): t.List(t.Int),
         t.Key('status'): t.Enum(*choices),
+        t.Key('visible'): t.StrBool,
     })
     return schema
 
@@ -174,10 +229,12 @@ def create_document(request, document_schema, mongo_collection, loop):
                 'body': 'body field {}'.format(i),
                 'views': i,
                 'average_note': i * 0.1,
-                'pictures': {'foo': 'bar', 'i': i},
+                # 'pictures': {'foo': 'bar', 'i': i},
                 'published_at': datetime.datetime.now(),
-                'tags': [i + 1, i + 2],
-                'status': 'c'}))
+                # 'tags': [i + 1, i + 2],
+                'status': 'c',
+                'visible': bool(i % 2),
+            }))
         for doc in values:
             await mongo_collection.insert(doc)
         return sa_table
