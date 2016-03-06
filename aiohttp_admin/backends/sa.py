@@ -13,7 +13,7 @@ class SAResource(AbstractResource):
 
     def __init__(self, db, table, primary_key='id', url=None):
         super().__init__(url)
-        self._pg = db
+        self._db = db
         self._table = table
         self._primary_key = primary_key
         self._pk = table.c[primary_key]
@@ -25,7 +25,7 @@ class SAResource(AbstractResource):
 
     @property
     def pool(self):
-        return self._pg
+        return self._db
 
     @property
     def table(self):
