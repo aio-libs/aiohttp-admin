@@ -115,6 +115,8 @@ def create_server(loop, unused_port):
     yield create
 
     async def finish():
+        if app is None:
+            return
         await handler.finish_connections()
         await app.finish()
         srv.close()
@@ -141,4 +143,5 @@ def create_app_and_client(create_server, loop):
         return app, client
 
     yield maker
-    client.close()
+    if client is not None:
+        client.close()
