@@ -1,6 +1,8 @@
 import aiohttp_jinja2
 
 from .consts import TEMPLATE_APP_KEY, APP_KEY
+from .backends.sa import SAResource
+from .backends.sa_utils import build_sa_fe_field
 
 
 __all__ = ['Admin', 'get_admin']
@@ -38,14 +40,21 @@ class Admin:
 
     @aiohttp_jinja2.template('config.js', app_key=TEMPLATE_APP_KEY)
     async def config_handler(self, request):
-        print('render config.js')
-        print(self._resources)
-        print(self._entities)
         return {'name': self._name, 'entities': self._entities}
 
     def add_static(self):
         for resource in self._resources:
-            self._entities.append({
+            data = {
                 'url': resource.url,
-                'name': resource.table.name
-            })
+                'name': resource.table_name,
+            }
+            if isinstance(resource, SAResource):
+                mapper = build_sa_fe_field
+            data.setdefault(
+                'columns', [
+                    (title, mapper(column.type))
+                    for title, column in resource.columns
+                ]
+            )
+
+            self._entities.append(data)
