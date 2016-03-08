@@ -21,7 +21,8 @@ def read_version():
 install_requires = ['aiohttp',
                     'trafaret',
                     'aiohttp_jinja2',
-                    'pyyaml']
+                    'pyyaml',
+                    'aiopg']
 
 
 setup(name='aiohttpdemo_polls',

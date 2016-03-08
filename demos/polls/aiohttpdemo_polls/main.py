@@ -12,7 +12,7 @@ from aiohttpdemo_polls.utils import init_postgres, load_config
 from aiohttpdemo_polls.views import SiteHandler
 
 import aiohttp_admin
-from aiohttp_admin.backends.sa import SAResource
+from aiohttp_admin.backends.sa import PGResource
 
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
@@ -24,6 +24,8 @@ def setup_admin(app, pg, admin_config_path):
 
     admin.add_resource(SAResource(pg, db.question, url='question'))
     admin.add_resource(SAResource(pg, db.choice, url='choice'))
+    admin.add_resource(PGResource(pg, db.question, url='question'))
+    admin.add_resource(PGResource(pg, db.choice, url='choice'))
     return admin
 
 
