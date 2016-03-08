@@ -1,4 +1,4 @@
-import aiohttp_jinja2
+from aiohttp_jinja2 import render_template
 
 from .consts import TEMPLATE_APP_KEY, APP_KEY
 
@@ -12,16 +12,21 @@ def get_admin(app, *, app_key=APP_KEY):
 
 class Admin:
 
-    def __init__(self, app, *, name=None, url=None, loop):
+    def __init__(self, app, *, name=None, url=None, template=None, loop):
         self._app = app
         self._loop = loop
         self._resources = []
         self._url = url or '/admin'
         self._name = name or 'aiohttp_admin'
+        self._temalate = template or 'admin.html'
 
     @property
     def app(self):
         return self._app
+
+    @property
+    def template(self):
+        return self._temalate
 
     @property
     def name(self):
@@ -31,6 +36,7 @@ class Admin:
         resource.setup(self.app, self._url)
         self._resources.append(resource)
 
-    @aiohttp_jinja2.template('admin.html', app_key=TEMPLATE_APP_KEY)
     async def index_handler(self, request):
-        return {'name': self._name}
+        t = self._temalate
+        context = {'name': self._name}
+        return render_template(t, request, context, app_key=TEMPLATE_APP_KEY)
