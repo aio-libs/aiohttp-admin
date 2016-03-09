@@ -22,8 +22,6 @@ TEMPLATES_ROOT = pathlib.Path(__file__).parent / 'templates'
 def setup_admin(app, pg, admin_config_path):
     admin = aiohttp_admin.setup(app, admin_config_path)
 
-    admin.add_resource(SAResource(pg, db.question, url='question'))
-    admin.add_resource(SAResource(pg, db.choice, url='choice'))
     admin.add_resource(PGResource(pg, db.question, url='question'))
     admin.add_resource(PGResource(pg, db.choice, url='choice'))
     return admin
