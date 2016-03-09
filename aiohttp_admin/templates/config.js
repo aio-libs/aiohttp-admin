@@ -70,7 +70,7 @@
 
             // list view
             {{ entity.name }}.listView()
-                .title('{{ entity.name }}') // default title is "[Entity_name] list"
+                .title('{{ entity.name | capitalize }}') // default title is "[Entity_name] list"
                 .description('List of {{ entity.name }} with infinite pagination') // description appears under the title
                 .infinitePagination(true) // load pages as the user scrolls
                 .fields([
@@ -115,98 +115,29 @@
         // customize dashboard
         var customDashboardTemplate =
         '<div class="row dashboard-starter"></div>' +
-        '<div class="row dashboard-content"><div class="col-lg-12"><div class="alert alert-info">' +
-            'Welcome to the demo! Fell free to explore and modify the data. We reset it every few minutes.' +
-        '</div></div></div>' +
-        '<div class="row dashboard-content">' +
-            '<div class="col-lg-12">' +
-                '<div class="panel panel-default">' +
-                    '<ma-dashboard-panel collection="dashboardController.collections.comments" entries="dashboardController.entries.comments" datastore="dashboardController.datastore"></ma-dashboard-panel>' +
+            {% for entity in entities %}
+                '<div class="row dashboard-content">' +
+                    '<div class="col-lg-12">' +
+                        '<div class="panel panel-default">' +
+                            '<ma-dashboard-panel collection="dashboardController.collections.{{ entity.url }}" entries="dashboardController.entries.{{ entity.url }}" datastore="dashboardController.datastore"></ma-dashboard-panel>' +
+                        '</div>' +
+                    '</div>' +
                 '</div>' +
-            '</div>' +
-        '</div>' +
-        '<div class="row dashboard-content">' +
-            '<div class="col-lg-6">' +
-                '<div class="panel panel-green">' +
-                    '<ma-dashboard-panel collection="dashboardController.collections.recent_posts" entries="dashboardController.entries.recent_posts" datastore="dashboardController.datastore"></ma-dashboard-panel>' +
-                '</div>' +
-                '<div class="panel panel-green">' +
-                    '<ma-dashboard-panel collection="dashboardController.collections.popular_posts" entries="dashboardController.entries.popular_posts" datastore="dashboardController.datastore"></ma-dashboard-panel>' +
-                '</div>' +
-            '</div>' +
-            '<div class="col-lg-6">' +
-                '<div class="panel panel-yellow">' +
-                    '<ma-dashboard-panel collection="dashboardController.collections.tags" entries="dashboardController.entries.tags" datastore="dashboardController.datastore"></ma-dashboard-panel>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-
-        //todo render this >>>
+            {% endfor %}
+         '<div class="row dashboard-content"></div>';
 
         admin.dashboard(nga.dashboard()
-            .addCollection(nga.collection(post)
-                .name('recent_posts')
-                .title('Recent posts')
-                .perPage(5) // limit the panel to the 5 latest posts
-                .fields([
-                    nga.field('published_at', 'date').label('Published').format('MMM d'),
-                    nga.field('title').isDetailLink(true).map(truncate),
-                    nga.field('views', 'number')
-                ])
-                .sortField('published_at')
-                .sortDir('DESC')
-                .order(1)
-            )
-            .addCollection(nga.collection(post)
-                .name('popular_posts')
-                .title('Popular posts')
-                .perPage(5) // limit the panel to the 5 latest posts
-                .fields([
-                    nga.field('published_at', 'date').label('Published').format('MMM d'),
-                    nga.field('title').isDetailLink(true).map(truncate),
-                    nga.field('views', 'number')
-                ])
-                .sortField('views')
-                .sortDir('DESC')
-                .order(3)
-            )
-            .addCollection(nga.collection(comment)
-                .title('Last comments')
-                .perPage(10)
-                .fields([
-                    nga.field('created_at', 'date')
-                        .label('Posted'),
-                    nga.field('body', 'wysiwyg')
-                        .label('Comment')
-                        .stripTags(true)
-                        .map(truncate)
-                        .isDetailLink(true),
-                    nga.field('post_id', 'reference')
-                        .label('Post')
-                        .targetEntity(post)
-                        .targetField(nga.field('title').map(truncate))
-                ])
-                .sortField('created_at')
-                .sortDir('DESC')
-                .order(2)
-            )
-            .addCollection(nga.collection(tag)
-                .title('Tags publication status')
-                .perPage(10)
-                .fields([
-                    nga.field('name'),
-                    nga.field('published', 'boolean').label('Is published ?')
-                ])
-                .listActions(['show'])
-                .order(4)
-            )
+            {% for entity in entities %}
+                .addCollection(nga.collection({{ entity.name }})
+                    .title('{{ entity.name | capitalize }}')
+                )
+            {% endfor %}
             .template(customDashboardTemplate)
         );
 
         nga.configure(admin);
     }]);
 
-    // <<< todo render this
 
     app.directive('postLink', ['$location', function ($location) {
         return {
