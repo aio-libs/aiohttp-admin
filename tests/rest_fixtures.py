@@ -1,8 +1,8 @@
 import json
 
 import aiohttp
-from aiohttp import web
 import pytest
+from aiohttp import web
 
 from aiohttp_admin.utils import jsonify
 
@@ -65,29 +65,30 @@ class AdminRESTClient:
         if self._session:
             self._session.close()
 
-    async def create(self, resource, data):
-        answer = await self.request("POST", resource, data=data)
+    async def create(self, resource, data, **kw):
+        answer = await self.request("POST", resource, data=data, *kw)
         return answer
 
-    async def detail(self, resource, entity_id):
+    async def detail(self, resource, entity_id, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("GET", path)
+        answer = await self.request("GET", path, **kw)
         return answer
 
-    async def list(self, resource, page=1, per_page=30, sort_field='id',
-                   sort_dir='DESC', filters=None):
+    async def list(self, resource, page=1, per_page=30, sort_field=None,
+                   sort_dir=None, filters=None):
         f = json.dumps(filters or {})
-        query = {'_page': page,
-                 '_perPage': per_page,
-                 '_sortField': sort_field,
-                 '_sortDir': sort_dir,
-                 '_filters': f}
+
+        query = {'_page': page, '_perPage': per_page, '_filters': f}
+
+        sort_field and query.update({'_sortField': sort_field})
+        sort_dir and query.update({'_sortDir': sort_dir})
+
         answer = await self.request("GET", resource, params=query)
         return answer
 
-    async def update(self, resource, entity_id, data):
+    async def update(self, resource, entity_id, data, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("PUT", path, data=data)
+        answer = await self.request("PUT", path, data=data, **kw)
         return answer
 
     async def delete(self, resource, entity_id):
@@ -114,6 +115,8 @@ def create_server(loop, unused_port):
     yield create
 
     async def finish():
+        if app is None:
+            return
         await handler.finish_connections()
         await app.finish()
         srv.close()
@@ -140,4 +143,5 @@ def create_app_and_client(create_server, loop):
         return app, client
 
     yield maker
-    client.close()
+    if client is not None:
+        client.close()

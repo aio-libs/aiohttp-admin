@@ -10,11 +10,12 @@ from .consts import TEMPLATES_ROOT
 
 try:
     from bson import ObjectId
-except ImportError:
+except ImportError:  # pragma: no cover
     ObjectId = None
 
 
-__all__ = ['json_response', 'validate_query', 'gather_template_folders']
+__all__ = ['json_response', 'jsonify', 'validate_query', 'validate_payload',
+           'gather_template_folders']
 
 
 def json_datetime_serial(obj):
@@ -38,42 +39,51 @@ json_response = partial(web.json_response, dumps=jsonify)
 OptKey = partial(t.Key, optional=True)
 
 
+SimpleType = t.Int | t.Bool | t.String | t.Float
 Filter = t.Dict({
-    OptKey('in'): t.List(t.String),
-    OptKey('gt'): t.String,
-    OptKey('ge'): t.String,
-    OptKey('lt'): t.String,
-    OptKey('le'): t.String,
-    OptKey('ne'): t.String,
-    OptKey('eq'): t.String,
-    OptKey('like'): t.String,
+    OptKey('in'): t.List(SimpleType),
+    OptKey('gt'): SimpleType,
+    OptKey('ge'): SimpleType,
+    OptKey('lt'): SimpleType,
+    OptKey('le'): SimpleType,
+    OptKey('ne'): SimpleType,
+    OptKey('eq'): SimpleType,
+    OptKey('like'): SimpleType,
 })
 
-SimpleType = t.Int | t.Bool | t.String | t.Float
+
+ASC = 'ASC'
+DESC = 'DESC'
 ListQuery = t.Dict({
-    t.Key('_page', default=1): t.Int[1:],
-    t.Key('_perPage', default=30): t.Int[1:],
-    OptKey('_sortField', default='id'): t.String,
-    OptKey('_sortDir'): t.Enum('DESC', 'ASC'),
+    OptKey('_page', default=1): t.Int[1:],
+    OptKey('_perPage', default=30): t.Int[1:],
+    OptKey('_sortField'): t.String,
+    OptKey('_sortDir', default=DESC): t.Enum(DESC, ASC),
+
     OptKey('_filters'): t.Mapping(t.String, Filter | SimpleType)
 })
 
 
 def validate_query(query):
+    """Validate query arguments in list request.
+
+    :param query: mapping with pagination and filtering iformation
+    """
     query_dict = dict(query)
     filters = query_dict.pop('_filters', None)
     if filters:
         try:
             f = json.loads(filters)
-        except ValueError as e:
-            raise t.DataError('_filters can not be serialized') from e
+        except ValueError:
+            msg = '_filters field can not be serialized'
+            raise JsonValidaitonError(msg)
         else:
             query_dict['_filters'] = f
-
     try:
         q = ListQuery(query_dict)
     except t.DataError as exc:
-        raise JsonValidaitonError(**exc.as_dict())
+        msg = '_filters query invalid'
+        raise JsonValidaitonError(msg, **exc.as_dict())
 
     return q
 

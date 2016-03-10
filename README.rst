@@ -9,12 +9,18 @@ aiohttp_admin
 on top of an existing data model.
 
 
+.. image:: https://raw.githubusercontent.com/jettify/aiohttp_admin/master/docs/admin_polls.png
+    :align: center
+
+
+
 Supported backends
 ------------------
 
 * PostgreSQL with, aiopg_ and sqlalchemy.core_
 * MySQL with aiomysql_ and sqlalchemy.core_
 * Mongodb with motor
+
 
 
 Requirements

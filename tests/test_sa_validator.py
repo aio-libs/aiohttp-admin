@@ -28,7 +28,7 @@ def table():
 def test_keys(table):
     names = sorted(['id', 'title', 'body', 'views', 'average_note', 'pictures',
                     'published_at', 'tags'])
-    traf = validator_from_table(table, skip_pk=False)
+    traf = validator_from_table(table, 'id', skip_pk=False)
     result_names = sorted([key.name for key in traf.keys])
     assert result_names == names
 
@@ -36,13 +36,13 @@ def test_keys(table):
 def test_skip_pk(table):
     names = sorted(['title', 'body', 'views', 'average_note', 'pictures',
                     'published_at', 'tags'])
-    traf = validator_from_table(table, skip_pk=True)
+    traf = validator_from_table(table, 'id', skip_pk=True)
     result_names = sorted([key.name for key in traf.keys])
     assert result_names == names
 
 
 def test_validation(table):
-    traf = validator_from_table(table, skip_pk=False)
+    traf = validator_from_table(table, 'id', skip_pk=False)
     data = {'id': '1',
             'title': 'title string',
             'body': 'body text',
@@ -58,7 +58,7 @@ def test_validation(table):
 
 
 def test_validation_bad_input(table):
-    traf = validator_from_table(table, skip_pk=False)
+    traf = validator_from_table(table, 'id', skip_pk=False)
     with pytest.raises(t.DataError):
         data = {'id': 'not a string',  # not valid data
                 'title': 'title string',

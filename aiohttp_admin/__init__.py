@@ -11,32 +11,24 @@ __all__ = ['Admin', 'setup', 'get_admin']
 __version__ = '0.0.1'
 
 
-def setup(app, admin_conf_path=None, url=None, static_url=None,
-          template_folder=None, name=None, app_key=APP_KEY):
+def setup(app, admin_conf_path, *, url=None, static_url=None,
+          static_folder=None, template_folder=None, template_name=None,
+          name=None, app_key=APP_KEY):
     loop = app.loop
-
-    admin = Admin(app, url=url, name=name, loop=loop)
+    template_name = template_name or 'admin.html'
+    admin = Admin(app, url=url, name=name, template=template_name, loop=loop)
     # add support for multiple admins sites
-    app[APP_KEY] = admin
+    app[app_key] = admin
 
     # setup routes
     url = url or '/admin'
     static_url = static_url or '/admin/static'
-    config_url = '/admin/static/js/config.js'
+    static_folder = static_folder or str(PROJ_ROOT / 'static')
 
-    app.router.add_route('GET', url, admin.index_handler, name='admin.index')
-    if admin_conf_path:
-        app.router.add_static(static_url,
-                              path=admin_conf_path,
-                              name='admin.config')
-    else:
-        app.router.add_route('GET',
-                             config_url,
-                             admin.config_handler,
-                             name='admin.config')
-    app.router.add_static(static_url,
-                          path=str(PROJ_ROOT / 'static'),
-                          name='admin.static')
+    r = app.router
+    r.add_route('GET', url, admin.index_handler, name='admin.index')
+    r.add_static(static_url, path=static_folder, name='admin.static')
+    r.add_static('/admin/config', path=admin_conf_path, name='admin.config')
 
     # init aiohttp_jinja plugin
     tf = gather_template_folders(template_folder)
