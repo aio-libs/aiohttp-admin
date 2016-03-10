@@ -9,7 +9,7 @@ import jinja2
 from aiohttp import web
 
 import aiohttp_admin
-from aiohttp_admin.backends.sa import SAResource
+from aiohttp_admin.backends.sa import PGResource
 import db
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
@@ -29,9 +29,10 @@ class SiteHandler:
 def setup_admin(app, pg, admin_config_path):
     admin = aiohttp_admin.setup(app, admin_config_path)
 
-    admin.add_resource(SAResource(pg, db.post, url='posts'))
-    admin.add_resource(SAResource(pg, db.tag, url='tags'))
-    admin.add_resource(SAResource(pg, db.comment, url='comments'))
+    admin.add_resource(PGResource(pg, db.post, url='posts'))
+    admin.add_resource(PGResource(pg, db.tag, url='tags'))
+    admin.add_resource(PGResource(pg, db.comment, url='comments'))
+    admin.add_static()
     return admin
 
 

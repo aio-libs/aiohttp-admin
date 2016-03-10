@@ -31,6 +31,18 @@ class PGResource(AbstractResource):
     def table(self):
         return self._table
 
+    @property
+    def table_name(self):
+        return self.table.name
+
+    @property
+    def columns(self):
+        return self.table.columns.items()
+
+    @property
+    def url(self):
+        return self._url
+
     async def list(self, request):
         q = validate_query(request.GET, self._table)
 
@@ -175,9 +187,6 @@ class MySQLResource(PGResource):
                 self.table.select()
                 .where(self._pk == entity_id))
             rec = await resp.first()
-
-        entity = dict(rec)
-        return json_response(entity)
 
         entity = dict(rec)
         return json_response(entity)

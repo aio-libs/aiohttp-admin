@@ -10,7 +10,7 @@ from ..exceptions import JsonValidaitonError
 from ..utils import validate_query as _validate_query
 
 
-__all__ = ['validator_from_table', 'create_filter']
+__all__ = ['validator_from_table', 'create_filter', 'build_sa_fe_field']
 
 
 AnyDict = t.Dict({}).allow_extra('*')
@@ -191,3 +191,51 @@ def validate_query(query, table):
         msg = 'Columns: {} do not present in resource'.format(column_list)
         raise JsonValidaitonError(msg)
     return q
+
+
+def build_type_mapper(sa_type, **kwargs):
+
+    if isinstance(sa_type, sa.sql.sqltypes.Enum):
+        fe_type = 'string'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.String):
+        fe_type = 'string'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.Text):
+        fe_type = 'text'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.Integer):
+        fe_type = 'string'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.Float):
+        fe_type = 'float'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.DateTime):
+        fe_type = 'datetime'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.Date):
+        fe_type = 'date'
+
+    elif isinstance(sa_type, sa.sql.sqltypes.Boolean):
+        fe_type = 'boolean'
+
+    # Add PG related JSON and ARRAY
+    elif isinstance(sa_type, postgresql.JSON):
+        fe_type = 'json'
+
+    # Add PG related JSON and ARRAY
+    elif isinstance(sa_type, postgresql.ARRAY):
+        fe_type = 'embedded_list'
+
+    else:
+        type_ = str(sa_type)
+        msg = 'Validator for type {} not implemented'.format(type_)
+        raise NotImplementedError(msg)
+
+    return fe_type
+
+
+def build_sa_fe_field(column):
+    field = build_type_mapper(column)
+
+    return field

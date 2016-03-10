@@ -104,11 +104,9 @@ def validate_payload(raw_payload, schema):
 
 def gather_template_folders(template_folder):
     # gather template folders: default and provided
-    if not isinstance(template_folder, list):
+    if template_folder and not isinstance(template_folder, list):
         template_folder = [template_folder]
-    template_root = str(TEMPLATES_ROOT)
-    if template_folder is None:
-        template_folders = [template_root]
-    else:
-        template_folders = [template_root] + template_folder
+    elif template_folder is None:
+        template_folder = []
+    template_folders = [str(TEMPLATES_ROOT)] + template_folder
     return template_folders

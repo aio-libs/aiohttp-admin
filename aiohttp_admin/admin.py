@@ -1,6 +1,8 @@
 from aiohttp_jinja2 import render_template
 
 from .consts import TEMPLATE_APP_KEY, APP_KEY
+from .backends.sa import PGResource
+from .backends.sa_utils import build_sa_fe_field
 
 
 __all__ = ['Admin', 'get_admin']
@@ -19,6 +21,8 @@ class Admin:
         self._url = url or '/admin'
         self._name = name or 'aiohttp_admin'
         self._temalate = template or 'admin.html'
+        self._config_template = 'config.js'
+        self._entities = []
 
     @property
     def app(self):
@@ -40,3 +44,25 @@ class Admin:
         t = self._temalate
         context = {'name': self._name}
         return render_template(t, request, context, app_key=TEMPLATE_APP_KEY)
+
+    async def config_handler(self, request):
+        t = self._config_template
+        context = {'name': self._name, 'entities': self._entities}
+        return render_template(t, request, context, app_key=TEMPLATE_APP_KEY)
+
+    def add_static(self):
+        for resource in self._resources:
+            data = {
+                'url': resource.url,
+                'name': resource.table_name,
+            }
+            if isinstance(resource, PGResource):
+                mapper = build_sa_fe_field
+            data.setdefault(
+                'columns', [
+                    (title, mapper(column.type))
+                    for title, column in resource.columns
+                ]
+            )
+
+            self._entities.append(data)
