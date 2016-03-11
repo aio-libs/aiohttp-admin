@@ -1,2 +1,5 @@
-recursive-include aiohttp_admin/static *
-recursive-include aiohttp_admin/templates *
+include LICENSE
+include CHANGES.txt
+include README.rst
+graft aiohttp_admin
+global-exclude *.pyc *.swp
