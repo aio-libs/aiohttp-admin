@@ -1,0 +1,2 @@
+recursive-include aiohttp_admin/static *
+recursive-include aiohttp_admin/templates *
