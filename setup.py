@@ -16,8 +16,7 @@ def read(f):
 
 install_requires = ['aiohttp',
                     'trafaret',
-                    'aiohttp_jinja2',
-                    'pyyaml']
+                    'aiohttp_jinja2']
 
 extras_require = {'motor': ['motor'],
                   'aiopg': ['aiopg', 'sqlalchemy'],
@@ -53,7 +52,7 @@ classifiers = [
 
 setup(name='aiohttp_admin',
       version=read_version(),
-      description=(''),
+      description=('admin interface for aiohttp application'),
       long_description='\n\n'.join((read('README.rst'), read('CHANGES.txt'))),
       classifiers=classifiers,
       platforms=['POSIX'],
