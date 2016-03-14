@@ -1,10 +1,11 @@
+aiomysql
+aiopg
+coverage
 flake8
+ipdb
+motor
 pytest
 pytest-cov
-coverage
-ipdb
-aiopg
-aiomysql
-motor
-sqlalchemy
+pytest-sugar
 python-dateutil
+sqlalchemy
