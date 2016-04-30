@@ -2,6 +2,7 @@ import os
 import time
 
 import psycopg2
+import pymongo
 import pymysql
 import pytest
 
@@ -123,6 +124,51 @@ def mysql_server(unused_port, docker, session_id, docker_pull):
         pytest.fail("Cannot start postgres server: {}".format(e))
     container['port'] = port
     container['mysql_params'] = mysql_params
+    yield container
+
+    docker.kill(container=container['Id'])
+    docker.remove_container(container['Id'])
+
+
+@pytest.fixture
+def mongo_params(mongo_server):
+    return dict(**mongo_server['mongo_params'])
+
+
+@pytest.yield_fixture(scope='session')
+def mongo_server(unused_port, docker, session_id, docker_pull):
+    mongo_tag = '2.6'
+    if docker_pull:
+        docker.pull('mongo:{}'.format(mongo_tag))
+    port = unused_port()
+    container = docker.create_container(
+        image='mongo:{}'.format(mongo_tag),
+        name='mongo-test-server-{}-{}'.format(mongo_tag, session_id),
+        ports=[27017],
+        detach=True,
+        host_config=docker.create_host_config(port_bindings={27017: port})
+    )
+    docker.start(container=container['Id'])
+    host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
+    mongo_params = dict(host=host,
+                        port=port)
+    print(mongo_params)
+    delay = 0.001
+    for i in range(100):
+        try:
+            client = pymongo.MongoClient(host, port)
+            test_coll = client.test.test
+            test_coll.find_one()
+            client.close()
+            break
+        except pymongo.errors.PyMongoError as e:
+            print(e)
+            time.sleep(delay)
+            delay *= 2
+    else:
+        pytest.fail("Cannot start mongo server: {}".format(e))
+    container['port'] = port
+    container['mongo_params'] = mongo_params
     yield container
 
     docker.kill(container=container['Id'])
