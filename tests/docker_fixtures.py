@@ -78,8 +78,8 @@ def wait_for_container(callable, image, skip_exception):
         pytest.fail("Cannot start {} server".format(image))
 
 
-@pytest.yield_fixture(scope='session')
-def pg_server(unused_port, container_starter, docker_pull):
+@pytest.fixture(scope='session')
+def pg_server(unused_port, container_starter):
     tag = "9.5"
     image = 'postgres:{}'.format(tag)
 
@@ -103,7 +103,7 @@ def pg_server(unused_port, container_starter, docker_pull):
 
     wait_for_container(connect, image, psycopg2.Error)
     container['params'] = params
-    yield container
+    return container
 
 
 @pytest.fixture
@@ -111,8 +111,8 @@ def mysql_params(mysql_server):
     return dict(**mysql_server['params'])
 
 
-@pytest.yield_fixture(scope='session')
-def mysql_server(unused_port, container_starter, docker_pull):
+@pytest.fixture(scope='session')
+def mysql_server(unused_port, container_starter):
     tag = '5.7'
     image = 'mysql:{}'.format(tag)
 
@@ -141,49 +141,32 @@ def mysql_server(unused_port, container_starter, docker_pull):
 
     wait_for_container(connect, image, pymysql.Error)
     container['params'] = params
-    yield container
+    return container
 
 
 @pytest.fixture
 def mongo_params(mongo_server):
-    return dict(**mongo_server['mongo_params'])
+    return dict(**mongo_server['params'])
 
 
-@pytest.yield_fixture(scope='session')
-def mongo_server(unused_port, docker, session_id, docker_pull):
-    mongo_tag = '2.6'
-    if docker_pull:
-        docker.pull('mongo:{}'.format(mongo_tag))
-    port = unused_port()
-    container = docker.create_container(
-        image='mongo:{}'.format(mongo_tag),
-        name='mongo-test-server-{}-{}'.format(mongo_tag, session_id),
-        ports=[27017],
-        detach=True,
-        host_config=docker.create_host_config(port_bindings={27017: port})
-    )
-    docker.start(container=container['Id'])
+@pytest.fixture(scope='session')
+def mongo_server(unused_port, container_starter):
+    tag = '2.6'
+    image = 'mongo:{}'.format(tag)
+
+    internal_port = 27017
+    host_port = unused_port()
+    container = container_starter(image, internal_port, host_port)
+
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
-    mongo_params = dict(host=host,
-                        port=port)
-    print(mongo_params)
-    delay = 0.001
-    for i in range(100):
-        try:
-            client = pymongo.MongoClient(host, port)
-            test_coll = client.test.test
-            test_coll.find_one()
-            client.close()
-            break
-        except pymongo.errors.PyMongoError as e:
-            print(e)
-            time.sleep(delay)
-            delay *= 2
-    else:
-        pytest.fail("Cannot start mongo server: {}".format(e))
-    container['port'] = port
-    container['mongo_params'] = mongo_params
-    yield container
+    params = dict(host=host, port=host_port)
 
-    docker.kill(container=container['Id'])
-    docker.remove_container(container['Id'])
+    def connect():
+        client = pymongo.MongoClient(**params)
+        test_coll = client.test.test
+        test_coll.find_one()
+        client.close()
+
+    wait_for_container(connect, image, pymongo.errors.PyMongoError)
+    container['params'] = params
+    return container
