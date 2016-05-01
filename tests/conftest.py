@@ -56,7 +56,7 @@ def pytest_runtest_setup(item):
         item.fixturenames.append('loop')
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def unused_port():
     def f():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
