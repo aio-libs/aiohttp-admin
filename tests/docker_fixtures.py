@@ -22,7 +22,7 @@ def docker_pull(request):
 @pytest.fixture(scope='session')
 def session_id():
     """Unique session identifier, random string."""
-    return 'aiohttp-admin'
+    return 'aiohttp-admin-session'
 
 
 @pytest.fixture(scope='session')
@@ -32,7 +32,37 @@ def docker():
 
 @pytest.fixture(scope='session')
 def pg_params(pg_server):
-    return dict(**pg_server['pg_params'])
+    return dict(**pg_server['params'])
+
+
+@pytest.fixture(scope='session')
+def container_starter(request, docker, session_id, docker_pull):
+
+    def f(image, internal_port, host_port, env=None):
+        if docker_pull:
+            print("Pulling {} image".format(image))
+            docker.pull(image)
+
+        container = docker.create_container(
+            image=image,
+            name='{}-server-{}'.format(image.replace(":", "-"), session_id),
+            ports=[internal_port],
+            detach=True,
+            environment=env,
+            host_config=docker.create_host_config(
+                port_bindings={internal_port: host_port})
+        )
+        docker.start(container=container['Id'])
+
+        def fin():
+            docker.kill(container=container['Id'])
+            docker.remove_container(container['Id'])
+
+        request.addfinalizer(fin)
+        container['port'] = host_port
+        return container
+
+    return f
 
 
 @pytest.yield_fixture(scope='session')
