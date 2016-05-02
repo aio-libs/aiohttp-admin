@@ -23,7 +23,6 @@ def admin_type():
 @pytest.fixture
 def database(request, admin_type):
     if admin_type == 'mysql':
-        f = mysql
         f = request.getfuncargvalue('mysql')
     else:
         f = request.getfuncargvalue('postgres')
@@ -132,6 +131,7 @@ def create_table(request, sa_table, database, loop):
         return sa_table
 
     def fin():
+        # TODO: drop table after test
         pass
     request.addfinalizer(fin)
     return f
@@ -210,8 +210,8 @@ def create_document(request, document_schema, mongo_collection, loop):
             await mongo_collection.insert(doc)
         return sa_table
 
-    # TODO: fix finalizer
     def fin():
+        # TODO: fix finalizer, drop document after test
         pass
     request.addfinalizer(fin)
     return f

@@ -56,7 +56,7 @@ def container_starter(request, docker, session_id, docker_pull):
 
         def fin():
             docker.kill(container=container['Id'])
-            docker.remove_container(container['Id'])
+            docker.remove_container(container['Id'], v=True)
 
         request.addfinalizer(fin)
         container['port'] = host_port
