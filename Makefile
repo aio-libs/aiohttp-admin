@@ -13,7 +13,7 @@ vtest:
 	py.test -s -v $(FLAGS) ./tests/
 
 cov cover coverage: flake
-	py.test -s -v  --cov-report term --cov-report html --cov aiohttp_admin ./tests
+	py.test --dp -s -v  --cov-report term --cov-report html --cov aiohttp_admin ./tests
 	@echo "open file://`pwd`/htmlcov/index.html"
 clean:
 	rm -rf `find . -name __pycache__`

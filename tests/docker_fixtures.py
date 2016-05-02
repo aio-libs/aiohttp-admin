@@ -27,7 +27,11 @@ def session_id():
 
 @pytest.fixture(scope='session')
 def docker():
-    return DockerClient.from_env(assert_hostname=False)
+    if os.environ.get('DOCKER_MACHINE_IP') is not None:
+        docker = DockerClient.from_env(assert_hostname=False)
+    else:
+        docker = DockerClient(version='auto')
+    return docker
 
 
 @pytest.fixture(scope='session')
