@@ -16,7 +16,7 @@ cov cover coverage: flake
 	py.test -s -v  --cov-report term --cov-report html --cov aiohttp_admin ./tests
 	@echo "open file://`pwd`/htmlcov/index.html"
 
-ci:
+ci: flake
 	py.test --dp -s -v  --cov-report term --cov aiohttp_admin ./tests
 
 clean:
@@ -34,8 +34,13 @@ clean:
 	rm -rf htmlcov
 	rm -rf dist
 
+docker_clean:
+	-@docker rmi $$(docker images -q --filter "dangling=true")
+	-@docker rm $$(docker ps -q -f status=exited)
+	-@docker volume ls -qf dangling=true | xargs -r docker volume rm
+
 doc:
 	make -C docs html
 	@echo "open file://`pwd`/docs/_build/html/index.html"
 
-.PHONY: all flake test vtest cov clean doc
+.PHONY: all flake test vtest cov clean doc ci
