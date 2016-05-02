@@ -1,8 +1,8 @@
 postgres:
-  database: aiohttpdemo_polls
-  user: aiohttpdemo_user
-  password: aiohttpdemo_user
-  host: localhost
+  database: aiohttp_admin
+  user: aiohttp_admin
+  password: mysecretpassword
+  host: 192.168.99.100
   port: 5432
   minsize: 1
   maxsize: 5

@@ -1,6 +1,8 @@
 aiomysql
 aiopg
 coverage
+docker-compose
+docker-py
 flake8
 ipdb
 motor
