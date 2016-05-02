@@ -1,25 +1,24 @@
 import asyncio
 import gc
 import socket
+
 import pytest
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def loop(request):
     old_loop = asyncio.get_event_loop()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(None)
 
-    def fin():
-        if not loop._closed:
-            loop.call_soon(loop.stop)
-            loop.run_forever()
-            loop.close()
-            gc.collect()
-        asyncio.set_event_loop(old_loop)
+    yield loop
 
-    request.addfinalizer(fin)
-    return loop
+    if not loop._closed:
+        loop.call_soon(loop.stop)
+        loop.run_forever()
+        loop.close()
+        gc.collect()
+    asyncio.set_event_loop(old_loop)
 
 
 @pytest.mark.tryfirst
@@ -65,4 +64,4 @@ def unused_port():
     return f
 
 
-pytest_plugins = ['db_fixtures', 'rest_fixtures']
+pytest_plugins = ['docker_fixtures', 'db_fixtures', 'rest_fixtures']

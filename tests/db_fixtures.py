@@ -1,7 +1,7 @@
 import datetime
 
-import aiopg.sa
 import aiomysql.sa
+import aiopg.sa
 import motor.motor_asyncio as aiomotor
 import pytest
 import sqlalchemy as sa
@@ -21,52 +21,29 @@ def admin_type():
 
 
 @pytest.fixture
-def database(admin_type, mysql, postgres):
+def database(request, admin_type):
     if admin_type == 'mysql':
         f = mysql
+        f = request.getfuncargvalue('mysql')
     else:
-        f = postgres
+        f = request.getfuncargvalue('postgres')
     return f
 
 
 @pytest.fixture
-def pg_conf():
-    conf = {"database": "admindemo_blog",
-            "user": "admindemo_user",
-            "host": "localhost",
-            "password": "admindemo_user",
-            "port": 5432,
-            "minsize": 1,
-            "maxsize": 3}
-    return conf
-
-
-@pytest.fixture
-def mysql_conf():
-    conf = {"db": "admindemo_blog",
-            "user": "root",
-            "host": "127.0.0.1",
-            "password": None,
-            "port": 3306,
-            "minsize": 1,
-            "maxsize": 3}
-    return conf
-
-
-@pytest.fixture
-def mysql(request, loop, mysql_conf):
+def mysql(request, loop, mysql_params):
     async def init_mysql(conf, loop):
         engine = await aiomysql.sa.create_engine(
-            db=conf['db'],
+            db=conf['database'],
             user=conf['user'],
             password=conf['password'],
             host=conf['host'],
             port=conf['port'],
-            minsize=conf['minsize'],
-            maxsize=conf['maxsize'],
+            minsize=1,
+            maxsize=5,
             loop=loop)
         return engine
-    engine = loop.run_until_complete(init_mysql(mysql_conf, loop))
+    engine = loop.run_until_complete(init_mysql(mysql_params, loop))
 
     def fin():
         engine.close()
@@ -76,7 +53,7 @@ def mysql(request, loop, mysql_conf):
 
 
 @pytest.fixture
-def postgres(request, loop, pg_conf):
+def postgres(request, loop, pg_params):
     async def init_postgres(conf, loop):
         engine = await aiopg.sa.create_engine(
             database=conf['database'],
@@ -84,11 +61,11 @@ def postgres(request, loop, pg_conf):
             password=conf['password'],
             host=conf['host'],
             port=conf['port'],
-            minsize=conf['minsize'],
-            maxsize=conf['maxsize'],
+            minsize=1,
+            maxsize=5,
             loop=loop)
         return engine
-    engine = loop.run_until_complete(init_postgres(pg_conf, loop))
+    engine = loop.run_until_complete(init_postgres(pg_params, loop))
 
     def fin():
         engine.close()
@@ -161,15 +138,6 @@ def create_table(request, sa_table, database, loop):
 
 
 @pytest.fixture
-def mongo_conf():
-    conf = {"database": "aiohttp_admin_db",
-            "host": "127.0.0.1",
-            "port": 27017,
-            "max_pool_size": 3}
-    return conf
-
-
-@pytest.fixture
 def document_schema():
     choices = ['a', 'b', 'c']
     schema = t.Dict({
@@ -189,7 +157,10 @@ def document_schema():
 
 
 @pytest.fixture
-def mongo(request, loop, mongo_conf):
+def mongo(request, loop, mongo_params):
+    conf = mongo_params.copy()
+    conf["database"] = "aiohttp_admin_db"
+    conf["max_pool_size"] = 5
 
     async def init_mogo(conf, loop):
         url = "mongodb://{}:{}".format(conf['host'], conf['port'])
@@ -199,14 +170,14 @@ def mongo(request, loop, mongo_conf):
         await conn.open()
         return conn
 
-    conn = loop.run_until_complete(init_mogo(mongo_conf, loop))
+    conn = loop.run_until_complete(init_mogo(conf, loop))
 
     def fin():
         conn.close()
 
     request.addfinalizer(fin)
 
-    db = mongo_conf['database']
+    db = conf['database']
     return conn[db]
 
 

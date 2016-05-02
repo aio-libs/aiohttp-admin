@@ -1,38 +1,23 @@
 language: python
-sudo: false
+sudo: required
 python:
-  - 3.5
-
-addons:
-  postgresql: 9.4
-  mysql: 5.6
-  mongodb: 2.6
-
+    - 3.5
 
 services:
-  - mysql
-  - postgresql
-  - mongodb
+    - docker
 
 install:
-  - pip install --upgrade setuptools
-  - pip install coveralls
-  - pip install -Ur requirements-dev.txt
-  - python setup.py develop
-
-before_script:
-  - psql -c "CREATE DATABASE admindemo_blog;" -U postgres
-  - psql -c "CREATE USER admindemo_user WITH PASSWORD 'admindemo_user';" -U postgres
-  - psql -c "GRANT ALL PRIVILEGES ON DATABASE admindemo_blog TO admindemo_user;" -U postgres
-  - mysql -e 'SELECT VERSION()'
-  - mysql -e 'DROP DATABASE IF EXISTS admindemo_blog; CREATE DATABASE admindemo_blog DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;'
+    - pip install --upgrade setuptools
+    - pip install coveralls
+    - pip install -Ur requirements-dev.txt
+    - python setup.py develop
 
 script:
-  make cov
+    make cov
 after_success:
-  coveralls
+    coveralls
 
 env:
-  matrix:
-    - PYTHONASYNCIODEBUG=x
-    - PYTHONASYNCIODEBUG=
+    matrix:
+        - PYTHONASYNCIODEBUG=x
+        - PYTHONASYNCIODEBUG=
