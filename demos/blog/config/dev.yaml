@@ -1,7 +1,7 @@
 postgres:
-  database: admindemo_blog
-  user: admindemo_user
-  password: admindemo_user
+  database: aiohttp_admin
+  user: aiohttp_admin_user
+  password: mysecretpassword
   host: localhost
   port: 5432
   minsize: 1
