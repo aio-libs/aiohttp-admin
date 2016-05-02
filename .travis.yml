@@ -13,7 +13,7 @@ install:
     - python setup.py develop
 
 script:
-    make cov
+    make ci
 after_success:
     coveralls
 
