@@ -15,7 +15,7 @@ class SiteHandler:
     def index(self, request):
         with (yield from self.postgres) as conn:
             cursor = yield from conn.execute(
-                db.question.select())
+                db.question.select().limit(100))
             records = yield from cursor.fetchall()
         questions = [dict(q) for q in records]
         return {'questions': questions}

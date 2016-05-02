@@ -69,8 +69,8 @@ class PGResource(AbstractResource):
     async def detail(self, request):
         entity_id = request.match_info['entity_id']
         async with self.pool.acquire() as conn:
-            resp = await conn.execute(
-                self.table.select().where(self._pk == entity_id))
+            query = self.table.select().where(self._pk == entity_id)
+            resp = await conn.execute(query)
             rec = await resp.first()
 
         if not rec:
@@ -85,8 +85,8 @@ class PGResource(AbstractResource):
         data = validate_payload(raw_payload, self._create_validator)
 
         async with self.pool.acquire() as conn:
-            rec = await conn.execute(
-                self.table.insert().values(data).returning(*self.table.c))
+            query = self.table.insert().values(data).returning(*self.table.c)
+            rec = await conn.execute(query)
             row = await rec.first()
             await conn.execute('commit;')
 
@@ -100,10 +100,8 @@ class PGResource(AbstractResource):
 
         # TODO: execute in transaction?
         async with self.pool.acquire() as conn:
-            row = await conn.execute(
-                self.table.select()
-                .where(self._pk == entity_id)
-            )
+            query = self.table.select().where(self._pk == entity_id)
+            row = await conn.execute(query)
             rec = await row.first()
             if not rec:
                 msg = 'Entity with id: {} not found'.format(entity_id)
@@ -124,8 +122,9 @@ class PGResource(AbstractResource):
         entity_id = request.match_info['entity_id']
 
         async with self.pool.acquire() as conn:
-            await conn.execute(
-                self.table.delete().where(self._pk == entity_id))
+            query = self.table.delete().where(self._pk == entity_id)
+            await conn.execute(query)
+            # TODO: Think about autocommit by default
             await conn.execute('commit;')
 
         return json_response({'status': 'deleted'})
@@ -175,9 +174,6 @@ class MySQLResource(PGResource):
                 self.table.select()
                 .where(self._pk == entity_id))
             rec = await resp.first()
-
-        entity = dict(rec)
-        return json_response(entity)
 
         entity = dict(rec)
         return json_response(entity)

@@ -1,10 +1,9 @@
-import abc
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 
 from .utils import json_response, validate_query
 
 
-class AbstractResource(metaclass=abc.ABCMeta):
+class AbstractResource(metaclass=ABCMeta):
 
     def __init__(self, url=None):
         class_name = self.__class__.__name__.lower()
