@@ -93,7 +93,7 @@ def pg_server(unused_port, container_starter):
                    'POSTGRES_PASSWORD': 'mysecretpassword',
                    'POSTGRES_DB': 'aiohttp_admin'}
 
-    container = container_starter(image, internal_port, host_port)
+    container = container_starter(image, internal_port, host_port, environment)
 
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
@@ -134,7 +134,7 @@ def mysql_server(unused_port, container_starter):
 
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
-                  user='aiohttp_admin',
+                  user='aiohttp_admin_user',
                   password='mysecretpassword',
                   host=host,
                   port=host_port)
