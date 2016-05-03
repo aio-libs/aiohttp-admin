@@ -1,8 +1,6 @@
 import asyncio
 import logging
 import pathlib
-import yaml
-import aiopg.sa
 
 import aiohttp_jinja2
 import jinja2
@@ -11,6 +9,8 @@ from aiohttp import web
 import aiohttp_admin
 from aiohttp_admin.backends.sa import PGResource
 import db
+from utils import init_postgres, load_config
+
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
 TEMPLATES_ROOT = pathlib.Path(__file__).parent / 'templates'
@@ -69,26 +69,6 @@ async def init(loop):
 
     host, port = conf['host'], conf['port']
     return app, host, port
-
-
-def load_config(fname):
-    with open(fname, 'rt') as f:
-        data = yaml.load(f)
-    # TODO: add config validation
-    return data
-
-
-async def init_postgres(conf, loop):
-    engine = await aiopg.sa.create_engine(
-        database=conf['database'],
-        user=conf['user'],
-        password=conf['password'],
-        host=conf['host'],
-        port=conf['port'],
-        minsize=conf['minsize'],
-        maxsize=conf['maxsize'],
-        loop=loop)
-    return engine
 
 
 def main():

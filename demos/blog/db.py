@@ -11,13 +11,13 @@ post = sa.Table(
     'post', meta,
     sa.Column('id', sa.Integer, nullable=False),
     sa.Column('title', sa.String(200), nullable=False),
-    sa.Column('teaser', sa.String(200), nullable=False),
+    sa.Column('teaser', sa.String(500), nullable=False),
     sa.Column('body', sa.Text, nullable=False),
     sa.Column('views', sa.Integer, nullable=False),
     sa.Column('average_note', sa.Float, nullable=False),
     sa.Column('pictures', postgresql.JSON, server_default='{}'),
     sa.Column('published_at', sa.Date, nullable=False),
-    sa.Column('tags', postgresql.ARRAY(sa.Integer), server_default='[]'),
+    sa.Column('tags', postgresql.ARRAY(sa.Integer), server_default='{}'),
     sa.Column('category', sa.String(50), nullable=False),
     sa.Column('subcategory', sa.String(50), nullable=False),
     sa.Column('backlinks', postgresql.JSON, server_default='{}'),
@@ -46,4 +46,7 @@ comment = sa.Table(
     sa.Column('created_at', sa.Date, nullable=False),
 
     # Indexes #
-    sa.PrimaryKeyConstraint('id', name='comment_id_pkey'))
+    sa.PrimaryKeyConstraint('id', name='comment_id_pkey'),
+    sa.ForeignKeyConstraint(['post_id'], [post.c.id], name='post_fkey',
+                            ondelete='CASCADE')
+)
