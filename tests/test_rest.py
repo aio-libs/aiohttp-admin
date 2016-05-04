@@ -203,10 +203,9 @@ async def test_list_filtering(create_admin, loop):
     resp = await client.list(resource, page=1, per_page=30, filters=filters)
     assert len(resp) == 10
 
-    # only 2.4 available on travis ci for now
-    # filters = {'views': {'eq': 15}}
-    # resp = await client.list(resource, page=1, per_page=30, filters=filters)
-    # assert len(resp) == 1
+    filters = {'views': {'eq': 15}}
+    resp = await client.list(resource, page=1, per_page=30, filters=filters)
+    assert len(resp) == 1
 
     filters = {'views': {'ne': 15}}
     resp = await client.list(resource, page=1, per_page=30, filters=filters)
