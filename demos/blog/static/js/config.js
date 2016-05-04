@@ -34,7 +34,7 @@
         }
 
         var admin = nga.application('ng-admin backend demo') // application main title
-            .debug(true) // debug disabled
+            .debug(false) // debug disabled
             .baseApiUrl('/admin/'); // main API endpoint
 
         // define all entities at the top to allow references between them
@@ -207,6 +207,7 @@
             .title('Comments')
             .perPage(10) // limit the number of elements displayed per page. Default is 30.
             .fields([
+                nga.field('id'),
                 nga.field('created_at', 'date')
                     .label('Posted'),
                 nga.field('author.name')
