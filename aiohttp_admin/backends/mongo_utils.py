@@ -52,9 +52,10 @@ def check_comparator(column, comparator):
 
 def apply_trafaret(trafaret, value):
     validate = trafaret.check_and_return
+
     if isinstance(trafaret, MongoId):
         validate = trafaret.converter
-    if isinstance(value, list):
+    elif isinstance(value, list):
         value = [validate(v) for v in value]
     else:
         value = validate(value)
