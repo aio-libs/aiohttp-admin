@@ -5,22 +5,30 @@ from aiohttp_admin.backends.mongo import MotorResource
 
 
 @pytest.fixture
-def create_admin(loop, admin_type, create_app_and_client,
-                 mongo_collection, document_schema, create_document,
-                 postgres, mysql, sa_table, create_table):
-
+def pg_admin_creator(loop, create_app_and_client, postgres,
+                     sa_table, create_table):
     async def pg_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(PGResource(postgres, sa_table, url=resource_name))
         return admin, client, create_table
+    return pg_admin
 
+
+@pytest.fixture
+def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
+                        create_table):
     async def mysql_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MySQLResource(mysql, sa_table, url=resource_name))
         return admin, client, create_table
+    return mysql_admin
 
+
+@pytest.fixture
+def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
+                        document_schema, create_document):
     async def mongo_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
         admin = aiohttp_admin.setup(app, './')
@@ -28,12 +36,17 @@ def create_admin(loop, admin_type, create_app_and_client,
                                          url=resource_name))
         return admin, client, create_document
 
+    return mongo_admin
+
+
+@pytest.fixture
+def create_admin(request, admin_type):
     if admin_type == 'mongo':
-        f = mongo_admin
+        f = request.getfuncargvalue('mongo_admin_creator')
     elif admin_type == 'mysql':
-        f = mysql_admin
+        f = request.getfuncargvalue('mysql_admin_creator')
     else:
-        f = pg_admin
+        f = request.getfuncargvalue('pg_admin_creator')
     return f
 
 
