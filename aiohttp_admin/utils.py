@@ -1,6 +1,7 @@
 import json
 from functools import partial
 from datetime import datetime, date
+from collections import namedtuple
 
 import trafaret as t
 from aiohttp import web
@@ -16,6 +17,10 @@ except ImportError:  # pragma: no cover
 
 __all__ = ['json_response', 'jsonify', 'validate_query', 'validate_payload',
            'gather_template_folders']
+
+
+PagingParams = namedtuple('PagingParams',
+                          ['limit', 'offset', 'sort_field', 'sort_dir'])
 
 
 def json_datetime_serial(obj):
@@ -54,6 +59,8 @@ Filter = t.Dict({
 
 ASC = 'ASC'
 DESC = 'DESC'
+
+
 ListQuery = t.Dict({
     OptKey('_page', default=1): t.Int[1:],
     OptKey('_perPage', default=30): t.Int[1:],
@@ -67,7 +74,7 @@ ListQuery = t.Dict({
 def validate_query_structure(query):
     """Validate query arguments in list request.
 
-    :param query: mapping with pagination and filtering iformation
+    :param query: mapping with pagination and filtering information
     """
     query_dict = dict(query)
     filters = query_dict.pop('_filters', None)
@@ -114,9 +121,7 @@ def gather_template_folders(template_folder):
     return template_folders
 
 
-# TODO: remove duplication
 def validate_query(query, possible_columns):
-    # possible_columns = set(c for c in table.c.keys())
     q = validate_query_structure(query)
     sort_field = q.get('_sortField')
 
@@ -132,3 +137,14 @@ def validate_query(query, possible_columns):
         msg = 'Columns: {} do not present in resource'.format(column_list)
         raise JsonValidaitonError(msg)
     return q
+
+
+def calc_pagination(query_dict, default_sort_direction):
+    q = query_dict
+    page = q['_page']
+    sort_field = q.get('_sortField', default_sort_direction)
+    per_page = q['_perPage']
+    sort_dir = q['_sortDir']
+    offset = (page - 1) * per_page
+    limit = per_page
+    return PagingParams(limit, offset, sort_field, sort_dir)
