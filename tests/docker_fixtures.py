@@ -1,5 +1,7 @@
 import os
 import time
+import tempfile
+from pathlib import Path
 
 import psycopg2
 import pymongo
@@ -7,6 +9,9 @@ import pymysql
 import pytest
 
 from docker import Client as DockerClient
+
+
+TEMP_FOLDER = Path(tempfile.gettempdir()) / 'aiohttp_admin'
 
 
 def pytest_addoption(parser):
@@ -42,10 +47,21 @@ def pg_params(pg_server):
 @pytest.fixture(scope='session')
 def container_starter(request, docker, session_id, docker_pull):
 
-    def f(image, internal_port, host_port, env=None):
+    def f(image, internal_port, host_port, env=None, volume=None):
         if docker_pull:
             print("Pulling {} image".format(image))
             docker.pull(image)
+
+        if volume is not None:
+            host_vol, cont_vol = volume
+            host_config = docker.create_host_config(
+                port_bindings={internal_port: host_port},
+                binds={host_vol: cont_vol})
+            volumes = [cont_vol]
+        else:
+            host_config = docker.create_host_config(
+                port_bindings={internal_port: host_port})
+            volumes = None
 
         container = docker.create_container(
             image=image,
@@ -53,9 +69,8 @@ def container_starter(request, docker, session_id, docker_pull):
             ports=[internal_port],
             detach=True,
             environment=env,
-            host_config=docker.create_host_config(
-                port_bindings={internal_port: host_port})
-        )
+            volumes=volumes,
+            host_config=host_config)
         docker.start(container=container['Id'])
 
         def fin():
@@ -93,7 +108,10 @@ def pg_server(unused_port, container_starter):
                    'POSTGRES_PASSWORD': 'mysecretpassword',
                    'POSTGRES_DB': 'aiohttp_admin'}
 
-    container = container_starter(image, internal_port, host_port, environment)
+    volume = (str(TEMP_FOLDER / 'docker' / 'pg'),
+              '/var/lib/postgresql/data')
+    container = container_starter(image, internal_port, host_port,
+                                  environment, volume)
 
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
@@ -129,8 +147,9 @@ def mysql_server(unused_port, container_starter):
                    'MYSQL_PASSWORD': 'mysecretpassword',
                    'MYSQL_DATABASE': 'aiohttp_admin',
                    'MYSQL_ROOT_PASSWORD': 'mysecretpassword'}
-
-    container = container_starter(image, internal_port, host_port, environment)
+    volume = str(TEMP_FOLDER / 'docker' / 'mysql'), '/var/lib/mysql'
+    container = container_starter(image, internal_port, host_port,
+                                  environment, volume)
 
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
@@ -163,7 +182,9 @@ def mongo_server(unused_port, container_starter):
 
     internal_port = 27017
     host_port = unused_port()
-    container = container_starter(image, internal_port, host_port)
+    volume = str(TEMP_FOLDER / 'docker' / 'mongo'), '/data/db'
+    container = container_starter(image, internal_port, host_port,
+                                  volume=volume)
 
     host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(host=host, port=host_port)
