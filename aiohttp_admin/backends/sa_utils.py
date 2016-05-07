@@ -7,7 +7,6 @@ from sqlalchemy.dialects import postgresql
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
-from ..exceptions import JsonValidaitonError, AdminValidationException
 
 
 __all__ = ['validator_from_table', 'create_filter']
@@ -129,14 +128,13 @@ comparator_map = {
 
 
 def check_comparator(column, comparator):
-    # TODO: fix error messages and types
     if type(column.type) not in comparator_map:
         msg = 'Filtering for column type {} not supported'.format(column.type)
-        raise Exception(msg)
+        raise JsonValidaitonError(msg)
 
     if comparator not in comparator_map[type(column.type)]:
         msg = 'Filtering for column type {} not supported'.format(column.type)
-        raise Exception(msg)
+        raise JsonValidaitonError(msg)
 
 
 def check_value(column, value):
