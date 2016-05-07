@@ -3,7 +3,8 @@ from pymongo import ASCENDING, DESCENDING
 
 from ..exceptions import ObjectNotFound
 from ..resource import AbstractResource
-from ..utils import json_response, validate_payload, ASC, validate_query
+from ..utils import (json_response, validate_payload, ASC, validate_query,
+                     calc_pagination)
 from .mongo_utils import create_validator, create_filter
 
 
@@ -22,29 +23,21 @@ class MotorResource(AbstractResource):
     async def list(self, request):
         possible_fields = [k.name for k in self._schema.keys]
         q = validate_query(request.GET, possible_fields)
+        paging = calc_pagination(q, self._primary_key)
 
-        page = q['_page']
-        per_page = q['_perPage']
-
-        sort_field = q.get('_sortField', self._primary_key)
-        sort_dir = q['_sortDir']
         filters = q.get('_filters')
-
-        offset = (page - 1) * per_page
-        limit = per_page
-
         query = {}
         if filters:
             query = create_filter(filters, self._schema)
 
-        sort_direction = ASCENDING if sort_dir == ASC else DESCENDING
+        sort_direction = ASCENDING if paging.sort_dir == ASC else DESCENDING
 
         cursor = (self._collection.find(query)
-                  .skip(offset)
-                  .limit(limit)
-                  .sort(sort_field, sort_direction))
+                  .skip(paging.offset)
+                  .limit(paging.limit)
+                  .sort(paging.sort_field, sort_direction))
 
-        entities = await cursor.to_list(limit)
+        entities = await cursor.to_list(paging.limit)
         count = await self._collection.find(query).count()
         headers = {'X-Total-Count': str(count)}
         return json_response(entities, headers=headers)
