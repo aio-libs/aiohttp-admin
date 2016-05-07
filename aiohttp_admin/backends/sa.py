@@ -2,7 +2,8 @@ import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_payload, validate_query
+from ..utils import (json_response, validate_payload, validate_query,
+                     calc_pagination, ASC)
 from .sa_utils import validator_from_table, create_filter
 
 
@@ -34,16 +35,9 @@ class PGResource(AbstractResource):
     async def list(self, request):
         columns_names = list(self._table.c.keys())
         q = validate_query(request.GET, columns_names)
-
-        page = q['_page']
-        sort_field = q.get('_sortField', self._primary_key)
-        per_page = q['_perPage']
-        sort_dir = q['_sortDir']
+        paging = calc_pagination(q, self._primary_key)
 
         filters = q.get('_filters')
-
-        offset = (page - 1) * per_page
-        limit = per_page
         async with self.pool.acquire() as conn:
             if filters:
                 query = create_filter(self.table, filters)
@@ -53,12 +47,12 @@ class PGResource(AbstractResource):
                 sa.select([sa.func.count()])
                 .select_from(query.alias('foo')))
 
-            sort_dir = sa.asc if sort_dir == 'ASC' else sa.desc
+            sort_dir = sa.asc if paging.sort_dir == ASC else sa.desc
             cursor = await conn.execute(
                 query
-                .offset(offset)
-                .limit(limit)
-                .order_by(sort_dir(sort_field)))
+                .offset(paging.offset)
+                .limit(paging.limit)
+                .order_by(sort_dir(paging.sort_field)))
 
             recs = await cursor.fetchall()
 
