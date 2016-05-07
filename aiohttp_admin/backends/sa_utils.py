@@ -7,7 +7,7 @@ from sqlalchemy.dialects import postgresql
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
-from ..utils import validate_query as _validate_query
+from ..exceptions import JsonValidaitonError, AdminValidationException
 
 
 __all__ = ['validator_from_table', 'create_filter']
@@ -172,22 +172,3 @@ def create_filter(table, filter):
             query = query.where(f)
 
     return query
-
-
-def validate_query(query, table):
-    possible_columns = set(c for c in table.c.keys())
-    q = _validate_query(query)
-    sort_field = q.get('_sortField')
-
-    filters = q.get('_filters', [])
-    columns = [field_name for field_name in filters]
-
-    if sort_field is not None:
-        columns.append(sort_field)
-
-    not_valid = set(columns).difference(possible_columns)
-    if not_valid:
-        column_list = ', '.join(not_valid)
-        msg = 'Columns: {} do not present in resource'.format(column_list)
-        raise JsonValidaitonError(msg)
-    return q

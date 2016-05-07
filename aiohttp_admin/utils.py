@@ -64,7 +64,7 @@ ListQuery = t.Dict({
 })
 
 
-def validate_query(query):
+def validate_query_structure(query):
     """Validate query arguments in list request.
 
     :param query: mapping with pagination and filtering iformation
@@ -112,3 +112,23 @@ def gather_template_folders(template_folder):
     else:
         template_folders = [template_root] + template_folder
     return template_folders
+
+
+# TODO: remove duplication
+def validate_query(query, possible_columns):
+    # possible_columns = set(c for c in table.c.keys())
+    q = validate_query_structure(query)
+    sort_field = q.get('_sortField')
+
+    filters = q.get('_filters', [])
+    columns = [field_name for field_name in filters]
+
+    if sort_field is not None:
+        columns.append(sort_field)
+
+    not_valid = set(columns).difference(possible_columns)
+    if not_valid:
+        column_list = ', '.join(not_valid)
+        msg = 'Columns: {} do not present in resource'.format(column_list)
+        raise JsonValidaitonError(msg)
+    return q

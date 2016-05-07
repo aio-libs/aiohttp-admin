@@ -3,8 +3,8 @@ from pymongo import ASCENDING, DESCENDING
 
 from ..exceptions import ObjectNotFound
 from ..resource import AbstractResource
-from ..utils import json_response, validate_payload, ASC
-from .mongo_utils import create_validator, create_filter, validate_query
+from ..utils import json_response, validate_payload, ASC, validate_query
+from .mongo_utils import create_validator, create_filter
 
 
 __all__ = ['MotorResource']
@@ -20,7 +20,8 @@ class MotorResource(AbstractResource):
         self._update_schema = create_validator(schema, primary_key)
 
     async def list(self, request):
-        q = validate_query(request.GET, self._schema)
+        possible_fields = [k.name for k in self._schema.keys]
+        q = validate_query(request.GET, possible_fields)
 
         page = q['_page']
         per_page = q['_perPage']

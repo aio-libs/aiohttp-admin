@@ -2,8 +2,8 @@ import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
-from ..utils import json_response, validate_payload
-from .sa_utils import validator_from_table, create_filter, validate_query
+from ..utils import json_response, validate_payload, validate_query
+from .sa_utils import validator_from_table, create_filter
 
 
 __all__ = ['PGResource', 'MySQLResource']
@@ -32,7 +32,8 @@ class PGResource(AbstractResource):
         return self._table
 
     async def list(self, request):
-        q = validate_query(request.GET, self._table)
+        columns_names = list(self._table.c.keys())
+        q = validate_query(request.GET, columns_names)
 
         page = q['_page']
         sort_field = q.get('_sortField', self._primary_key)
