@@ -14,6 +14,11 @@ from trafaret.contrib.object_id import MongoId
 from trafaret.contrib.rfc_3339 import DateTime
 
 
+def pytest_namespace():
+    dbs = 'pg', 'mysql', 'mongo'
+    return {'admin_type_list': dbs}
+
+
 @pytest.fixture
 def admin_type():
     # 'pg', 'mysql', 'mongo'
@@ -211,7 +216,7 @@ def create_document(request, document_schema, mongo_collection, loop):
         return sa_table
 
     def fin():
-        # TODO: fix finalizer, drop document after test
+        # TODO: fix finalize r, drop document after test
         pass
     request.addfinalizer(fin)
     return f
