@@ -4,12 +4,13 @@ import trafaret as t
 
 from bson import ObjectId
 
-from aiohttp_admin.utils import validate_query, jsonify, validate_payload
 from aiohttp_admin.exceptions import JsonValidaitonError
+from aiohttp_admin.utils import (validate_query_structure, jsonify,
+                                 validate_payload)
 
 
 def test_validate_query_empty_defaults():
-    q = validate_query({})
+    q = validate_query_structure({})
     expected = {'_page': 1,
                 '_perPage': 30,
                 '_sortDir': 'DESC'}
@@ -25,7 +26,7 @@ def test_validate_query_all_possible_params():
              '_sortField': 'id',
              '_sortDir': 'DESC',
              '_filters': json.dumps(filters)}
-    q = validate_query(query)
+    q = validate_query_structure(query)
 
     expected = query.copy()
     expected['_filters'] = filters
@@ -36,7 +37,7 @@ def test_validate_query_filters_is_not_json():
     query = {'_filters': 'foo'}
 
     with pytest.raises(JsonValidaitonError) as ctx:
-        validate_query(query)
+        validate_query_structure(query)
     error = json.loads(ctx.value.text)
     assert error['error'] == '_filters field can not be serialized'
 
@@ -45,7 +46,7 @@ def test_validate_query_filters_invalid():
     query = {'_filters': json.dumps({'foo': {'bar': 'baz'}})}
 
     with pytest.raises(JsonValidaitonError) as ctx:
-        validate_query(query)
+        validate_query_structure(query)
 
     error = json.loads(ctx.value.text)
     assert error['error'] == '_filters query invalid'
