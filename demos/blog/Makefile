@@ -4,8 +4,8 @@ FLAGS=
 
 
 flake:
-	pyflakes aiohttp_polls
-	pep8 aiohttp_polls setup.py
+	pyflakes aiohttp_blog
+	pep8 aiohttp_blog setup.py
 
 clean:
 	rm -rf `find . -name __pycache__`
