@@ -19,6 +19,7 @@ def read_version():
 
 
 install_requires = ['aiohttp',
+                    'aiohttp_admin',
                     'trafaret',
                     'aiohttp_jinja2',
                     'pyyaml',
@@ -27,7 +28,7 @@ install_requires = ['aiohttp',
 
 setup(name='aiohttpdemo_polls',
       version=read_version(),
-      description='Polls project example from aiohttp',
+      description='Polls project example from aiohttp_admin',
       platforms=['POSIX'],
       packages=find_packages(),
       include_package_data=True,
