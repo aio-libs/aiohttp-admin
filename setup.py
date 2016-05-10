@@ -16,6 +16,7 @@ def read(f):
 
 install_requires = ['aiohttp',
                     'trafaret',
+                    'python-dateutil'
                     'aiohttp_jinja2']
 
 extras_require = {'motor': ['motor'],
