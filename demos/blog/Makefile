@@ -22,4 +22,6 @@ clean:
 	rm -rf htmlcov
 	rm -rf dist
 
+run:
+	python -m aiohttpdemo_blog
 .PHONY: flake clean

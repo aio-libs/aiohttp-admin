@@ -8,8 +8,8 @@ from aiohttp import web
 
 import aiohttp_admin
 from aiohttp_admin.backends.sa import PGResource
-import db
-from utils import init_postgres, load_config
+import aiohttpdemo_blog.db as db
+from aiohttpdemo_blog.utils import init_postgres, load_config
 
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
