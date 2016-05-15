@@ -21,6 +21,7 @@ __all__ = ['json_response', 'jsonify', 'validate_query', 'validate_payload',
 
 PagingParams = namedtuple('PagingParams',
                           ['limit', 'offset', 'sort_field', 'sort_dir'])
+MULTI_FIELD_TEXT_QUERY = 'q'
 
 
 def json_datetime_serial(obj):
@@ -131,7 +132,8 @@ def validate_query(query, possible_columns):
     if sort_field is not None:
         columns.append(sort_field)
 
-    not_valid = set(columns).difference(possible_columns)
+    not_valid = set(columns).difference(
+        possible_columns + [MULTI_FIELD_TEXT_QUERY])
     if not_valid:
         column_list = ', '.join(not_valid)
         msg = 'Columns: {} do not present in resource'.format(column_list)
