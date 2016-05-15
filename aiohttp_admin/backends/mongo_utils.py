@@ -95,4 +95,4 @@ def create_validator(schema, primary_key):
     keys = [s for s in schema.keys if s.get_name() != primary_key]
     new_schema = t.Dict({})
     new_schema.keys = keys
-    return new_schema
+    return new_schema.ignore_extra(primary_key)
