@@ -8,13 +8,20 @@ user = t.Dict({
     t.Key('username'): t.String(max_length=50),
     t.Key('email'): t.Email,
     t.Key('pw_hash'): t.String,
+    # t.Key('first_name'): t.String(max_length=50),
+    # t.Key('last_name'): t.String(max_length=50),
+    # t.Key('created'): DateTime,
+    # t.Key('active'): t.Buol,
 })
+
 
 message = t.Dict({
     t.Key('_id'): MongoId,
-    t.Key('author'): t.String(max_length=200),
+    t.Key('author_id'): MongoId,
+    t.Key('username'): t.String(max_length=50),
     t.Key('text'): t.String,
     t.Key('pub_date'): DateTime,
+    # t.Key('likes'): t.Int,
 })
 
 follower = t.Dict({
@@ -25,6 +32,5 @@ follower = t.Dict({
 
 
 async def get_user_id(user_collection, username):
-    """Convenience method to look up the id for a username."""
     rv = await user_collection.find_one({'username': username}, {'_id': 1})
     return rv['_id'] if rv else None
