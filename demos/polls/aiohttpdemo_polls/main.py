@@ -33,7 +33,7 @@ async def init(loop):
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT)))
     # load config from yaml file
-    conf = load_config(str(PROJ_ROOT / 'config' / 'polls.yaml'))
+    conf = load_config(str(PROJ_ROOT / 'config' / 'dev.yml'))
 
     # create connection to the database
     pg = await init_postgres(conf['postgres'], loop)
