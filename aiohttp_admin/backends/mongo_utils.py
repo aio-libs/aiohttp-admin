@@ -3,6 +3,7 @@ import trafaret as t
 from trafaret.contrib.object_id import MongoId
 
 from ..exceptions import JsonValidaitonError
+from ..utils import MULTI_FIELD_TEXT_QUERY
 
 
 __all__ = ['create_validator', 'create_filter']
@@ -76,6 +77,16 @@ def _check_value(column_traf_map, field_name, value):
     return value
 
 
+def text_filter(query, value, schema):
+    string_columns = [s.name for s in schema.keys
+                      if isinstance(s.trafaret, t.String)]
+    query_list = []
+    for column_name in string_columns:
+        query_list.append(op({}, column_name, "like", value))
+    query["$or"] = query_list
+    return query
+
+
 def create_filter(filter, schema):
     column_traf_map = {s.name: s.trafaret for s in schema.keys}
     query = {}
@@ -84,6 +95,9 @@ def create_filter(filter, schema):
             for op_name, value in operation.items():
                 value = _check_value(column_traf_map, field_name, value)
                 query = op(query, field_name, op_name, value)
+        elif field_name == MULTI_FIELD_TEXT_QUERY:
+            value = operation
+            query = text_filter(query, value, schema)
         else:
             value = operation
             value = _check_value(column_traf_map, field_name, value)
