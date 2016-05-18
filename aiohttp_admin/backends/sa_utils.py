@@ -7,6 +7,7 @@ from sqlalchemy.dialects import postgresql
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
+from ..utils import MULTI_FIELD_TEXT_QUERY
 
 
 __all__ = ['validator_from_table', 'create_filter']
@@ -150,12 +151,28 @@ def check_value(column, value):
     return value
 
 
+def text_filter(query, value, table):
+    pairs = ((n, c) for n, c in table.c.items()
+             if isinstance(c.type, sa.sql.sqltypes.String))
+    for name, column in pairs:
+        do_compare = op("like", column)
+        f = do_compare(column, value)
+        query = query.where(f)
+    return query
+
+
 # TODO: validate that value supplied in filter has same type as in table
 # TODO: simplify this monster
 def create_filter(table, filter):
     query = table.select()
 
     for column_name, operation in filter.items():
+
+        if column_name == MULTI_FIELD_TEXT_QUERY:
+            value = operation
+            query = text_filter(query, value, table)
+            continue
+
         column = to_column(column_name, table)
 
         if not isinstance(operation, dict):

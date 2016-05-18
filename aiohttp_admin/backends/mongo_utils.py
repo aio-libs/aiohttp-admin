@@ -90,6 +90,7 @@ def text_filter(query, value, schema):
 def create_filter(filter, schema):
     column_traf_map = {s.name: s.trafaret for s in schema.keys}
     query = {}
+    # TODO: simplify like in sa version
     for field_name, operation in filter.items():
         if isinstance(operation, dict):
             for op_name, value in operation.items():
