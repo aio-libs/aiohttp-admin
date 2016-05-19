@@ -170,6 +170,29 @@ async def test_list_text_like_filtering(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
+async def test_list_q_filter(create_admin, loop):
+    resource = 'posts'
+    admin, client, create_entities = await create_admin(resource)
+    # TODO this is ugly
+
+    num_entities = 25
+    await create_entities(num_entities)
+    all_rows = await client.list(resource, page=1, per_page=30)
+    assert len(all_rows) == num_entities
+
+    # text  search on sa.String field
+    filters = {'q': 'category field 2'}
+    resp = await client.list(resource, page=1, per_page=30, filters=filters)
+    assert len(resp) == 6
+
+    # text  search on sa.Text field
+    filters = {'q': 'body field 2'}
+    resp = await client.list(resource, page=1, per_page=30, filters=filters)
+    assert len(resp) == 6
+
+
+@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.run_loop
 async def test_list_sorting(create_admin, loop):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
