@@ -4,6 +4,7 @@ import operator as _operator
 import sqlalchemy as sa
 import trafaret as t
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql import or_
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
@@ -154,10 +155,12 @@ def check_value(column, value):
 def text_filter(query, value, table):
     pairs = ((n, c) for n, c in table.c.items()
              if isinstance(c.type, sa.sql.sqltypes.String))
+    sub_queries = []
     for name, column in pairs:
         do_compare = op("like", column)
-        f = do_compare(column, value)
-        query = query.where(f)
+        sub_queries.append(do_compare(column, value))
+
+    query = query.where(or_(*sub_queries))
     return query
 
 
