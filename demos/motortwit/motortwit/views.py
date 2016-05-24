@@ -4,6 +4,7 @@ from aiohttp import web
 from aiohttp_session import get_session
 from bson import ObjectId
 
+# flake8: noqa
 
 class SiteHandler:
 
