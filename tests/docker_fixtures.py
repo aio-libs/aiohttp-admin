@@ -31,6 +31,11 @@ def session_id():
 
 
 @pytest.fixture(scope='session')
+def host():
+    return os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
+
+
+@pytest.fixture(scope='session')
 def docker():
     if os.environ.get('DOCKER_MACHINE_IP') is not None:
         docker = DockerClient.from_env(assert_hostname=False)
@@ -98,7 +103,7 @@ def wait_for_container(callable, image, skip_exception):
 
 
 @pytest.fixture(scope='session')
-def pg_server(unused_port, container_starter):
+def pg_server(host, unused_port, container_starter):
     tag = "9.5"
     image = 'postgres:{}'.format(tag)
 
@@ -113,7 +118,6 @@ def pg_server(unused_port, container_starter):
     container = container_starter(image, internal_port, host_port,
                                   environment, volume)
 
-    host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
                   user='aiohttp_admin_user',
                   password='mysecretpassword',
@@ -137,7 +141,7 @@ def mysql_params(mysql_server):
 
 
 @pytest.fixture(scope='session')
-def mysql_server(unused_port, container_starter):
+def mysql_server(host, unused_port, container_starter):
     tag = '5.7'
     image = 'mysql:{}'.format(tag)
 
@@ -151,7 +155,6 @@ def mysql_server(unused_port, container_starter):
     container = container_starter(image, internal_port, host_port,
                                   environment, volume)
 
-    host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(database='aiohttp_admin',
                   user='aiohttp_admin_user',
                   password='mysecretpassword',
@@ -176,7 +179,7 @@ def mongo_params(mongo_server):
 
 
 @pytest.fixture(scope='session')
-def mongo_server(unused_port, container_starter):
+def mongo_server(host, unused_port, container_starter):
     tag = '2.6'
     image = 'mongo:{}'.format(tag)
 
@@ -186,7 +189,6 @@ def mongo_server(unused_port, container_starter):
     container = container_starter(image, internal_port, host_port,
                                   volume=volume)
 
-    host = os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
     params = dict(host=host, port=host_port)
 
     def connect():
