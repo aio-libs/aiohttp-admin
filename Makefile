@@ -39,6 +39,12 @@ docker_clean:
 	-@docker rm $$(docker ps -q -f status=exited)
 	-@docker volume ls -qf dangling=true | xargs -r docker volume rm
 
+docker_start_pg:
+	docker-compose -f docker-compose.yml up -d postgres
+
+docker_stop_pg:
+	docker-compose -f docker-compose.yml stop postgres
+
 doc:
 	make -C docs html
 	@echo "open file://`pwd`/docs/_build/html/index.html"
