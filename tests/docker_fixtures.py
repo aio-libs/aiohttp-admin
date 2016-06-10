@@ -95,7 +95,8 @@ def wait_for_container(callable, image, skip_exception):
         try:
             callable()
             break
-        except skip_exception:
+        except skip_exception as e:
+            print("Waiting image to start, last exception: {}".format(e))
             time.sleep(delay)
             delay *= 2
     else:

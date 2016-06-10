@@ -7,7 +7,7 @@ flake:
 	flake8 aiohttp_admin tests demos setup.py
 
 test: flake
-	py.test -s $(FLAGS) ./tests/
+	py.test -s -v $(FLAGS) ./tests/
 
 vtest:
 	py.test -s -v $(FLAGS) ./tests/
