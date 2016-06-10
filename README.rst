@@ -14,7 +14,7 @@ on top of an existing data model.
 result it is possible to change admin views without changing any **python**
 code. On browser side user interacts with single page application (ng-admin).
 
-.. image:: https://raw.githubusercontent.com/jettify/aiohttp_admin/master/docs/diagram.svg?
+.. image:: https://cdn.rawgit.com/jettify/aiohttp_admin/master/docs/diagram.svg
     :align: center
 
 2) admin views are database agnostic, if it is possible to implement REST API
