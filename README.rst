@@ -40,9 +40,23 @@ Under the hood python docker client pulls images for PostgreSQL, MySQL
 and Mongodb. Fixtures start databases and insert testing data. You do not
 have to install any database at all.
 
-For OSX users one extra step is required, before running tests, please
-init environment variable::
+Next time  `--dp` (docker pull) flag could be dropped since all required
+images are cached on local machine. To make sure you have required images
+please execute::
 
+    $ docker images
+
+Among results you should find something like::
+
+    postgres  9.5  247a11721cbd  2 weeks ago  265.9 MB
+    mysql     5.7  63a92d0c131d  8 weeks ago  374.1 MB
+    mongo     2.6  150dd5b5bd1b  9 weeks ago  390.9 MB
+
+
+For OSX users one extra step is required, before running tests, please
+init environment variables::
+
+    $ eval $(docker-machine env default)
     $ export DOCKER_MACHINE_IP=$(docker-machine ip)
 
 
@@ -70,5 +84,5 @@ Requirements
 .. _sqlalchemy.core: http://www.sqlalchemy.org/
 .. _PEP492: https://www.python.org/dev/peps/pep-0492/
 .. _docker: https://www.docker.com/
-.. _instruction: https://docs.docker.com/engine/installation/linux/ubuntulinux/ 
+.. _instruction: https://docs.docker.com/engine/installation/linux/ubuntulinux/
 .. _docker-machine: https://docs.docker.com/machine/
