@@ -87,26 +87,34 @@ def text_filter(query, value, schema):
     return query
 
 
+# TODO: use functional style to create query
+# do not modify dict inside functions, modify dict on
+# same level
 def create_filter(filter, schema):
     column_traf_map = {s.name: s.trafaret for s in schema.keys}
     query = {}
-    # TODO: simplify like in sa version
     for field_name, operation in filter.items():
-        if isinstance(operation, dict):
-            for op_name, value in operation.items():
-                value = _check_value(column_traf_map, field_name, value)
-                query = op(query, field_name, op_name, value)
-        elif field_name == MULTI_FIELD_TEXT_QUERY:
+        # case for special q filter, {"q": "text"}
+        if field_name == MULTI_FIELD_TEXT_QUERY:
             value = operation
             query = text_filter(query, value, schema)
-        else:
+            continue
+        # special case {"key": "value"} check for equality
+        if not isinstance(operation, dict):
             value = operation
             value = _check_value(column_traf_map, field_name, value)
-            query[field_name] = value
+            operation = {'eq': value}
+
+        for op_name, value in operation.items():
+            value = _check_value(column_traf_map, field_name, value)
+            query = op(query, field_name, op_name, value)
+
     return query
 
 
 def create_validator(schema, primary_key):
+    # create validator without primary key, used for update queries
+    # where pk supplied in url and rest in body
     keys = [s for s in schema.keys if s.get_name() != primary_key]
     new_schema = t.Dict({})
     new_schema.keys = keys
