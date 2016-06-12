@@ -165,7 +165,7 @@ def text_filter(query, value, table):
 
 
 # TODO: validate that value supplied in filter has same type as in table
-# TODO: simplify this monster
+# TODO: use functional style to create query
 def create_filter(table, filter):
     query = table.select()
 

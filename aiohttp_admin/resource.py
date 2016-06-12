@@ -13,7 +13,10 @@ class AbstractResource(metaclass=ABCMeta):
     async def list(self, request):  # pragma: no cover
         q = validate_query(request.GET)
         assert q
-        return json_response({})
+
+        # total number of results should be supplied in separate
+        headers = {'X-Total-Count': str(0)}
+        return json_response({}, headers=headers)
 
     @abstractmethod
     async def detail(self, request):  # pragma: no cover
