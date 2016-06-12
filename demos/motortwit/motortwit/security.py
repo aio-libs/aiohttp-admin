@@ -10,6 +10,9 @@ def generate_password_hash(password, salt_rounds=12):
 
 
 def check_password_hash(encoded, password):
+    password = password.encode('utf-8')
+    encoded = encoded.encode('utf-8')
+
     hashed = base64.b64decode(encoded)
     is_correct = bcrypt.hashpw(password, hashed) == hashed
     return is_correct
