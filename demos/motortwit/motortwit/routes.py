@@ -5,7 +5,9 @@ def setup_routes(app, handler, project_root):
               handler.public_timeline, name='public_timeline')
     add_route('GET', '/logout', handler.logout, name='logout')
     add_route('GET', '/login', handler.login, name='login')
+    add_route('POST', '/login', handler.login)
     add_route('GET', '/register', handler.register, name='register')
+    add_route('POST', '/register', handler.register)
     add_route('GET', '/{username}', handler.user_timeline,
               name='user_timeline')
     add_route('GET', '/{username}/follow', handler.user_timeline,
