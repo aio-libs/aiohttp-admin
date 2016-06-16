@@ -39,3 +39,9 @@ def format_datetime(timestamp):
     if isinstance(timestamp, str):
         timestamp = parse(timestamp)
     return timestamp.replace(tzinfo=pytz.utc).strftime('%Y-%m-%d @ %H:%M')
+
+
+def redirect(request, name, **kw):
+    router = request.app.router
+    location = router[name].url(**kw)
+    return web.HTTPFound(location=location)
