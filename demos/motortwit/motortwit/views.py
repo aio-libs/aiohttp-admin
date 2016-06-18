@@ -4,6 +4,10 @@ from aiohttp import web
 from aiohttp_session import get_session
 from bson import ObjectId
 
+from . import db
+from .security import generate_password_hash, check_password_hash
+from .utils import redirect
+
 # flake8: noqa
 
 class SiteHandler:
@@ -33,10 +37,14 @@ class SiteHandler:
 
         query = {'$or': [{'author_id': ObjectId(user_id)},
                          {'author_id': {'$in': followed['whom_id']}}]}
-        messages = self.mongo.message.find(query).sort('pub_date', -1)
+        messages = await (self.mongo.message
+                          .find(query)
+                          .sort('pub_date', -1)
+                          .to_list(30))
         endpoint = request.match_info.route.name
         return {"messages": messages,
-                "endpoint": endpoint}
+                "endpoint": endpoint,
+                "endpoint": request.match_info.route.name}
 
     @aiohttp_jinja2.template('timeline.html')
     async def public_timeline(self, request):
@@ -59,15 +67,18 @@ class SiteHandler:
         if user_id:
             followed = await self.mongo.follower.find_one(
                 {'who_id': ObjectId(session['user_id']),
-                 'whom_id': {'$in': [ObjectId(profile_user['_id'])]}}) is not None
+                 'whom_id': {'$in': [ObjectId(profile_user['_id'])]}})
+            followed = followed is not None
 
-        messages = await (self.mongo.message.find({'author_id': ObjectId(profile_user['_id'])})
+        messages = await (self.mongo.message
+                          .find({'author_id': ObjectId(profile_user['_id'])})
                           .sort('pub_date', -1)
                           .to_list(30))
 
         return {"messages": messages,
                 "followed": followed,
-                "profile_user": profile_user}
+                "profile_user": profile_user,
+                "endpoint": request.match_info.route.name}
 
 
 
