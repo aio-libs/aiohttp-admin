@@ -98,13 +98,32 @@ class SiteHandler:
 #    return render_template('timeline.html', messages=messages,
 #                           followed=followed, profile_user=profile_user)
 
-    @aiohttp_jinja2.template('timeline.html')
+    @aiohttp_jinja2.template('login.html')
     async def login(self, request):
-        return {}
+        session = await get_session(request)
+        user_id = session.get('user_id')
+        if user_id:
+            return redirect(request, 'timeline')
+        error = None
+        form = None
 
-    @aiohttp_jinja2.template('timeline.html')
+        if request.method == 'POST':
+            form = await request.post()
+            user = await self.mongo.user.find_one(
+                {'username': form['username']})
+            if user is None:
+                error = 'Invalid username'
+            elif not check_password_hash(user['pw_hash'], form['password']):
+                error = 'Invalid password'
+            else:
+                session['user_id'] = str(user['_id'])
+                return redirect(request, 'timeline')
+        return {"error": error, "form": form}
+
     async def logout(self, request):
-        return {}
+        session = await get_session(request)
+        session.pop('user_id', None)
+        return redirect(request, 'public_timeline')
 
     @aiohttp_jinja2.template('timeline.html')
     async def register(self, request):
