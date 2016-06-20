@@ -125,13 +125,37 @@ class SiteHandler:
         session.pop('user_id', None)
         return redirect(request, 'public_timeline')
 
-    @aiohttp_jinja2.template('timeline.html')
+    @aiohttp_jinja2.template('register.html')
     async def register(self, request):
-        return {}
+        """Registers the user."""
+        session = await get_session(request)
+        user_id = session.get('user_id')
+        if user_id:
+            return redirect(request, 'timeline')
 
-    @aiohttp_jinja2.template('timeline.html')
-    async def timeline(self, request):
-        return {}
+        error = None
+        form = None
+        if request.method == 'POST':
+            form = await request.post()
+
+            user_id = await db.get_user_id(self.mongo.user, form['username'])
+            if not form['username']:
+                error = 'You have to enter a username'
+            elif not form['email'] or '@' not in form['email']:
+                error = 'You have to enter a valid email address'
+            elif not form['password']:
+                error = 'You have to enter a password'
+            elif form['password'] != form['password2']:
+                error = 'The two passwords do not match'
+            elif user_id is not None:
+                error = 'The username is already taken'
+            else:
+                await self.mongo.user.insert(
+                    {'username': form['username'],
+                     'email': form['email'],
+                     'pw_hash': generate_password_hash(form['password'])})
+                return redirect(request, 'login')
+        return {"error": error, "form": form}
 
 
 #import datetime
