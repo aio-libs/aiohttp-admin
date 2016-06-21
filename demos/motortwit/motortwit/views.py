@@ -8,8 +8,8 @@ from . import db
 from .security import generate_password_hash, check_password_hash
 from .utils import redirect
 
-# flake8: noqa
 
+# flake8: noqa
 class SiteHandler:
 
     def __init__(self, mongo):
@@ -81,23 +81,6 @@ class SiteHandler:
                 "endpoint": request.match_info.route.name}
 
 
-
-#@app.route('/<username>')
-#def user_timeline(username):
-#    """Display's a users tweets."""
-#    profile_user = mongo.db.user.find_one({'username': username})
-#    if profile_user is None:
-#        abort(404)
-#    followed = False
-#    if g.user:
-#        followed = mongo.db.follower.find_one(
-#            {'who_id': ObjectId(session['user_id']),
-#             'whom_id': {'$in': [ObjectId(profile_user['_id'])]}}) is not None
-#    messages = mongo.db.message.find(
-#        {'author_id': ObjectId(profile_user['_id'])}).sort('pub_date', -1)
-#    return render_template('timeline.html', messages=messages,
-#                           followed=followed, profile_user=profile_user)
-
     @aiohttp_jinja2.template('login.html')
     async def login(self, request):
         session = await get_session(request)
@@ -156,6 +139,43 @@ class SiteHandler:
                      'pw_hash': generate_password_hash(form['password'])})
                 return redirect(request, 'login')
         return {"error": error, "form": form}
+
+    async def follow_user(self, request):
+        """Adds the current user as follower of the given user."""
+        username = request.match_info['username']
+        session = await get_session(request)
+        user_id = session.get('user_id')
+
+        if not user_id:
+            raise web.HTTPNotAuthorized()
+
+        whom_id = await db.get_user_id(self.mongo.user, username)
+
+        if whom_id is None:
+            raise web.HTTPFound()
+
+        await self.mongo.follower.update(
+            {'who_id': ObjectId(user_id)},
+            {'$push': {'whom_id': whom_id}}, upsert=True)
+
+        return redirect(request, 'user_timeline', username=username)
+
+    async def unfollow_user(self, request):
+        """Removes the current user as follower of the given user."""
+        username = request.match_info['username']
+        session = await get_session(request)
+        user_id = session.get('user_id')
+        if not user_id:
+            raise web.HTTPNotAuthorized()
+
+        whom_id = await db.get_user_id(self.mongo.user, username)
+        if whom_id is None:
+            raise web.HTTPFound()
+
+        await self.mongo.follower.update(
+            {'who_id': ObjectId(session['user_id'])},
+            {'$pull': {'whom_id': whom_id}})
+        return redirect(request, 'user_timeline', username=username)
 
 
 #import datetime
@@ -232,23 +252,6 @@ class SiteHandler:
 #    """Displays the latest messages of all users."""
 #    messages = mongo.db.message.find().sort('pub_date', -1)
 #    return render_template('timeline.html', messages=messages)
-#
-#
-#@app.route('/<username>')
-#def user_timeline(username):
-#    """Display's a users tweets."""
-#    profile_user = mongo.db.user.find_one({'username': username})
-#    if profile_user is None:
-#        abort(404)
-#    followed = False
-#    if g.user:
-#        followed = mongo.db.follower.find_one(
-#            {'who_id': ObjectId(session['user_id']),
-#             'whom_id': {'$in': [ObjectId(profile_user['_id'])]}}) is not None
-#    messages = mongo.db.message.find(
-#        {'author_id': ObjectId(profile_user['_id'])}).sort('pub_date', -1)
-#    return render_template('timeline.html', messages=messages,
-#                           followed=followed, profile_user=profile_user)
 #
 #
 #@app.route('/<username>/follow')
