@@ -1,5 +1,6 @@
-import aiohttp_jinja2
+import datetime
 
+import aiohttp_jinja2
 from aiohttp import web
 from aiohttp_session import get_session
 from bson import ObjectId
@@ -9,7 +10,6 @@ from .security import generate_password_hash, check_password_hash
 from .utils import redirect
 
 
-# flake8: noqa
 class SiteHandler:
 
     def __init__(self, mongo):
@@ -28,6 +28,7 @@ class SiteHandler:
             router = request.app.router
             location = router['public_timeline'].url()
             raise web.HTTPFound(location=location)
+        user = await self.mongo.user.find_one({'_id': ObjectId(user_id)})
 
         query = {'who_id': ObjectId(user_id)}
         filter = {'whom_id': 1}
@@ -43,6 +44,7 @@ class SiteHandler:
                           .to_list(30))
         endpoint = request.match_info.route.name
         return {"messages": messages,
+                "user": user,
                 "endpoint": endpoint,
                 "endpoint": request.match_info.route.name}
 
