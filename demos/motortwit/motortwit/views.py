@@ -66,7 +66,9 @@ class SiteHandler:
         followed = False
         session = await get_session(request)
         user_id = session.get('user_id')
+        user = None
         if user_id:
+            user = await self.mongo.user.find_one({'_id': ObjectId(user_id)})
             followed = await self.mongo.follower.find_one(
                 {'who_id': ObjectId(session['user_id']),
                  'whom_id': {'$in': [ObjectId(profile_user['_id'])]}})
@@ -77,11 +79,12 @@ class SiteHandler:
                           .sort('pub_date', -1)
                           .to_list(30))
 
+        profile_user['_id'] = str(profile_user['_id'])
         return {"messages": messages,
                 "followed": followed,
                 "profile_user": profile_user,
+                "user": user,
                 "endpoint": request.match_info.route.name}
-
 
     @aiohttp_jinja2.template('login.html')
     async def login(self, request):
@@ -160,7 +163,7 @@ class SiteHandler:
             {'who_id': ObjectId(user_id)},
             {'$push': {'whom_id': whom_id}}, upsert=True)
 
-        return redirect(request, 'user_timeline', username=username)
+        return redirect(request, 'user_timeline', parts={"username": username})
 
     async def unfollow_user(self, request):
         """Removes the current user as follower of the given user."""
@@ -177,7 +180,7 @@ class SiteHandler:
         await self.mongo.follower.update(
             {'who_id': ObjectId(session['user_id'])},
             {'$pull': {'whom_id': whom_id}})
-        return redirect(request, 'user_timeline', username=username)
+        return redirect(request, 'user_timeline', parts={"username": username})
 
 
 #import datetime
