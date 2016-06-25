@@ -3,6 +3,7 @@ import os
 import yaml
 from hashlib import md5
 from dateutil.parser import parse
+from aiohttp import web
 
 import motor.motor_asyncio as aiomotor
 
@@ -29,7 +30,7 @@ async def init_mongo(conf, loop):
 
 def robo_avatar_url(email, size=80):
     """Return the gravatar image for the given email address."""
-    hash = md5(email.strip().lower().encode('utf-8')).hexdigest()
+    hash = md5(str(email).strip().lower().encode('utf-8')).hexdigest()
     url = "https://robohash.org/{hash}.png?size={size}x{size}".format(
         hash=hash, size=size)
     return url
