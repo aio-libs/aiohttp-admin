@@ -52,7 +52,8 @@ def pg_params(pg_server):
 @pytest.fixture(scope='session')
 def container_starter(request, docker, session_id, docker_pull):
 
-    def f(image, internal_port, host_port, env=None, volume=None):
+    def f(image, internal_port, host_port, env=None, volume=None,
+          command=None):
         if docker_pull:
             print("Pulling {} image".format(image))
             docker.pull(image)
@@ -75,6 +76,7 @@ def container_starter(request, docker, session_id, docker_pull):
             detach=True,
             environment=env,
             volumes=volumes,
+            command=command,
             host_config=host_config)
         docker.start(container=container['Id'])
 
@@ -187,8 +189,9 @@ def mongo_server(host, unused_port, container_starter):
     internal_port = 27017
     host_port = unused_port()
     volume = str(TEMP_FOLDER / 'docker' / 'mongo'), '/data/db'
+    command = '--smallfiles'
     container = container_starter(image, internal_port, host_port,
-                                  volume=volume)
+                                  volume=volume, command=command)
 
     params = dict(host=host, port=host_port)
 
