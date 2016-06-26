@@ -121,12 +121,13 @@
             .title('Messages')
             .perPage(10)
             .fields([
-                nga.field('_id'),
+                nga.field('_id').isDetailLink(true),
                 nga.field('author_id'),
                 nga.field('username'),
                 nga.field('text'),
                 nga.field('pub_date'),
             ])
+            .sortField('_id')
             .listActions(['edit', 'delete']);
 
         message.creationView()
