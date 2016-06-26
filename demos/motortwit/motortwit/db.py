@@ -4,10 +4,10 @@ from trafaret.contrib.rfc_3339 import DateTime
 
 
 user = t.Dict({
-    t.Key('_id'): MongoId,
+    t.Key('_id'): MongoId(),
     t.Key('username'): t.String(max_length=50),
-    t.Key('email'): t.Email,
-    t.Key('pw_hash'): t.String,
+    t.Key('email'): t.Email(),
+    t.Key('pw_hash'): t.String(),
     # t.Key('first_name'): t.String(max_length=50),
     # t.Key('last_name'): t.String(max_length=50),
     # t.Key('created'): DateTime,
@@ -16,18 +16,18 @@ user = t.Dict({
 
 
 message = t.Dict({
-    t.Key('_id'): MongoId,
-    t.Key('author_id'): MongoId,
+    t.Key('_id'): MongoId(),
+    t.Key('author_id'): MongoId(),
     t.Key('username'): t.String(max_length=50),
-    t.Key('text'): t.String,
-    t.Key('pub_date'): DateTime,
+    t.Key('text'): t.String(),
+    t.Key('pub_date'): DateTime(),
     # t.Key('likes'): t.Int,
 })
 
 follower = t.Dict({
-    t.Key('_id'): MongoId,
-    t.Key('who'): MongoId,
-    t.Key('whom'): MongoId,
+    t.Key('_id'): MongoId(),
+    t.Key('who_id'): MongoId(),
+    t.Key('whom_id'): t.List(MongoId()),
 })
 
 

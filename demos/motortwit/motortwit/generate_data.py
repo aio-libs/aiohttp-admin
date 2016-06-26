@@ -58,14 +58,12 @@ async def generate_messages(mongo, schema, rows, fake, users):
 async def generate_followers(mongo, schema, rows, fake, user_ids):
     values = []
     for user_id in user_ids:
-        values = []
+        entry = schema({'_id': ObjectId(),
+                        'who_id': user_id,
+                        'whom_id': []})
         for i in range(rows):
-            values.append(schema({
-                '_id': ObjectId(),
-                'who': random.choice(user_ids),
-                'whom': user_id,
-            }))
-
+            entry['whom_id'].append(random.choice(user_ids))
+        values.append(entry)
     await insert_data(mongo, values)
 
 
