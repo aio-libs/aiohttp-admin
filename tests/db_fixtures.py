@@ -103,17 +103,11 @@ def sa_table():
     return post
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def create_table(request, sa_table, database, loop):
     async def f(rows):
         create_expr = CreateTable(sa_table)
-        drop_expr = DropTable(sa_table)
         async with database.acquire() as conn:
-            # TODO: move drop expr to finalizer
-            try:
-                await conn.execute(drop_expr)
-            except:
-                pass
             await conn.execute(create_expr)
             values = []
             # TODO: dry things, should be one function for sa and mongo
@@ -135,11 +129,15 @@ def create_table(request, sa_table, database, loop):
             await conn.execute('commit;')
         return sa_table
 
-    def fin():
-        # TODO: drop table after test
-        pass
-    request.addfinalizer(fin)
-    return f
+    yield f
+
+    async def fin():
+        drop_expr = DropTable(sa_table)
+        async with database.acquire() as conn:
+            await conn.execute(drop_expr)
+            await conn.execute('commit;')
+
+    loop.run_until_complete(fin())
 
 
 @pytest.fixture
@@ -192,7 +190,7 @@ def mongo_collection(mongo):
     return mongo[name]
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def create_document(request, document_schema, mongo_collection, loop):
     async def f(rows):
         values = []
@@ -214,9 +212,5 @@ def create_document(request, document_schema, mongo_collection, loop):
         for doc in values:
             await mongo_collection.insert(doc)
         return sa_table
-
-    def fin():
-        # TODO: fix finalize r, drop document after test
-        pass
-    request.addfinalizer(fin)
-    return f
+    yield f
+    loop.run_until_complete(mongo_collection.drop())
