@@ -7,7 +7,6 @@ import pytest
 import sqlalchemy as sa
 import trafaret as t
 
-from bson import ObjectId
 # from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable, DropTable
 from trafaret.contrib.object_id import MongoId
@@ -103,27 +102,35 @@ def sa_table():
     return post
 
 
+@pytest.fixture
+def create_entries():
+    def f(rows):
+        values = []
+        # TODO: dry things, should be one function for sa and mongo
+        for i in range(rows):
+            values.append({
+                'title': 'title {}'.format(i),
+                'category': 'category field {}'.format(i),
+                'body': 'body field {}'.format(i),
+                'views': i,
+                'average_note': i * 0.1,
+                # 'pictures': {'foo': 'bar', 'i': i},
+                'published_at': datetime.datetime.now(),
+                # 'tags': [i + 1, i + 2],
+                'status': 'c',
+                'visible': bool(i % 2),
+            })
+        return values
+    return f
+
+
 @pytest.yield_fixture
-def create_table(request, sa_table, database, loop):
+def create_table(request, sa_table, database, loop, create_entries):
     async def f(rows):
         create_expr = CreateTable(sa_table)
         async with database.acquire() as conn:
             await conn.execute(create_expr)
-            values = []
-            # TODO: dry things, should be one function for sa and mongo
-            for i in range(rows):
-                values.append({
-                    'title': 'title {}'.format(i),
-                    'category': 'category field {}'.format(i),
-                    'body': 'body field {}'.format(i),
-                    'views': i,
-                    'average_note': i * 0.1,
-                    # 'pictures': {'foo': 'bar', 'i': i},
-                    'published_at': datetime.datetime.now(),
-                    # 'tags': [i + 1, i + 2],
-                    'status': 'c',
-                    'visible': bool(i % 2),
-                })
+            values = create_entries(rows)
             query1 = sa_table.insert().values(values)
             await conn.execute(query1)
             await conn.execute('commit;')
@@ -191,24 +198,11 @@ def mongo_collection(mongo):
 
 
 @pytest.yield_fixture
-def create_document(request, document_schema, mongo_collection, loop):
+def create_document(request, document_schema, mongo_collection, loop,
+                    create_entries):
     async def f(rows):
-        values = []
         await mongo_collection.drop()
-        for i in range(rows):
-            values.append(document_schema({
-                '_id': ObjectId(),
-                'title': 'mongo title {}'.format(i),
-                'category': 'category field {}'.format(i),
-                'body': 'body field {}'.format(i),
-                'views': i,
-                'average_note': i * 0.1,
-                # 'pictures': {'foo': 'bar', 'i': i},
-                'published_at': datetime.datetime.now(),
-                # 'tags': [i + 1, i + 2],
-                'status': 'c',
-                'visible': bool(i % 2),
-            }))
+        values = create_entries(rows)
         for doc in values:
             await mongo_collection.insert(doc)
         return sa_table
