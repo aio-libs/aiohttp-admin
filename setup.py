@@ -46,8 +46,6 @@ classifiers = [
     'Operating System :: POSIX',
     'Environment :: Web Environment',
     'Development Status :: 3 - Alpha',
-    'Topic :: Database',
-    'Topic :: Database :: Front-Ends',
 ]
 
 
@@ -60,7 +58,7 @@ setup(name='aiohttp_admin',
       author="Nikolay Novik",
       author_email="nickolainovik@gmail.com",
       url='https://github.com/jettify/aiohttp_admin',
-      download_url='',
+      download_url='https://github.com/jettify/aiohttp_admin',
       license='Apache 2',
       packages=find_packages(),
       install_requires=install_requires,
