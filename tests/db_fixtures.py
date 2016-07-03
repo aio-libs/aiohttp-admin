@@ -106,7 +106,6 @@ def sa_table():
 def create_entries():
     def f(rows):
         values = []
-        # TODO: dry things, should be one function for sa and mongo
         for i in range(rows):
             values.append({
                 'title': 'title {}'.format(i),
@@ -114,8 +113,10 @@ def create_entries():
                 'body': 'body field {}'.format(i),
                 'views': i,
                 'average_note': i * 0.1,
+                # json is not supported in released sqlalchemy for mysql 5.7
                 # 'pictures': {'foo': 'bar', 'i': i},
                 'published_at': datetime.datetime.now(),
+                # lists not supported in MySQL
                 # 'tags': [i + 1, i + 2],
                 'status': 'c',
                 'visible': bool(i % 2),
