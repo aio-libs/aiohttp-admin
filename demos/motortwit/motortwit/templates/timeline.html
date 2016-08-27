@@ -37,7 +37,7 @@
   {% endif %}
   <ul class=messages>
     {% for message in messages %}
-      <li><img src="{{ message.author_id|robo_avatar_url(size=48)}}"><p>
+      <li><img src="{{ message.username|robo_avatar_url(size=48)}}"><p>
           <strong><a href="{{ url('user_timeline', parts={'username': message.username})
                 }}">{{ message.username }}</a></strong>
         {{ message.text }}

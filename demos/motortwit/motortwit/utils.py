@@ -28,9 +28,9 @@ async def init_mongo(conf, loop):
     return conn[db_name]
 
 
-def robo_avatar_url(email, size=80):
+def robo_avatar_url(user_data, size=80):
     """Return the gravatar image for the given email address."""
-    hash = md5(str(email).strip().lower().encode('utf-8')).hexdigest()
+    hash = md5(str(user_data).strip().lower().encode('utf-8')).hexdigest()
     url = "https://robohash.org/{hash}.png?size={size}x{size}".format(
         hash=hash, size=size)
     return url
