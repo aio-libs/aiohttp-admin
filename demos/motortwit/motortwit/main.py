@@ -49,7 +49,7 @@ def setup_jinja(app):
 
 
 async def init(loop):
-    conf = load_config(str(PROJ_ROOT / 'config' / 'dev.yml'))
+    conf = load_config(str(PROJ_ROOT / 'config' / 'config.yml'))
 
     app = web.Application(loop=loop)
     cookie_storage = SimpleCookieStorage()
