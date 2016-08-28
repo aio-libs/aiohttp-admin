@@ -163,6 +163,29 @@
         message.deletionView()
             .title('Deletion confirmation');
 
+        follower.listView()
+            .title('All follower')
+            .fields([
+                nga.field('_id').isDetailLink(true),
+                nga.field('who_id'),
+                nga.field('whom_id', 'reference_many')
+                    .targetEntity(user)
+                    .targetField(nga.field('username'))
+            ])
+            .sortField('_id')
+            .listActions(['show', 'edit', 'delete']);
+
+        follower.editionView()
+            .fields([
+                nga.field('_id').isDetailLink(true),
+                nga.field('who_id'),
+                nga.field('whom_id', 'reference_many')
+                    .targetEntity(user)
+                    .targetField(nga.field('username'))
+            ]);
+
+        follower.deletionView()
+            .title('Deletion confirmation');
 
         nga.configure(admin);
     }]);
