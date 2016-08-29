@@ -1,10 +1,12 @@
 import asyncio
 import pathlib
-from faker import Factory
 
 import aiohttpdemo_polls.db as db
+import psycopg2
+from faker import Factory
+
 from aiohttpdemo_polls.utils import init_postgres
-from sqlalchemy.schema import CreateTable
+from sqlalchemy.schema import CreateTable, DropTable
 
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
@@ -23,7 +25,15 @@ conf = {"host": "127.0.0.1",
 
 
 async def preapre_tables(pg):
-    tables = [db.choice, db.question]
+    tables = [db.question, db.choice]
+    async with pg.acquire() as conn:
+        for table in reversed(tables):
+            drop_expr = DropTable(table)
+            try:
+                await conn.execute(drop_expr)
+            except psycopg2.ProgrammingError:
+                pass
+
     async with pg.acquire() as conn:
         for table in tables:
             create_expr = CreateTable(table)
@@ -32,10 +42,10 @@ async def preapre_tables(pg):
 
 async def insert_data(pg, table, values):
     async with pg.acquire() as conn:
-        query = db.tag.insert().values(values).returning(table.c.id)
+        query = table.insert().values(values).returning(table.c.id)
         cursor = await conn.execute(query)
         resp = await cursor.fetchall()
-    return list(resp)
+    return [r[0] for r in resp]
 
 
 async def generate_questions(pg, rows, fake):
@@ -68,10 +78,10 @@ async def init(loop):
     fake.seed(1234)
     await preapre_tables(pg)
 
-    quiestion_num = 100000
+    quiestion_num = 1000
     choices_num = 5
     question_ids = await generate_questions(pg, quiestion_num, fake)
-    await generate_questions(pg, choices_num, fake, question_ids)
+    await generate_choices(pg, choices_num, fake, question_ids)
 
     pg.close()
     await pg.wait_closed()
