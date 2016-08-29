@@ -24,4 +24,14 @@ clean:
 
 run:
 	python -m aiohttpdemo_blog
+
+fake_data:
+	python ./aiohttpdemo_blog/generate_data.py
+
+docker_start_pg:
+	docker-compose -f ../../docker-compose.yml up -d postgres
+
+docker_stop_pg:
+	docker-compose -f ../../docker-compose.yml stop postgres
+
 .PHONY: flake clean
