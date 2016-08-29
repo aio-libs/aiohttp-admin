@@ -348,7 +348,7 @@
         var customDashboardTemplate =
         '<div class="row dashboard-starter"></div>' +
         '<div class="row dashboard-content"><div class="col-lg-12"><div class="alert alert-info">' +
-            'Welcome to the demo! Fell free to explore and modify the data. We reset it every few minutes.' +
+            'Welcome to the demo! Fell free to explore and modify the data.' +
         '</div></div></div>' +
         '<div class="row dashboard-content">' +
             '<div class="col-lg-12">' +
