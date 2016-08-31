@@ -1,10 +1,12 @@
 import asyncio
 import pathlib
+
+import psycopg2
 from faker import Factory
+from sqlalchemy.schema import CreateTable, DropTable
 
 import db
 from utils import init_postgres
-from sqlalchemy.schema import CreateTable
 
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
@@ -22,8 +24,19 @@ conf = {"host": "127.0.0.1",
         }
 
 
+async def delete_tables(pg, tables):
+    async with pg.acquire() as conn:
+        for table in reversed(tables):
+            drop_expr = DropTable(table)
+            try:
+                await conn.execute(drop_expr)
+            except psycopg2.ProgrammingError:
+                pass
+
+
 async def preapre_tables(pg):
     tables = [db.post, db.tag, db.comment]
+    await delete_tables(pg, tables)
     async with pg.acquire() as conn:
         for table in tables:
             create_expr = CreateTable(table)
@@ -32,10 +45,10 @@ async def preapre_tables(pg):
 
 async def insert_data(pg, table, values):
     async with pg.acquire() as conn:
-        query = db.tag.insert().values(values).returning(table.c.id)
+        query = table.insert().values(values).returning(table.c.id)
         cursor = await conn.execute(query)
         resp = await cursor.fetchall()
-    return list(resp)
+    return [r[0] for r in resp]
 
 
 async def generate_tags(pg, rows, fake):
@@ -73,8 +86,8 @@ async def generate_posts(pg, rows, fake, tag_ids):
 
 
 async def generate_comments(pg, rows, fake, post_ids):
+    values = []
     for post_id in post_ids:
-        values = []
         for i in range(rows):
             values.append({
                 'post_id': post_id,
@@ -86,6 +99,7 @@ async def generate_comments(pg, rows, fake, post_ids):
 
     await insert_data(pg, db.comment, values)
 
+
 async def init(loop):
     print("Generating Fake Data")
     pg = await init_postgres(conf['postgres'], loop)
@@ -93,7 +107,7 @@ async def init(loop):
     fake.seed(1234)
     await preapre_tables(pg)
 
-    rows = 10000
+    rows = 1000
 
     tag_ids = await generate_tags(pg, 500, fake)
     post_ids = await generate_posts(pg, rows, fake, tag_ids)
@@ -103,6 +117,7 @@ async def init(loop):
 def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(loop))
+
 
 if __name__ == "__main__":
     main()
