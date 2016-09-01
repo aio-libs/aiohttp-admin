@@ -69,7 +69,12 @@
                 nga.field('question_text', 'wysiwyg'),
                 nga.field('pub_date', 'date')
             ]);
-        question.creationView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+        question
+            .creationView()
+            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+
+        question.deletionView()
+            .title('Deletion confirmation');
 
         question.editionView()
             .title('Edit question')
