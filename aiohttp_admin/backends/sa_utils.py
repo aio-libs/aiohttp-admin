@@ -1,4 +1,3 @@
-import functools
 import operator as _operator
 
 import sqlalchemy as sa
@@ -62,8 +61,7 @@ def build_trafaret(sa_type, **kwargs):
 
 def build_key(name, default):
     if default is not None:
-        Key = functools.partial(t.Key, default=default)
-        key = Key(name)
+        key = t.Key(name, default=default)
     else:
         key = t.Key(name)
     return key
