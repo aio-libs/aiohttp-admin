@@ -59,8 +59,11 @@ def build_trafaret(sa_type, **kwargs):
     return trafaret
 
 
-def build_key(name, default):
-    if default is not None:
+_empty = object()
+
+
+def build_key(name, default=_empty):
+    if default is not _empty:
         key = t.Key(name, default=default)
     else:
         key = t.Key(name)
