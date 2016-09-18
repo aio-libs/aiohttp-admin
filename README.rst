@@ -1,9 +1,9 @@
 aiohttp_admin
 =============
-.. image:: https://travis-ci.org/jettify/aiohttp_admin.svg?branch=master
-    :target: https://travis-ci.org/jettify/aiohttp_admin
-.. image:: https://coveralls.io/repos/github/jettify/aiohttp_admin/badge.svg?branch=master
-    :target: https://coveralls.io/github/jettify/aiohttp_admin?branch=master
+.. image:: https://travis-ci.org/aio-libs/aiohttp_admin.svg?branch=master
+    :target: https://travis-ci.org/aio-libs/aiohttp_admin
+.. image:: https://coveralls.io/repos/github/aio-libs/aiohttp_admin/badge.svg?branch=master
+    :target: https://coveralls.io/github/aio-libs/aiohttp_admin?branch=master
 
 **aiohttp_admin** will help you on building an admin interface
 on top of an existing data model.
@@ -14,7 +14,7 @@ on top of an existing data model.
 result it is possible to change admin views without changing any **python**
 code. On browser side user interacts with single page application (ng-admin).
 
-.. image:: https://cdn.rawgit.com/jettify/aiohttp_admin/master/docs/diagram.svg
+.. image:: https://cdn.rawgit.com/aio-libs/aiohttp_admin/master/docs/diagram.svg
     :align: center
 
 2) admin views are database agnostic, if it is possible to implement REST API
@@ -24,14 +24,14 @@ be disabled if database do not support some kind of filtering.
 
 
 
-.. image:: https://raw.githubusercontent.com/jettify/aiohttp_admin/master/docs/admin_polls.png
+.. image:: https://raw.githubusercontent.com/aio-libs/aiohttp_admin/master/docs/admin_polls.png
     :align: center
 
 Run Tests
 ---------
 Fist of all just clone repository::
 
-    $ git clone git@github.com:jettify/aiohttp_admin.git
+    $ git clone git@github.com:aio-libs/aiohttp_admin.git
 
 Install docker_ using instruction_ from the official site, for OSX we
 use docker-machine_.
