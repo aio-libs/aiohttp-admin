@@ -24,7 +24,7 @@ be disabled if database do not support some kind of filtering.
 
 
 
-.. image:: https://raw.githubusercontent.com/aio-libs/aiohttp_admin/master/docs/admin_polls.png
+.. image:: https://raw.githubusercontent.com/aio-libs/aiohttp_admin/master/docs/demo.gif
     :align: center
 
 Run Tests
