@@ -52,7 +52,7 @@ def create_admin(request, admin_type):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_basic_rest(create_admin, loop):
+async def test_basic_rest(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -70,7 +70,7 @@ async def test_basic_rest(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_detail_entity_that_not_exists(create_admin, loop):
+async def test_detail_entity_that_not_exists(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     primary_key = admin._resources[0]._primary_key
@@ -102,7 +102,7 @@ async def test_detail_entity_that_not_exists(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_pagination(create_admin, loop):
+async def test_list_pagination(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -126,7 +126,7 @@ async def test_list_pagination(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_filtering_by_pk(create_admin, loop):
+async def test_list_filtering_by_pk(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -149,7 +149,7 @@ async def test_list_filtering_by_pk(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_text_like_filtering(create_admin, loop):
+async def test_list_text_like_filtering(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -170,7 +170,7 @@ async def test_list_text_like_filtering(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_q_filter(create_admin, loop):
+async def test_list_q_filter(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -193,7 +193,7 @@ async def test_list_q_filter(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_sorting(create_admin, loop):
+async def test_list_sorting(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     num_entities = 25
@@ -217,7 +217,7 @@ async def test_list_sorting(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_list_filtering(create_admin, loop):
+async def test_list_filtering(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
 
@@ -262,7 +262,7 @@ async def test_list_filtering(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_create(create_admin, loop):
+async def test_create(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -291,7 +291,7 @@ async def test_create(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_update(create_admin, loop):
+async def test_update(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -327,7 +327,7 @@ async def test_update(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_update_deleted_entity(create_admin, loop):
+async def test_update_deleted_entity(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     primary_key = admin._resources[0]._primary_key
@@ -362,7 +362,7 @@ async def test_update_deleted_entity(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_update_not_valid_payload(create_admin, loop):
+async def test_update_not_valid_payload(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     primary_key = admin._resources[0]._primary_key
@@ -396,7 +396,7 @@ async def test_update_not_valid_payload(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_delete(create_admin, loop):
+async def test_delete(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
@@ -418,7 +418,7 @@ async def test_delete(create_admin, loop):
 
 @pytest.mark.parametrize('admin_type', pytest.admin_type_list)
 @pytest.mark.run_loop
-async def test_delete_entity_that_not_exists(create_admin, loop):
+async def test_delete_entity_that_not_exists(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
     # TODO this is ugly
