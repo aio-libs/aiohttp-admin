@@ -1,4 +1,4 @@
-Motortwit Demo 
+Motortwit Demo
 ==============
 
 Example of mongo project using aiohttp_, motor_ and aiohttp_jinja2_,

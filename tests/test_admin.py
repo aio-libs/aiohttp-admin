@@ -23,8 +23,8 @@ def test_admin_default_ctor(loop):
     app = web.Application(loop=loop)
     admin = aiohttp_admin.Admin(app, loop=loop)
     assert app is admin.app
-    assert 'aiohttp_admin' == admin.name
-    assert 'admin.html' == admin.template
+    assert admin.name == 'aiohttp_admin'
+    assert admin.template == 'admin.html'
 
 
 def test_admin_ctor(loop):
