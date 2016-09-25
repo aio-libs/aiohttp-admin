@@ -1,5 +1,5 @@
 aiomysql
-aiopg
+aiopg==0.11.0
 coverage
 docker-compose
 docker-py
