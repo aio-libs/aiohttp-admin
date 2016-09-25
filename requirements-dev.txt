@@ -6,7 +6,7 @@ docker-py
 flake8
 ipdb
 motor
-pytest
+pytest==3.0.2
 pytest-cov
 pytest-sugar
 python-dateutil
