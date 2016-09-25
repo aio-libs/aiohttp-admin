@@ -10,4 +10,4 @@ pytest
 pytest-cov
 pytest-sugar
 python-dateutil
-sqlalchemy
+sqlalchemy==1.0.15
