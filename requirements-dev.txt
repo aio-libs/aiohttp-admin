@@ -4,7 +4,7 @@ coverage
 docker-compose
 docker-py
 flake8
-ipdb
+ipdb==0.10.1
 motor
 pytest
 pytest-cov
