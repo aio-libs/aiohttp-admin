@@ -1,7 +1,7 @@
 aiomysql
 aiopg
 coverage
-docker-compose
+docker-compose==1.8.1
 docker-py
 flake8
 ipdb
