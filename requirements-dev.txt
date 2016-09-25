@@ -5,7 +5,7 @@ docker-compose
 docker-py
 flake8
 ipdb
-motor
+motor==0.6.2
 pytest
 pytest-cov
 pytest-sugar
