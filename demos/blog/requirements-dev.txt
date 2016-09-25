@@ -1,4 +1,4 @@
 pyflakes
 pep8
-pytest
+pytest==3.0.2
 ipdb
