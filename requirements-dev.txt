@@ -9,5 +9,5 @@ motor
 pytest
 pytest-cov
 pytest-sugar
-python-dateutil
+python-dateutil==2.5.3
 sqlalchemy
