@@ -1,4 +1,4 @@
 pyflakes
 pep8==1.7.0
-pytest
+pytest==3.0.2
 ipdb==0.10.1
