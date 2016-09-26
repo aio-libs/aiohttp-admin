@@ -1,4 +1,4 @@
 pyflakes
 pep8
 pytest
-ipdb
+ipdb==0.10.1
