@@ -1,4 +1,4 @@
-aiomysql
+aiomysql==0.0.9
 aiopg
 coverage==4.2
 docker-compose
