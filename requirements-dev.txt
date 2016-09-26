@@ -1,6 +1,6 @@
 aiomysql
 aiopg
-coverage
+coverage==4.2
 docker-compose
 docker-py==1.10.3
 flake8
