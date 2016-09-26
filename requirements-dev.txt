@@ -8,6 +8,6 @@ ipdb==0.10.1
 motor
 pytest
 pytest-cov
-pytest-sugar
+pytest-sugar==0.7.1
 python-dateutil==2.5.3
 sqlalchemy
