@@ -225,11 +225,9 @@
             ])
             .filters([
                 nga.field('q')
-                    .label('')
+                    .label('Search')
                     .pinned(true)
-                    .template('<div class="input-group"><input type="text" ng-model="value" placeholder="Search" class="form-control"></input><span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span></div>')
-                    .transform(v => v && v.toUpperCase()) // transform the entered value before sending it as a query parameter
-                    .map(v => v && v.toLowerCase()), // map the query parameter to a displayed value in the filter form
+                    .attributes({'q': 'text search'}),
                 nga.field('created_at', 'date')
                     .label('Posted')
                     .attributes({'placeholder': 'Filter by date'}),

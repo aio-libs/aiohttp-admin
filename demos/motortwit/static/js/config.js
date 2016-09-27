@@ -178,7 +178,17 @@
         follower.editionView()
             .fields([
                 nga.field('_id').isDetailLink(true),
-                nga.field('who_id'),
+                nga.field('who_id', 'reference')
+                    .label('User')
+                    .targetEntity(user)
+                    .targetField(nga.field('username'))
+                    .sortField('_id')
+                    .sortDir('ASC')
+                    .validation({ required: true })
+                    .remoteComplete(true, {
+                        refreshDelay: 200,
+                        searchQuery: function(search) { return { q: search }; }
+                    }),
                 nga.field('whom_id', 'reference_many')
                     .targetEntity(user)
                     .targetField(nga.field('username'))
