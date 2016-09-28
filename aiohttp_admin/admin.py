@@ -38,7 +38,7 @@ class Admin:
         resource.setup(self.app, self._url)
         self._resources.append(resource)
 
-    async def index_handler(self, request):
+    async def index_page(self, request):
         t = self._temalate
         context = {'name': self._name}
         return render_template(t, request, context, app_key=TEMPLATE_APP_KEY)
