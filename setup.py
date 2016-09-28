@@ -15,9 +15,12 @@ def read(f):
 
 
 install_requires = ['aiohttp',
-                    'trafaret',
+                    'aiohttp_jinja2',
+                    'aiohttp_security',
+                    'aiohttp_session',
                     'python-dateutil',
-                    'aiohttp_jinja2']
+                    'trafaret',
+                    'yarl']
 
 extras_require = {'motor': ['motor'],
                   'aiopg': ['aiopg', 'sqlalchemy'],
