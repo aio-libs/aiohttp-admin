@@ -71,6 +71,11 @@ ListQuery = t.Dict({
     OptKey('_filters'): t.Mapping(t.String, Filter | SimpleType)
 })
 
+LoginForm = t.Dict({
+    "username": t.String,
+    "password": t.String,
+})
+
 
 def validate_query_structure(query):
     """Validate query arguments in list request.
