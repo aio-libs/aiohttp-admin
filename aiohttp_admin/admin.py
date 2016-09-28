@@ -1,4 +1,5 @@
 from aiohttp_jinja2 import render_template
+from yarl import URL
 
 from .consts import TEMPLATE_APP_KEY, APP_KEY
 
@@ -16,7 +17,8 @@ class Admin:
         self._app = app
         self._loop = loop
         self._resources = []
-        self._url = url or '/admin'
+        # TODO: check that url starts with /
+        self._url = URL(url or '/admin')
         self._name = name or 'aiohttp_admin'
         self._temalate = template or 'admin.html'
 

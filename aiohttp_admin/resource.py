@@ -5,9 +5,9 @@ from .utils import json_response, validate_query
 
 class AbstractResource(metaclass=ABCMeta):
 
-    def __init__(self, url=None):
+    def __init__(self, resource_name=None):
         class_name = self.__class__.__name__.lower()
-        self._url = url or class_name
+        self._resource_name = resource_name or class_name
 
     @abstractmethod
     async def list(self, request):  # pragma: no cover
@@ -41,7 +41,7 @@ class AbstractResource(metaclass=ABCMeta):
         return json_response({})
 
     def setup(self, app, base_url):
-        url = '{}/{}'.format(base_url, self._url)
+        url = str(base_url / self._resource_name)
         url_id = url + '/{entity_id}'
         add_route = app.router.add_route
         add_route('GET', url, self.list)

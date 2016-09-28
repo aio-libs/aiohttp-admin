@@ -1,5 +1,6 @@
 import aiohttp_jinja2
 import jinja2
+from yarl import URL
 
 
 from .admin import Admin, get_admin
@@ -21,12 +22,12 @@ def setup(app, admin_conf_path, *, url=None, static_url=None,
     app[app_key] = admin
 
     # setup routes
-    url = url or '/admin'
+    url = URL(url or '/admin')
     static_url = static_url or '/admin/static'
     static_folder = static_folder or str(PROJ_ROOT / 'static')
 
     r = app.router
-    r.add_route('GET', url, admin.index_handler, name='admin.index')
+    r.add_route('GET', str(url), admin.index_page, name='admin.index')
     r.add_static(static_url, path=static_folder, name='admin.static')
     r.add_static('/admin/config', path=admin_conf_path, name='admin.config')
 
