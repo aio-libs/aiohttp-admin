@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>aiohttp admin</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="{{ url('admin.static', filename='css/login.css') }}" rel="stylesheet">
+    <link href="{{ url('admin.static', filename='css/ng-admin.min.css') }}" rel="prefetch">
+    <link href="{{ url('admin.static', filename='js/ng-admin.min.js') }}" rel="prefetch">
+    <link href="{{ url('admin.config', filename='config.js') }}" rel="prefetch">
+</head>
+<body>
+    <div class="login-page">
+        <div class="form">
+            <p>aiohttp_admin</p>
+            <form class="login-form" onsubmit="return login()">
+                <input id="username" placeholder="username" type="text">
+                <input id="password" placeholder="password" type="password">
+                <button>login</button>
+                <p class="message"><a href="http://github.com/aio-libs/aiohttp_admin">http://github.com/aio-libs/aiohttp_admin</a></p>
+            </form>
+        </div>
+    </div>
+    <script type="application/x-javascript">
+    window.addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false);
+    function hideURLbar(){
+        window.scrollTo(0,1);
+    }
+    function login(e) {
+        if (e) {
+            e.preventDefault();
+        }
+        var request = new XMLHttpRequest();
+        var data = {"username": document.getElementById('username').value,
+                    "password": document.getElementById('password').value}
+        request.open('POST', '/admin/login', true);
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.onload = function() {
+          if (request.status >= 200 && request.status < 400) {
+            var respData = JSON.parse(request.responseText);
+            window.localStorage.setItem('aiohttp_admin_token', respData);
+            var redirect = request.getResponseHeader("location");
+            window.location = redirect;
+          } else {
+            alert("go wrong status code");
+          }
+        };
+        request.onerror = function() {
+          alert("Connection Error");
+        };
+        request.send(JSON.stringify(data));
+    }
+    </script>
+</body>
+</html>
