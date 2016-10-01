@@ -2,8 +2,8 @@ aiohttp_admin
 =============
 .. image:: https://travis-ci.org/aio-libs/aiohttp_admin.svg?branch=master
     :target: https://travis-ci.org/aio-libs/aiohttp_admin
-.. image:: https://coveralls.io/repos/github/aio-libs/aiohttp_admin/badge.svg?branch=master
-    :target: https://coveralls.io/github/aio-libs/aiohttp_admin?branch=master
+.. image:: https://codecov.io/gh/aio-libs/aiohttp_admin/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/aio-libs/aiohttp_admin
 
 **aiohttp_admin** will help you on building an admin interface
 on top of an existing data model. Library designed to be database agnostic and
