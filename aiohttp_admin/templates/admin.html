@@ -8,6 +8,16 @@
         {% endblock %}
     </head>
     <body ng-app="aiohttp_admin">
+        <script type="text/javascript">
+        var data = window.localStorage.getItem('aiohttp_admin_token');
+        if (!data) {
+            window.location.href = "./admin/login";
+        }
+        function logout() {
+            window.localStorage.removeItem('aiohttp_admin_token');
+            window.location.href = "./admin/login";
+        }
+        </script>
         {% block body %}
         <div ui-view></div>
         <script src="{{ url('admin.static', filename='js/ng-admin.min.js') }}" type="text/javascript"></script>
