@@ -33,20 +33,26 @@ class JsonRestError(RestClientError):
 
 class AdminRESTClient:
 
-    def __init__(self, url, *, admin_prefix=None, loop):
+    def __init__(self, url, *, admin_prefix=None, headers=None, loop):
         self._loop = loop
         self._url = url
         self._admin_prefix = admin_prefix or 'admin'
         self._session = aiohttp.ClientSession(loop=loop)
+        self._headers = headers or {}
 
     async def request(self, method, path, data=None, params=None,
-                      headers=None, json_dumps=True):
+                      headers=None, json_dumps=True, token=None):
         if json_dumps and (data is not None):
             data = jsonify(data).encode('utf-8')
         url = '{}/{}/{}'.format(self._url, self._admin_prefix, path)
+        if headers:
+            self._headers.update(headers)
         resp = await self._session.request(method, url,
                                            params=params, data=data,
-                                           headers=headers)
+                                           headers=self._headers)
+        return resp
+
+    async def handle_response(self, resp):
         body = await resp.read()
         if resp.status in (200, 201):
             jsoned = await resp.json()
@@ -62,16 +68,22 @@ class AdminRESTClient:
                 raise JsonRestError(resp.status, jsoned)
 
     def close(self):
+        # TODO: make coroutine
         if self._session:
             self._session.close()
 
+    def set_token(self, token):
+        self._headers["Authorization"] = token
+
     async def create(self, resource, data, **kw):
-        answer = await self.request("POST", resource, data=data, *kw)
+        resp = await self.request("POST", resource, data=data, *kw)
+        answer = await self.handle_response(resp)
         return answer
 
     async def detail(self, resource, entity_id, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("GET", path, **kw)
+        resp = await self.request("GET", path, **kw)
+        answer = await self.handle_response(resp)
         return answer
 
     async def list(self, resource, page=1, per_page=30, sort_field=None,
@@ -83,18 +95,36 @@ class AdminRESTClient:
         sort_field and query.update({'_sortField': sort_field})
         sort_dir and query.update({'_sortDir': sort_dir})
 
-        answer = await self.request("GET", resource, params=query)
+        resp = await self.request("GET", resource, params=query)
+        answer = await self.handle_response(resp)
         return answer
 
     async def update(self, resource, entity_id, data, **kw):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("PUT", path, data=data, **kw)
+        resp = await self.request("PUT", path, data=data, **kw)
+        answer = await self.handle_response(resp)
         return answer
 
     async def delete(self, resource, entity_id):
         path = '{}/{}'.format(resource, entity_id)
-        answer = await self.request("DELETE", path)
+        resp = await self.request("DELETE", path)
+        answer = await self.handle_response(resp)
         return answer
+
+    async def token(self, username, password):
+        data = dict(username=username, password=password)
+        path = 'token'
+        resp = await self.request("POST", path, data=data)
+        token = resp.headers.get('X-Token')
+        await self.handle_response(resp)
+        return token
+
+    async def destroy_token(self, token):
+        path = 'logout'
+        h = {'X-Token': token}
+        resp = await self.request("DELETE", path, headers=h)
+        await self.handle_response(resp)
+        return token
 
 
 @pytest.yield_fixture
@@ -138,8 +168,7 @@ def create_app_and_client(create_server, loop):
         app, url = await create_server(**server_params)
         if client_params is None:
             client_params = {}
-        # TODO: pass client_params here
-        client = AdminRESTClient(url, loop=loop)
+        client = AdminRESTClient(url, **client_params, loop=loop)
         return app, client
 
     yield maker

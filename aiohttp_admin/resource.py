@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABCMeta
 
+from .security import Permissions, require
 from .utils import json_response, validate_query
 
 
@@ -11,6 +12,7 @@ class AbstractResource(metaclass=ABCMeta):
 
     @abstractmethod
     async def list(self, request):  # pragma: no cover
+        await require(request, Permissions.view)
         q = validate_query(request.GET)
         assert q
 
@@ -20,22 +22,26 @@ class AbstractResource(metaclass=ABCMeta):
 
     @abstractmethod
     async def detail(self, request):  # pragma: no cover
+        await require(request, Permissions.view)
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
 
     @abstractmethod
     async def create(self, request):  # pragma: no cover
+        await require(request, Permissions.add)
         return json_response({})
 
     @abstractmethod
     async def update(self, request):  # pragma: no cover
+        await require(request, Permissions.edit)
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
 
     @abstractmethod
     async def delete(self, request):  # pragma: no cover
+        await require(request, Permissions.delete)
         entity_id = request.match_info['entity_id']
         assert entity_id
         return json_response({})
