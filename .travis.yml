@@ -9,14 +9,14 @@ services:
 
 install:
     - pip install --upgrade setuptools
-    - pip install coveralls
+    - pip install codecov
     - pip install -Ur requirements-dev.txt
     - python setup.py develop
 
 script:
     make ci
 after_success:
-    coveralls
+    codecov
 
 env:
     matrix:
