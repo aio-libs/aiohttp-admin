@@ -1,7 +1,9 @@
 import pytest
 import aiohttp_admin
+import aiohttp_security
 from aiohttp_admin.backends.sa import PGResource, MySQLResource
 from aiohttp_admin.backends.mongo import MotorResource
+from aiohttp_admin.security import DummyAuthPolicy, DummyTokenIdentityPolicy
 
 
 @pytest.fixture
@@ -9,6 +11,10 @@ def pg_admin_creator(loop, create_app_and_client, postgres,
                      sa_table, create_table):
     async def pg_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
+        # setup dummy auth and identity
+        ident_policy = DummyTokenIdentityPolicy()
+        auth_policy = DummyAuthPolicy(username="admin", password="admin")
+        aiohttp_security.setup(app, ident_policy, auth_policy)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(PGResource(postgres, sa_table, url=resource_name))
         return admin, client, create_table
@@ -20,6 +26,10 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
                         create_table):
     async def mysql_admin(resource_name='test_post'):
         app, client = await create_app_and_client()
+        # setup dummy auth and identity
+        ident_policy = DummyTokenIdentityPolicy()
+        auth_policy = DummyAuthPolicy(username="admin", password="admin")
+        aiohttp_security.setup(app, ident_policy, auth_policy)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MySQLResource(mysql, sa_table, url=resource_name))
         return admin, client, create_table
@@ -30,7 +40,11 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
 def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
                         document_schema, create_document):
     async def mongo_admin(resource_name='test_post'):
+        # setup dummy auth and identity
         app, client = await create_app_and_client()
+        ident_policy = DummyTokenIdentityPolicy()
+        auth_policy = DummyAuthPolicy(username="admin", password="admin")
+        aiohttp_security.setup(app, ident_policy, auth_policy)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MotorResource(mongo_collection, document_schema,
                                          url=resource_name))
@@ -55,6 +69,9 @@ def create_admin(request, admin_type):
 async def test_basic_rest(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
+
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -73,6 +90,9 @@ async def test_basic_rest(create_admin):
 async def test_detail_entity_that_not_exists(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
+
     primary_key = admin._resources[0]._primary_key
 
     # create one entity
@@ -105,6 +125,8 @@ async def test_detail_entity_that_not_exists(create_admin):
 async def test_list_pagination(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -129,6 +151,8 @@ async def test_list_pagination(create_admin):
 async def test_list_filtering_by_pk(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -152,6 +176,8 @@ async def test_list_filtering_by_pk(create_admin):
 async def test_list_text_like_filtering(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
 
     num_entities = 25
@@ -173,6 +199,8 @@ async def test_list_text_like_filtering(create_admin):
 async def test_list_q_filter(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
 
     num_entities = 25
@@ -196,6 +224,8 @@ async def test_list_q_filter(create_admin):
 async def test_list_sorting(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     num_entities = 25
     await create_entities(num_entities)
 
@@ -220,6 +250,8 @@ async def test_list_sorting(create_admin):
 async def test_list_filtering(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
 
     num_entities = 25
     await create_entities(num_entities)
@@ -265,6 +297,8 @@ async def test_list_filtering(create_admin):
 async def test_create(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -294,6 +328,8 @@ async def test_create(create_admin):
 async def test_update(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -330,6 +366,8 @@ async def test_update(create_admin):
 async def test_update_deleted_entity(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     primary_key = admin._resources[0]._primary_key
 
     num_entities = 1
@@ -365,6 +403,8 @@ async def test_update_deleted_entity(create_admin):
 async def test_update_not_valid_payload(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     primary_key = admin._resources[0]._primary_key
 
     num_entities = 1
@@ -399,6 +439,8 @@ async def test_update_not_valid_payload(create_admin):
 async def test_delete(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 
@@ -421,6 +463,8 @@ async def test_delete(create_admin):
 async def test_delete_entity_that_not_exists(create_admin):
     resource = 'posts'
     admin, client, create_entities = await create_admin(resource)
+    token = await client.token('admin', 'admin')
+    client.set_token(token)
     # TODO this is ugly
     primary_key = admin._resources[0]._primary_key
 

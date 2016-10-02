@@ -2,6 +2,7 @@ import sqlalchemy as sa
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
+from ..security import require, Permissions
 from ..utils import (json_response, validate_payload, validate_query,
                      calc_pagination, ASC)
 from .sa_utils import validator_from_table, create_filter
@@ -33,6 +34,7 @@ class PGResource(AbstractResource):
         return self._table
 
     async def list(self, request):
+        await require(request, Permissions.view)
         columns_names = list(self._table.c.keys())
         q = validate_query(request.GET, columns_names)
         paging = calc_pagination(q, self._primary_key)
@@ -62,6 +64,7 @@ class PGResource(AbstractResource):
         return json_response(entities, headers=headers)
 
     async def detail(self, request):
+        await require(request, Permissions.view)
         entity_id = request.match_info['entity_id']
         async with self.pool.acquire() as conn:
             query = self.table.select().where(self._pk == entity_id)
@@ -76,6 +79,7 @@ class PGResource(AbstractResource):
         return json_response(entity)
 
     async def create(self, request):
+        await require(request, Permissions.add)
         raw_payload = await request.read()
         data = validate_payload(raw_payload, self._create_validator)
 
@@ -89,6 +93,7 @@ class PGResource(AbstractResource):
         return json_response(entity)
 
     async def update(self, request):
+        await require(request, Permissions.edit)
         entity_id = request.match_info['entity_id']
         raw_payload = await request.read()
         data = validate_payload(raw_payload, self._update_validator)
@@ -114,6 +119,7 @@ class PGResource(AbstractResource):
         return json_response(entity)
 
     async def delete(self, request):
+        await require(request, Permissions.delete)
         entity_id = request.match_info['entity_id']
 
         async with self.pool.acquire() as conn:
@@ -128,6 +134,7 @@ class PGResource(AbstractResource):
 class MySQLResource(PGResource):
 
     async def create(self, request):
+        await require(request, Permissions.add)
         raw_payload = await request.read()
         data = validate_payload(raw_payload, self._create_validator)
 
@@ -144,6 +151,7 @@ class MySQLResource(PGResource):
         return json_response(entity)
 
     async def update(self, request):
+        await require(request, Permissions.edit)
         entity_id = request.match_info['entity_id']
         raw_payload = await request.read()
         data = validate_payload(raw_payload, self._update_validator)
