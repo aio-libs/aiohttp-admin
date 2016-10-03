@@ -78,6 +78,5 @@ class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
 
     async def forget(self, request, response):
         token = request.headers.get("Authorization")
-        if token:
-            # destroy token,  remove it from storage
-            assert token
+        # destroy token,  remove it from storage
+        assert token
