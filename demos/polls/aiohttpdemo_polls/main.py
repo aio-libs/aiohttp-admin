@@ -2,17 +2,19 @@ import asyncio
 import logging
 import pathlib
 
+import aiohttp_admin
 import aiohttp_jinja2
+import aiohttp_security
 import jinja2
+
 from aiohttp import web
+from aiohttp_admin.backends.sa import PGResource
+from aiohttp_admin.security import DummyAuthPolicy, DummyTokenIdentityPolicy
 
 import aiohttpdemo_polls.db as db
 from aiohttpdemo_polls.routes import setup_routes
 from aiohttpdemo_polls.utils import init_postgres, load_config
 from aiohttpdemo_polls.views import SiteHandler
-
-import aiohttp_admin
-from aiohttp_admin.backends.sa import PGResource
 
 
 PROJ_ROOT = pathlib.Path(__file__).parent.parent
@@ -41,6 +43,11 @@ async def init(loop):
     async def close_pg(app):
         pg.close()
         await pg.wait_closed()
+
+    # setup dummy auth and identity
+    ident_policy = DummyTokenIdentityPolicy()
+    auth_policy = DummyAuthPolicy(username="admin", password="admin")
+    aiohttp_security.setup(app, ident_policy, auth_policy)
 
     # setup admin views
     admin_config = str(PROJ_ROOT / 'static' / 'js')

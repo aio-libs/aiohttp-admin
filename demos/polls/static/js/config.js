@@ -22,6 +22,10 @@
 
 
     var app = angular.module('aiohttp_admin', ['ng-admin']);
+    app.config(['RestangularProvider', function(RestangularProvider) {
+        var token = window.localStorage.getItem('aiohttp_admin_token');
+        RestangularProvider.setDefaultHeaders({'Authorization': token});
+    }]);
 
     app.config(['NgAdminConfigurationProvider', function (NgAdminConfigurationProvider) {
         var nga = NgAdminConfigurationProvider;
