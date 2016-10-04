@@ -3,6 +3,7 @@ import json
 import aiohttp
 import pytest
 from aiohttp import web
+from yarl import URL
 
 from aiohttp_admin.utils import jsonify
 
@@ -35,21 +36,37 @@ class AdminRESTClient:
 
     def __init__(self, url, *, admin_prefix=None, headers=None, loop):
         self._loop = loop
-        self._url = url
+        self._url = URL(url)
         self._admin_prefix = admin_prefix or 'admin'
         self._session = aiohttp.ClientSession(loop=loop)
         self._headers = headers or {}
 
+    RestClientError = RestClientError
+    JsonRestError = JsonRestError
+
+    @property
+    def base_url(self):
+        return self._url
+
+    @property
+    def admin_prefix(self):
+        return self._admin_prefix
+
     async def request(self, method, path, data=None, params=None,
-                      headers=None, json_dumps=True, token=None):
+                      headers=None, json_dumps=True, token=None,
+                      **kwargs):
+        url = self._url / path
         if json_dumps and (data is not None):
             data = jsonify(data).encode('utf-8')
-        url = '{}/{}/{}'.format(self._url, self._admin_prefix, path)
+
+        h = self._headers.copy()
         if headers:
-            self._headers.update(headers)
-        resp = await self._session.request(method, url,
+            h.update(headers)
+        if token:
+            h.update({"Authorization": token})
+        resp = await self._session.request(method, str(url),
                                            params=params, data=data,
-                                           headers=self._headers)
+                                           headers=h, **kwargs)
         return resp
 
     async def handle_response(self, resp):
@@ -76,18 +93,20 @@ class AdminRESTClient:
         self._headers["Authorization"] = token
 
     async def create(self, resource, data, **kw):
-        resp = await self.request("POST", resource, data=data, *kw)
+        url = '{}/{}'.format(self._admin_prefix, resource)
+        resp = await self.request("POST", url, data=data, *kw)
         answer = await self.handle_response(resp)
         return answer
 
     async def detail(self, resource, entity_id, **kw):
-        path = '{}/{}'.format(resource, entity_id)
+        path = '{}/{}/{}'.format(self._admin_prefix, resource, entity_id)
         resp = await self.request("GET", path, **kw)
         answer = await self.handle_response(resp)
         return answer
 
     async def list(self, resource, page=1, per_page=30, sort_field=None,
                    sort_dir=None, filters=None):
+        url = '{}/{}'.format(self._admin_prefix, resource)
         f = json.dumps(filters or {})
 
         query = {'_page': page, '_perPage': per_page, '_filters': f}
@@ -95,33 +114,33 @@ class AdminRESTClient:
         sort_field and query.update({'_sortField': sort_field})
         sort_dir and query.update({'_sortDir': sort_dir})
 
-        resp = await self.request("GET", resource, params=query)
+        resp = await self.request("GET", url, params=query)
         answer = await self.handle_response(resp)
         return answer
 
     async def update(self, resource, entity_id, data, **kw):
-        path = '{}/{}'.format(resource, entity_id)
+        path = '{}/{}/{}'.format(self._admin_prefix, resource, entity_id)
         resp = await self.request("PUT", path, data=data, **kw)
         answer = await self.handle_response(resp)
         return answer
 
     async def delete(self, resource, entity_id):
-        path = '{}/{}'.format(resource, entity_id)
+        path = '{}/{}/{}'.format(self._admin_prefix, resource, entity_id)
         resp = await self.request("DELETE", path)
         answer = await self.handle_response(resp)
         return answer
 
     async def token(self, username, password):
+        path = '{}/{}'.format(self._admin_prefix, 'token')
         data = dict(username=username, password=password)
-        path = 'token'
         resp = await self.request("POST", path, data=data)
         token = resp.headers.get('X-Token')
         await self.handle_response(resp)
         return token
 
     async def destroy_token(self, token):
-        path = 'logout'
-        h = {'X-Token': token}
+        path = '{}/{}'.format(self._admin_prefix, 'logout')
+        h = {'Authorization': token}
         resp = await self.request("DELETE", path, headers=h)
         await self.handle_response(resp)
         return token
