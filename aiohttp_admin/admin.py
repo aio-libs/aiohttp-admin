@@ -3,8 +3,9 @@ from aiohttp_security import remember, forget
 from yarl import URL
 
 from .consts import TEMPLATE_APP_KEY, APP_KEY
+from .exceptions import JsonValidaitonError
 from .security import authorize
-from .utils import json_response, validate_payload, LoginForm, redirect
+from .utils import json_response, validate_payload, LoginForm
 
 
 __all__ = ['Admin', 'get_admin']
@@ -65,7 +66,13 @@ class Admin:
         return response
 
     async def logout(self, request):
-        response = redirect("admin.login")
+        if "Authorization" not in request.headers:
+            msg = "Auth header is not present, can not destroy token"
+            raise JsonValidaitonError(msg)
+        router = request.app.router
+        location = router["admin.login"].url()
+        payload = {"location": location}
+        response = json_response(payload)
         await forget(request, response)
         return response
 
