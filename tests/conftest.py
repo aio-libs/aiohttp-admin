@@ -64,4 +64,5 @@ def unused_port():
     return f
 
 
-pytest_plugins = ['docker_fixtures', 'db_fixtures', 'rest_fixtures']
+pytest_plugins = ['docker_fixtures', 'db_fixtures', 'rest_fixtures',
+                  'admin_fixtures']
