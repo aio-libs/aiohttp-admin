@@ -155,9 +155,3 @@ def calc_pagination(query_dict, default_sort_direction):
     offset = (page - 1) * per_page
     limit = per_page
     return PagingParams(limit, offset, sort_field, sort_dir)
-
-
-def redirect(request, name, **kw):
-    router = request.app.router
-    location = router[name].url(**kw)
-    return web.HTTPFound(location=location)
