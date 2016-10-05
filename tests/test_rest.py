@@ -48,7 +48,7 @@ async def test_detail_entity_that_not_exists(create_admin):
     resp = await client.list(resource, page=1, per_page=30)
     assert len(resp) == 0
 
-    with pytest.raises(Exception) as ctx:
+    with pytest.raises(client.JsonRestError) as ctx:
         await client.detail(resource, entity_id)
 
     err = ctx.value
@@ -326,7 +326,7 @@ async def test_update_deleted_entity(create_admin):
               'status': 'c',
               'visible': True}
 
-    with pytest.raises(Exception) as ctx:
+    with pytest.raises(client.JsonRestError) as ctx:
         await client.update(resource, entity_id, entity)
 
     err = ctx.value
@@ -352,7 +352,7 @@ async def test_update_not_valid_payload(create_admin):
     entity_id = resp[0][primary_key]
 
     # try to send not json
-    with pytest.raises(Exception) as ctx:
+    with pytest.raises(client.JsonRestError) as ctx:
         await client.update(resource, entity_id, 'foo', json_dumps=False)
 
     err = ctx.value

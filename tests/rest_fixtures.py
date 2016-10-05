@@ -105,7 +105,7 @@ class AdminRESTClient:
         return answer
 
     async def list(self, resource, page=1, per_page=30, sort_field=None,
-                   sort_dir=None, filters=None):
+                   sort_dir=None, filters=None, **kw):
         url = '{}/{}'.format(self._admin_prefix, resource)
         f = json.dumps(filters or {})
 
@@ -114,7 +114,7 @@ class AdminRESTClient:
         sort_field and query.update({'_sortField': sort_field})
         sort_dir and query.update({'_sortDir': sort_dir})
 
-        resp = await self.request("GET", url, params=query)
+        resp = await self.request("GET", url, params=query, **kw)
         answer = await self.handle_response(resp)
         return answer
 
@@ -124,9 +124,9 @@ class AdminRESTClient:
         answer = await self.handle_response(resp)
         return answer
 
-    async def delete(self, resource, entity_id):
+    async def delete(self, resource, entity_id, **kw):
         path = '{}/{}/{}'.format(self._admin_prefix, resource, entity_id)
-        resp = await self.request("DELETE", path)
+        resp = await self.request("DELETE", path, **kw)
         answer = await self.handle_response(resp)
         return answer
 
