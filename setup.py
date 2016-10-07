@@ -17,7 +17,6 @@ def read(f):
 install_requires = ['aiohttp',
                     'aiohttp_jinja2',
                     'aiohttp_security',
-                    'aiohttp_session',
                     'python-dateutil',
                     'trafaret',
                     'yarl']
