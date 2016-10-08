@@ -14,5 +14,5 @@ pytest-sugar==0.7.1
 pytest==3.0.3
 python-dateutil==2.5.3
 sqlalchemy==1.1.0
-trafaret==0.7.2
+trafaret==0.7.3
 yarl==0.3.1
