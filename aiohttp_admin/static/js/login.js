@@ -1,25 +1,44 @@
-function login(e) {
-    if (e) {
-        e.preventDefault();
-    }
-    var request = new XMLHttpRequest();
-    var data = {"username": document.getElementById('username').value,
-        "password": document.getElementById('password').value}
-    request.open('POST', '/admin/token', true);
-    request.setRequestHeader('Content-Type', 'application/json');
-    request.onload = function() {
-        if (request.status >= 200 && request.status < 400) {
-            var respData = JSON.parse(request.responseText);
-            var redirect = respData["location"]
-            var token = request.getResponseHeader("X-Token");
-            window.localStorage.setItem('aiohttp_admin_token', token);
-            window.location = redirect;
+(function init() {
+    var form = document.getElementById('login-form');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        var url = form.getAttribute('action');
+        var data = {
+            'username': form.username.value,
+            'password': form.password.value
+        };
+        ajaxRequest(url, data, onSuccess, onError);
+    });
+})();
+
+function ajaxRequest(url, data, successCallback, errorCallback) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-type', 'application/json');
+
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            successCallback(xhr);
         } else {
-            alert("go wrong status code");
+            var response = JSON.parse(xhr.responseText);
+            errorCallback(response.error);
         }
     };
-    request.onerror = function() {
-        alert("Connection Error");
+    xhr.onerror = function () {
+        errorCallback('Connection error. Please try again later');
     };
-    request.send(JSON.stringify(data));
+
+    xhr.send(JSON.stringify(data));
+}
+
+function onSuccess(xhr) {
+    var response = JSON.parse(xhr.responseText);
+    var token = xhr.getResponseHeader('X-Token');
+    window.localStorage.setItem('aiohttp_admin_token', token);
+    window.location = response['location'];
+}
+
+function onError(message) {
+    console.log(message);
 }

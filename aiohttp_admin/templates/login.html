@@ -13,13 +13,13 @@
     <div class="login-panel">
         <h1 class="app-title">Login</h1>
 
-        <form class="login-form" onsubmit="return login()">
+        <form action="/admin/token" method="post" id="login-form">
             <div class="control-group">
-                <input type="text" class="login-field" placeholder="username" id="username" autofocus>
+                <input type="text" class="login-field" placeholder="username" name="username" autofocus>
             </div>
 
             <div class="control-group">
-                <input type="password" class="login-field" placeholder="password" id="password">
+                <input type="password" class="login-field" placeholder="password" name="password">
             </div>
 
             <button type="submit">login</button>

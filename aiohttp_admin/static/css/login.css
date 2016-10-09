@@ -27,7 +27,7 @@ body {
   color: #292d39;
 }
 
-.login-form {
+#login-form {
   text-align: center;
 }
 .control-group {
