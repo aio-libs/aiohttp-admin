@@ -26,7 +26,8 @@ install_requires = ['aiohttp',
                     'trafaret',
                     'aiohttp_jinja2',
                     'pyyaml',
-                    'motor']
+                    'motor',
+                    'faker']
 
 
 setup(name='motortwit',
