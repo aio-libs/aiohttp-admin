@@ -35,7 +35,7 @@ async def authorize(request, username, password):
     assert autz_policy, "aiohttp_security should inited first"
     is_user = await autz_policy.check_credential(username, password)
     if not is_user:
-        msg = "username or password is not correct"
+        msg = "Wrong username or password"
         raise JsonForbiddenError(msg)
     return is_user
 

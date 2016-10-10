@@ -10,16 +10,18 @@
     <link href="{{ url('admin.config', filename='config.js') }}" rel="prefetch">
 </head>
 <body>
-    <div class="login-panel">
+    <div id="login-panel">
         <h1 class="app-title">Login</h1>
+
+        <div id="error-message"></div>
 
         <form action="/admin/token" method="post" id="login-form">
             <div class="control-group">
-                <input type="text" class="login-field" placeholder="username" name="username" autofocus>
+                <input type="text" class="login-field" placeholder="username" name="username" required autofocus>
             </div>
 
             <div class="control-group">
-                <input type="password" class="login-field" placeholder="password" name="password">
+                <input type="password" class="login-field" placeholder="password" name="password" required>
             </div>
 
             <button type="submit">login</button>
@@ -27,5 +29,7 @@
     </div>
 
     <script src="{{ url('admin.static', filename='js/login.js') }}"></script>
+
+    <style type="text/css">div.image {max-width: 256px;max-height: 256px;}</style>
 </body>
 </html>
