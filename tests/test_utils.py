@@ -101,4 +101,4 @@ def test_validate_payload_not_valid_schema():
         validate_payload(raw_data, schema)
 
     error = json.loads(ctx.value.text)
-    assert error['error'] == 'Json in payload invalid'
+    assert error['error'] == 'Invalid json payload'

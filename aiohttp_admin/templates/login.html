@@ -10,47 +10,26 @@
     <link href="{{ url('admin.config', filename='config.js') }}" rel="prefetch">
 </head>
 <body>
-    <div class="login-page">
-        <div class="form">
-            <p>aiohttp_admin</p>
-            <form class="login-form" onsubmit="return login()">
-                <input id="username" placeholder="username" type="text">
-                <input id="password" placeholder="password" type="password">
-                <button>login</button>
-                <p class="message"><a href="http://github.com/aio-libs/aiohttp_admin">http://github.com/aio-libs/aiohttp_admin</a></p>
-            </form>
-        </div>
+    <div id="login-panel">
+        <h1 class="app-title">Login</h1>
+
+        <div id="error-message"></div>
+
+        <form action="/admin/token" method="post" id="login-form">
+            <div class="control-group">
+                <input type="text" class="login-field" placeholder="username" name="username" required autofocus>
+            </div>
+
+            <div class="control-group">
+                <input type="password" class="login-field" placeholder="password" name="password" required>
+            </div>
+
+            <button type="submit">login</button>
+        </form>
     </div>
-    <script type="application/x-javascript">
-    window.addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false);
-    function hideURLbar(){
-        window.scrollTo(0,1);
-    }
-    function login(e) {
-        if (e) {
-            e.preventDefault();
-        }
-        var request = new XMLHttpRequest();
-        var data = {"username": document.getElementById('username').value,
-                    "password": document.getElementById('password').value}
-        request.open('POST', '/admin/token', true);
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.onload = function() {
-          if (request.status >= 200 && request.status < 400) {
-            var respData = JSON.parse(request.responseText);
-            var redirect = respData["location"]
-            var token = request.getResponseHeader("X-Token");
-            window.localStorage.setItem('aiohttp_admin_token', token);
-            window.location = redirect;
-          } else {
-            alert("go wrong status code");
-          }
-        };
-        request.onerror = function() {
-          alert("Connection Error");
-        };
-        request.send(JSON.stringify(data));
-    }
-    </script>
+
+    <script src="{{ url('admin.static', filename='js/login.js') }}"></script>
+
+    <style type="text/css">div.image {max-width: 256px;max-height: 256px;}</style>
 </body>
 </html>
