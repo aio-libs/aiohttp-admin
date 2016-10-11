@@ -31,9 +31,9 @@ class ObjectNotFound(AdminRESTError):
 
 class JsonValidaitonError(AdminRESTError):
     status_code = 400
-    error = "Json in payload invalid"
+    error = "Invalid json payload"
 
 
 class JsonForbiddenError(AdminRESTError):
     status_code = 401
-    error = "Aceess denied"
+    error = "Access denied"
