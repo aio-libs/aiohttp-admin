@@ -1,43 +1,41 @@
 (function () {
     "use strict";
-    var onSubmitError = function(error, form, progression, notification) {
-            // mark fields based on errors from the response
-            if (!('error_details' in error.data)){
-                return true;
-            }
-            _.mapObject(error.data.error_details, function(error_msg, field_name) {
-                if (form[field_name]) {
-                    form[field_name].$valid = false;
-                }
-                return {}
-            });
-            // stop the progress bar
-            progression.done();
-            // add a notification
-            notification.log(`Some values are invalid, see details in the form`,
-                             { addnCls: 'humane-flatty-error' });
-            // cancel the default action (default error messages)
-            return false;
+    var onSubmitError = function (error, form, progression, notification) {
+        // mark fields based on errors from the response
+        if (!('error_details' in error.data)) {
+            return true;
         }
+        _.mapObject(error.data.error_details, function (error_msg, field_name) {
+            if (form[field_name]) {
+                form[field_name].$valid = false;
+            }
+            return {}
+        });
+        // stop the progress bar
+        progression.done();
+        // add a notification
+        notification.log(`Some values are invalid, see details in the form`,
+            {addnCls: 'humane-flatty-error'});
+        // cancel the default action (default error messages)
+        return false;
+    }
 
 
     var app = angular.module('aiohttp_admin', ['ng-admin']);
-    app.config(['RestangularProvider', function(RestangularProvider) {
+    app.config(['RestangularProvider', function (RestangularProvider) {
         var token = window.localStorage.getItem('aiohttp_admin_token');
         RestangularProvider.setDefaultHeaders({'Authorization': token});
     }]);
 
-    app.config(['NgAdminConfigurationProvider', function (NgAdminConfigurationProvider) {
-        var nga = NgAdminConfigurationProvider;
+    app.config(['NgAdminConfigurationProvider', function (nga) {
+        var admin = nga.application('aiohttp admin demo');
 
-        var admin = nga.application('aiohttp admin demo')
-            .debug(true)
-            .baseApiUrl('/admin/');
+        admin.baseApiUrl('/admin/');
 
         admin.errorMessage(function (response) {
             var msg = '<p>Oops error occured with status code: ' + response.status + '</p>\n';
 
-            if ('error_details' in response.data ){
+            if ('error_details' in response.data) {
                 msg += '<code>';
                 msg += JSON.stringify(response.data.error_details, null, 2);
                 msg += '</code>';
@@ -78,29 +76,29 @@
                 nga.field('pw_hash'),
             ]);
         user.creationView()
-            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
 
         user.editionView()
             .title('Edit user')
             .actions(['list', 'show', 'delete'])
             .fields([
                 nga.field('_id')
-                .editable(false),
+                    .editable(false),
                 user.creationView().fields(),
-                 nga.field('message', 'referenced_list')
-                     .targetEntity(nga.entity('message').identifier(nga.field('_id')))
-                     .targetReferenceField('author_id')
-                     .targetFields([
-                         nga.field('_id').isDetailLink(true),
-                         nga.field('text'),
-                         nga.field('pub_date')
-                     ])
-                     .sortField('_id')
-                     .sortDir('DESC')
-                     .listActions(['edit']),
+                nga.field('message', 'referenced_list')
+                    .targetEntity(nga.entity('message').identifier(nga.field('_id')))
+                    .targetReferenceField('author_id')
+                    .targetFields([
+                        nga.field('_id').isDetailLink(true),
+                        nga.field('text'),
+                        nga.field('pub_date')
+                    ])
+                    .sortField('_id')
+                    .sortDir('DESC')
+                    .listActions(['edit']),
             ]);
         user.editionView()
-            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
 
         user.showView()
             .fields([
@@ -142,27 +140,29 @@
                     .targetField(nga.field('username'))
                     .sortField('_id')
                     .sortDir('ASC')
-                    .validation({ required: true })
+                    .validation({required: true})
                     .remoteComplete(true, {
                         refreshDelay: 200,
-                        searchQuery: function(search) { return { q: search }; }
+                        searchQuery: function (search) {
+                            return {q: search};
+                        }
                     }),
                 nga.field('username'),
                 nga.field('text'),
                 nga.field('pub_date'),
             ]);
 
-        message.creationView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+        message.creationView().onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
 
         message.editionView()
             .fields(
                 nga.field('_id')
-                .editable(false)
-                .label('_id'),
+                    .editable(false)
+                    .label('_id'),
                 message.creationView().fields()
             );
         message.editionView()
-            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError ]);
+            .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
 
         message.deletionView()
             .title('Deletion confirmation');
@@ -188,10 +188,12 @@
                     .targetField(nga.field('username'))
                     .sortField('_id')
                     .sortDir('ASC')
-                    .validation({ required: true })
+                    .validation({required: true})
                     .remoteComplete(true, {
                         refreshDelay: 200,
-                        searchQuery: function(search) { return { q: search }; }
+                        searchQuery: function (search) {
+                            return {q: search};
+                        }
                     }),
                 nga.field('whom_id', 'reference_many')
                     .targetEntity(user)
