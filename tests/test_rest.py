@@ -366,7 +366,7 @@ async def test_update_not_valid_payload(create_admin):
 
     err = ctx.value
     assert err.status_code == 400
-    assert err.error_json['error'] == 'Json in payload invalid'
+    assert err.error_json['error'] == 'Invalid json payload'
     foo_error = err.error_json['error_details']['foo']
     assert foo_error == 'foo is not allowed key'
 

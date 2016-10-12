@@ -39,7 +39,7 @@ async def test_token(create_admin):
 
     with pytest.raises(client.JsonRestError) as ctx:
         await client.token('admin', 'badpassword')
-    msg = {'error': 'username or password is not correct'}
+    msg = {'error': 'Wrong username or password'}
     assert ctx.value.status_code == 401
     assert ctx.value.error_json == msg
 
@@ -52,7 +52,7 @@ async def test_token_invalid_payload(create_admin):
     with pytest.raises(client.JsonRestError) as ctx:
         resp = await client.request('POST', 'admin/token', data=data)
         await client.handle_response(resp)
-    msg = {'error': 'Json in payload invalid',
+    msg = {'error': 'Invalid json payload',
            'error_details': {'foo': 'foo is not allowed key',
                              'password': 'is required',
                              'username': 'is required'}}
