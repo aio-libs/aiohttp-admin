@@ -1,7 +1,9 @@
 import json
-from functools import partial
-from datetime import datetime, date
+
 from collections import namedtuple
+from datetime import datetime, date
+from functools import partial
+from types import MappingProxyType
 
 import trafaret as t
 from aiohttp import web
@@ -143,7 +145,7 @@ def validate_query(query, possible_columns):
         column_list = ', '.join(not_valid)
         msg = 'Columns: {} do not present in resource'.format(column_list)
         raise JsonValidaitonError(msg)
-    return q
+    return MappingProxyType(q)
 
 
 def calc_pagination(query_dict, default_sort_direction):
