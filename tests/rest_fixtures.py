@@ -94,7 +94,7 @@ class AdminRESTClient:
 
     async def create(self, resource, data, **kw):
         url = '{}/{}'.format(self._admin_prefix, resource)
-        resp = await self.request("POST", url, data=data, *kw)
+        resp = await self.request("POST", url, data=data, **kw)
         answer = await self.handle_response(resp)
         return answer
 
