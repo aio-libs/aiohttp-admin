@@ -122,11 +122,11 @@ def op(operation, column):
 
 # TODO: fix comparators, keys should be something better
 comparator_map = {
-    sa.sql.sqltypes.String: ['eq', 'ne', 'like'],
-    sa.sql.sqltypes.Text: ['eq', 'ne', 'like'],
-    sa.sql.sqltypes.Integer: ['eq', 'ne', 'lt', 'le', 'gt', 'ge', 'in'],
-    sa.sql.sqltypes.Float: ['eq', 'ne', 'lt', 'le', 'gt', 'ge'],
-    sa.sql.sqltypes.Date: ['eq', 'ne', 'lt', 'le', 'gt', 'ge'],
+    sa.sql.sqltypes.String: ('eq', 'ne', 'like'),
+    sa.sql.sqltypes.Text: ('eq', 'ne', 'like'),
+    sa.sql.sqltypes.Integer: ('eq', 'ne', 'lt', 'le', 'gt', 'ge', 'in'),
+    sa.sql.sqltypes.Float: ('eq', 'ne', 'lt', 'le', 'gt', 'ge'),
+    sa.sql.sqltypes.Date: ('eq', 'ne', 'lt', 'le', 'gt', 'ge'),
 }
 
 
