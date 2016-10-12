@@ -42,9 +42,10 @@ async def authorize(request, username, password):
 
 class DummyAuthPolicy(AdminAbstractAuthorizationPolicy):
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, permissions=None):
         self._username = username
         self._password = password
+        self._permissions = permissions or [p for p in Permissions]
 
     async def authorized_userid(self, identity):
         user_id = None
@@ -56,7 +57,7 @@ class DummyAuthPolicy(AdminAbstractAuthorizationPolicy):
         if identity is None:
             return False
         is_user = self._username == identity
-        is_perm = any(p == permission for p in Permissions)
+        is_perm = permission in self._permissions
         return is_user and is_perm
 
     async def check_credential(self, identity, password):
