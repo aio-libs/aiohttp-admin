@@ -1,5 +1,6 @@
+/* global _ angular */
 (function () {
-    "use strict";
+    'use strict';
     var onSubmitError = function (error, form, progression, notification) {
         // mark fields based on errors from the response
         if (!('error_details' in error.data)) {
@@ -9,16 +10,16 @@
             if (form[field_name]) {
                 form[field_name].$valid = false;
             }
-            return {}
+            return {};
         });
         // stop the progress bar
         progression.done();
         // add a notification
-        notification.log(`Some values are invalid, see details in the form`,
+        notification.log('Some values are invalid, see details in the form',
             {addnCls: 'humane-flatty-error'});
         // cancel the default action (default error messages)
         return false;
-    }
+    };
 
 
     var app = angular.module('aiohttp_admin', ['ng-admin']);
@@ -97,6 +98,7 @@
                     .sortDir('DESC')
                     .listActions(['edit']),
             ]);
+
         user.editionView()
             .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
 

@@ -33,6 +33,7 @@ clean:
 	rm -rf build
 	rm -rf htmlcov
 	rm -rf dist
+	rm -rf node_modules
 
 docker_clean:
 	-@docker rmi $$(docker images -q --filter "dangling=true")

@@ -17,7 +17,7 @@
  * Posters Galore demo (http://marmelab.com/ng-admin-demo/).
  */
 (function () {
-    "use strict";
+    'use strict';
 
     var app = angular.module('aiohttp_admin', ['ng-admin']);
 
