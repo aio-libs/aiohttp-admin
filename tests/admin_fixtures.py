@@ -16,9 +16,9 @@ def setup_security(app):
 @pytest.fixture
 def pg_admin_creator(loop, create_app_and_client, postgres,
                      sa_table, create_table):
-    async def pg_admin(resource_name='test_post'):
+    async def pg_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        setup_security(app)
+        security(app)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(PGResource(postgres, sa_table, url=resource_name))
         return admin, client, create_table
@@ -28,9 +28,9 @@ def pg_admin_creator(loop, create_app_and_client, postgres,
 @pytest.fixture
 def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
                         create_table):
-    async def mysql_admin(resource_name='test_post'):
+    async def mysql_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        setup_security(app)
+        security(app)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MySQLResource(mysql, sa_table, url=resource_name))
         return admin, client, create_table
@@ -40,9 +40,9 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
 @pytest.fixture
 def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
                         document_schema, create_document):
-    async def mongo_admin(resource_name='test_post'):
+    async def mongo_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        setup_security(app)
+        security(app)
         admin = aiohttp_admin.setup(app, './')
         admin.add_resource(MotorResource(mongo_collection, document_schema,
                                          url=resource_name))
