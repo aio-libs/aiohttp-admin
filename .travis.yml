@@ -6,11 +6,15 @@ python:
 services:
     - docker
 
+before_install:
+    - npm i -g yarn
+
 install:
     - pip install --upgrade setuptools
     - pip install codecov
     - pip install -Ur requirements-dev.txt
     - python setup.py develop
+    - yarn install
 
 script:
     make ci

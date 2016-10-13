@@ -18,6 +18,7 @@ cov cover coverage: flake
 
 ci: flake
 	py.test --dp -s -v  --cov-report term --cov aiohttp_admin ./tests
+	npm run eslint
 
 clean:
 	rm -rf `find . -name __pycache__`
@@ -33,6 +34,7 @@ clean:
 	rm -rf build
 	rm -rf htmlcov
 	rm -rf dist
+	rm -rf node_modules
 
 docker_clean:
 	-@docker rmi $$(docker images -q --filter "dangling=true")
