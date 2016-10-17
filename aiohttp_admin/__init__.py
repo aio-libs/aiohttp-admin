@@ -5,10 +5,12 @@ from yarl import URL
 
 from .admin import Admin, get_admin, setup_admin_handlers
 from .consts import PROJ_ROOT, TEMPLATE_APP_KEY, APP_KEY
+from .security import Permissions, require, authorize
 from .utils import gather_template_folders
 
 
-__all__ = ['Admin', 'setup', 'get_admin']
+__all__ = ['Admin', 'setup', 'get_admin', 'Permissions', 'require',
+           'authorize']
 __version__ = '0.0.1'
 
 
