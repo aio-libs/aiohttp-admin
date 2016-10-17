@@ -9,6 +9,9 @@ from aiohttp_security.api import AUTZ_KEY
 from .exceptions import JsonForbiddenError
 
 
+__all__ = ["Permissions", "require", "authorize"]
+
+
 class Permissions(str, Enum):
     view = "aiohttp_admin.view"
     edit = "aiohttp_admin.edit"
