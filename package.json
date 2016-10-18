@@ -6,6 +6,9 @@
     "type": "git"
   },
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=4.2.0"
+  },
   "scripts": {
     "preinstall": "rm -rf ./aiohttp_admin/static/ng-admin/",
     "postinstall": "mkdir ./aiohttp_admin/static/ng-admin/; cp ./node_modules/ng-admin/build/* ./aiohttp_admin/static/ng-admin/",
