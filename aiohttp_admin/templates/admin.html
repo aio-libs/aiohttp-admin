@@ -4,7 +4,7 @@
         {% block head %}
         <meta charset="utf-8">
         <title>aiohttp Admin</title>
-        <link rel="stylesheet" href="{{ url('admin.static', filename='css/ng-admin/ng-admin.min.css') }}">
+        <link rel="stylesheet" href="{{ url('admin.static', filename='ng-admin/ng-admin.min.css') }}">
         {% endblock %}
     </head>
     <body ng-app="aiohttp_admin">
@@ -19,8 +19,8 @@
         }
         </script>
         {% block body %}
-        <div ui-view></div>
-        <script src="{{ url('admin.static', filename='js/ng-admin/ng-admin.min.js') }}" type="text/javascript"></script>
+        <div ui-view="ng-admin"></div>
+        <script src="{{ url('admin.static', filename='ng-admin/ng-admin.min.js') }}" type="text/javascript"></script>
         <script src="{{ url('admin.config', filename='config.js') }}" type="text/javascript"></script>
         {% endblock %}
     </body>
