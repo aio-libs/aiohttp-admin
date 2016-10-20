@@ -6,10 +6,18 @@
     "type": "git"
   },
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=4.2.0"
+  },
   "scripts": {
+    "preinstall": "rm -rf ./aiohttp_admin/static/ng-admin/",
+    "postinstall": "mkdir ./aiohttp_admin/static/ng-admin/; cp ./node_modules/ng-admin/build/* ./aiohttp_admin/static/ng-admin/",
     "eslint": "node node_modules/eslint/bin/eslint.js **/*.js"
   },
   "devDependencies": {
     "eslint": "3.7.1"
+  },
+  "dependencies": {
+    "ng-admin": "1.0.0-beta2"
   }
 }
