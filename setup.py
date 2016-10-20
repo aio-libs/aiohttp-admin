@@ -51,7 +51,7 @@ classifiers = [
 ]
 
 
-setup(name='aiohttp_admin',
+setup(name='aiohttp-admin',
       version=read_version(),
       description=('admin interface for aiohttp application'),
       long_description='\n\n'.join((read('README.rst'), read('CHANGES.txt'))),
