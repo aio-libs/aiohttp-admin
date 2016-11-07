@@ -24,12 +24,18 @@ PROJ_ROOT = pathlib.Path(__file__).parent.parent
 TEMPLATES_ROOT = pathlib.Path(__file__).parent / 'templates'
 
 
-def setup_admin(app, mongo, admin_config_path):
-    admin = aiohttp_admin.setup(app, admin_config_path)
+def setup_admin(app, mongo):
+    admin_config_path = str(PROJ_ROOT / 'static' / 'js')
     m = mongo
-    admin.add_resource(MotorResource(m.user, db.user, url="user"))
-    admin.add_resource(MotorResource(m.message, db.message, url="message"))
-    admin.add_resource(MotorResource(m.follower, db.follower, url="follower"))
+    resources = (MotorResource(m.user, db.user, url="user"),
+                 MotorResource(m.message, db.message, url="message"),
+                 MotorResource(m.follower, db.follower, url="follower"))
+    admin = aiohttp_admin.setup(app, admin_config_path, resources=resources)
+
+    # setup dummy auth and identity
+    ident_policy = DummyTokenIdentityPolicy()
+    auth_policy = DummyAuthPolicy(username="admin", password="admin")
+    aiohttp_security.setup(admin, ident_policy, auth_policy)
     return admin
 
 
@@ -60,13 +66,8 @@ async def init(loop):
 
     setup_jinja(app)
 
-    # setup dummy auth and identity
-    ident_policy = DummyTokenIdentityPolicy()
-    auth_policy = DummyAuthPolicy(username="admin", password="admin")
-    aiohttp_security.setup(app, ident_policy, auth_policy)
-
-    admin_config = str(PROJ_ROOT / 'static' / 'js')
-    setup_admin(app, mongo, admin_config)
+    admin = setup_admin(app, mongo)
+    app.router.add_subapp('/admin', admin)
 
     app.router.add_static('/static', path=str(PROJ_ROOT / 'static'))
 

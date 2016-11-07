@@ -22,10 +22,15 @@ TEMPLATES_ROOT = pathlib.Path(__file__).parent / 'templates'
 
 
 def setup_admin(app, pg, admin_config_path):
-    admin = aiohttp_admin.setup(app, admin_config_path)
+    admin_config_path = str(PROJ_ROOT / 'static' / 'js')
+    resources = (PGResource(pg, db.question, url='question'),
+                 PGResource(pg, db.choice, url='choice'))
+    admin = aiohttp_admin.setup(app, admin_config_path, resources=resources)
 
-    admin.add_resource(PGResource(pg, db.question, url='question'))
-    admin.add_resource(PGResource(pg, db.choice, url='choice'))
+    # setup dummy auth and identity
+    ident_policy = DummyTokenIdentityPolicy()
+    auth_policy = DummyAuthPolicy(username="admin", password="admin")
+    aiohttp_security.setup(admin, ident_policy, auth_policy)
     return admin
 
 
@@ -44,14 +49,10 @@ async def init(loop):
         pg.close()
         await pg.wait_closed()
 
-    # setup dummy auth and identity
-    ident_policy = DummyTokenIdentityPolicy()
-    auth_policy = DummyAuthPolicy(username="admin", password="admin")
-    aiohttp_security.setup(app, ident_policy, auth_policy)
-
     # setup admin views
     admin_config = str(PROJ_ROOT / 'static' / 'js')
-    setup_admin(app, pg, admin_config)
+    admin = setup_admin(app, pg, admin_config)
+    app.router.add_subapp('/admin', admin)
 
     app.on_cleanup.append(close_pg)
 

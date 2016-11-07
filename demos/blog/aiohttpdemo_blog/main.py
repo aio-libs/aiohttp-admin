@@ -28,12 +28,17 @@ class SiteHandler:
         return {}
 
 
-def setup_admin(app, pg, admin_config_path):
-    admin = aiohttp_admin.setup(app, admin_config_path)
+def setup_admin(app, pg):
+    admin_config_path = str(PROJ_ROOT / 'static' / 'js')
+    resources = (PGResource(pg, db.post, url='posts'),
+                 PGResource(pg, db.tag, url='tags'),
+                 PGResource(pg, db.comment, url='comments'))
+    admin = aiohttp_admin.setup(app, admin_config_path, resources=resources)
 
-    admin.add_resource(PGResource(pg, db.post, url='posts'))
-    admin.add_resource(PGResource(pg, db.tag, url='tags'))
-    admin.add_resource(PGResource(pg, db.comment, url='comments'))
+    # setup dummy auth and identity
+    ident_policy = DummyTokenIdentityPolicy()
+    auth_policy = DummyAuthPolicy(username="admin", password="admin")
+    aiohttp_security.setup(admin, ident_policy, auth_policy)
     return admin
 
 
@@ -61,13 +66,8 @@ async def init(loop):
     aiohttp_jinja2.setup(
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT)))
 
-    # setup dummy auth and identity
-    ident_policy = DummyTokenIdentityPolicy()
-    auth_policy = DummyAuthPolicy(username="admin", password="admin")
-    aiohttp_security.setup(app, ident_policy, auth_policy)
-
-    admin_config = str(PROJ_ROOT / 'static' / 'js')
-    setup_admin(app, pg, admin_config)
+    admin = setup_admin(app, pg)
+    app.router.add_subapp('/admin/', admin)
 
     # setup views and routes
     handler = SiteHandler(pg)
