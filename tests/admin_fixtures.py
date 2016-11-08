@@ -18,9 +18,10 @@ def pg_admin_creator(loop, create_app_and_client, postgres,
                      sa_table, create_table):
     async def pg_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        security(app)
-        admin = aiohttp_admin.setup(app, './')
-        admin.add_resource(PGResource(postgres, sa_table, url=resource_name))
+        resources = (PGResource(postgres, sa_table, url=resource_name),)
+        admin = aiohttp_admin.setup(app, '/', resources=resources)
+        security(admin)
+        app.router.add_subapp('/admin', admin)
         return admin, client, create_table
     return pg_admin
 
@@ -30,9 +31,10 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
                         create_table):
     async def mysql_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        security(app)
-        admin = aiohttp_admin.setup(app, './')
-        admin.add_resource(MySQLResource(mysql, sa_table, url=resource_name))
+        resources = (MySQLResource(mysql, sa_table, url=resource_name),)
+        admin = aiohttp_admin.setup(app, '/', resources=resources)
+        security(admin)
+        app.router.add_subapp('/admin', admin)
         return admin, client, create_table
     return mysql_admin
 
@@ -42,10 +44,11 @@ def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
                         document_schema, create_document):
     async def mongo_admin(resource_name='test_post', security=setup_security):
         app, client = await create_app_and_client()
-        security(app)
-        admin = aiohttp_admin.setup(app, './')
-        admin.add_resource(MotorResource(mongo_collection, document_schema,
-                                         url=resource_name))
+        m = mongo_collection
+        resources = (MotorResource(m, document_schema, url=resource_name),)
+        admin = aiohttp_admin.setup(app, '/', resources=resources)
+        security(admin)
+        app.router.add_subapp('/admin', admin)
         return admin, client, create_document
 
     return mongo_admin
