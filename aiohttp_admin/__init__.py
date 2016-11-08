@@ -1,6 +1,5 @@
 import aiohttp_jinja2
 import jinja2
-from yarl import URL
 from aiohttp import web
 
 
@@ -36,7 +35,6 @@ def setup(app, admin_conf_path, *, resources, static_url=None,
     admin['admin_handler'] = admin_handler
     # TODO: fix this hack
     admin._resources = admin_handler._resources
-
 
     static_url = static_url or '/admin/static'
     static_folder = static_folder or str(PROJ_ROOT / 'static')
