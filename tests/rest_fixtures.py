@@ -148,28 +148,34 @@ class AdminRESTClient:
 
 @pytest.yield_fixture
 def create_server(loop, unused_port):
-    app = handler = srv = None
+    cleanup = []
 
     async def create(*, debug=False, ssl_ctx=None, proto='http'):
-        nonlocal app, handler, srv
         app = web.Application(loop=loop)
         port = unused_port()
-        handler = app.make_handler(debug=debug, keep_alive_on=False)
-        srv = await loop.create_server(handler, '127.0.0.1', port, ssl=ssl_ctx)
         if ssl_ctx:
             proto += 's'
         url = "{}://127.0.0.1:{}".format(proto, port)
-        return app, url
+
+        async def app_starter():
+            handler = app.make_handler(debug=debug, keep_alive_on=False)
+            srv = await loop.create_server(handler, '127.0.0.1', port,
+                                           ssl=ssl_ctx)
+            cleanup.append((app, handler, srv))
+            return
+
+        return app, url, app_starter
 
     yield create
 
     async def finish():
-        if app is None:
-            return
-        await handler.finish_connections()
-        await app.finish()
-        srv.close()
-        await srv.wait_closed()
+        for app, handler, srv in cleanup:
+            if app is None:
+                continue
+            await handler.finish_connections()
+            await app.finish()
+            srv.close()
+            await srv.wait_closed()
 
     loop.run_until_complete(finish())
 
@@ -184,11 +190,11 @@ def create_app_and_client(create_server, loop):
             server_params = {}
         server_params.setdefault('debug', False)
         server_params.setdefault('ssl_ctx', None)
-        app, url = await create_server(**server_params)
+        app, url, app_starter = await create_server(**server_params)
         if client_params is None:
             client_params = {}
         client = AdminRESTClient(url, **client_params, loop=loop)
-        return app, client
+        return app, client, app_starter
 
     yield maker
     if client is not None:

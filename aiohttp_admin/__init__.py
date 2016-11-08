@@ -34,6 +34,9 @@ def setup(app, admin_conf_path, *, resources, static_url=None,
         admin_handler.add_resource(r)
 
     admin['admin_handler'] = admin_handler
+    # TODO: fix this hack
+    admin._resources = admin_handler._resources
+
 
     static_url = static_url or '/admin/static'
     static_folder = static_folder or str(PROJ_ROOT / 'static')

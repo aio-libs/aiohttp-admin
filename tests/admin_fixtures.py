@@ -17,11 +17,12 @@ def setup_security(app):
 def pg_admin_creator(loop, create_app_and_client, postgres,
                      sa_table, create_table):
     async def pg_admin(resource_name='test_post', security=setup_security):
-        app, client = await create_app_and_client()
+        app, client, app_starter = await create_app_and_client()
         resources = (PGResource(postgres, sa_table, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
         app.router.add_subapp('/admin', admin)
+        await app_starter()
         return admin, client, create_table
     return pg_admin
 
@@ -30,11 +31,12 @@ def pg_admin_creator(loop, create_app_and_client, postgres,
 def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
                         create_table):
     async def mysql_admin(resource_name='test_post', security=setup_security):
-        app, client = await create_app_and_client()
+        app, client, app_starter = await create_app_and_client()
         resources = (MySQLResource(mysql, sa_table, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
         app.router.add_subapp('/admin', admin)
+        await app_starter()
         return admin, client, create_table
     return mysql_admin
 
@@ -43,12 +45,13 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
 def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
                         document_schema, create_document):
     async def mongo_admin(resource_name='test_post', security=setup_security):
-        app, client = await create_app_and_client()
+        app, client, app_starter = await create_app_and_client()
         m = mongo_collection
         resources = (MotorResource(m, document_schema, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
         app.router.add_subapp('/admin', admin)
+        await app_starter()
         return admin, client, create_document
 
     return mongo_admin
