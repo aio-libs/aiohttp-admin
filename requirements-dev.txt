@@ -13,7 +13,7 @@ motor==0.7
 pytest-cov==2.4.0
 pytest-sugar==0.7.1
 pytest==3.0.3
-python-dateutil==2.5.3
+python-dateutil==2.6.0
 sqlalchemy==1.1.3
 trafaret==0.7.5
 yarl==0.7.0
