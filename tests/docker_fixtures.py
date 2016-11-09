@@ -183,7 +183,7 @@ def mongo_params(mongo_server):
 
 @pytest.fixture(scope='session')
 def mongo_server(host, unused_port, container_starter):
-    tag = '2.6'
+    tag = '3.3'
     image = 'mongo:{}'.format(tag)
 
     internal_port = 27017
