@@ -43,7 +43,7 @@ def mysql(request, loop, mysql_params):
             host=conf['host'],
             port=conf['port'],
             minsize=1,
-            maxsize=5,
+            maxsize=2,
             loop=loop)
         return engine
     engine = loop.run_until_complete(init_mysql(mysql_params, loop))
@@ -65,7 +65,7 @@ def postgres(request, loop, pg_params):
             host=conf['host'],
             port=conf['port'],
             minsize=1,
-            maxsize=5,
+            maxsize=2,
             loop=loop)
         return engine
     engine = loop.run_until_complete(init_postgres(pg_params, loop))
@@ -171,7 +171,7 @@ def document_schema():
 def mongo(request, loop, mongo_params):
     conf = mongo_params.copy()
     conf["database"] = "aiohttp_admin_db"
-    conf["max_pool_size"] = 5
+    conf["max_pool_size"] = 2
 
     async def init_mogo(conf, loop):
         url = "mongodb://{}:{}".format(conf['host'], conf['port'])
