@@ -175,10 +175,8 @@ def mongo(request, loop, mongo_params):
 
     async def init_mogo(conf, loop):
         url = "mongodb://{}:{}".format(conf['host'], conf['port'])
-
         conn = aiomotor.AsyncIOMotorClient(
-            url, max_pool_size=conf['max_pool_size'], io_loop=loop)
-        await conn.open()
+            url, maxPoolSize=conf['max_pool_size'], io_loop=loop)
         return conn
 
     conn = loop.run_until_complete(init_mogo(conf, loop))
