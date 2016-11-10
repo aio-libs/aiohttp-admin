@@ -10,7 +10,7 @@ async def test_basic_rest(create_admin):
     client.set_token(token)
 
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 10
     await create_entities(num_entities)
@@ -30,7 +30,7 @@ async def test_detail_entity_that_not_exists(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
 
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     # create one entity
     num_entities = 1
@@ -65,7 +65,7 @@ async def test_list_pagination(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 25
     await create_entities(num_entities)
@@ -91,7 +91,7 @@ async def test_list_filtering_by_pk(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 25
     await create_entities(num_entities)
@@ -237,7 +237,7 @@ async def test_create(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 1
     await create_entities(num_entities)
@@ -268,7 +268,7 @@ async def test_update(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 1
     await create_entities(num_entities)
@@ -305,7 +305,7 @@ async def test_update_deleted_entity(create_admin):
     admin, client, create_entities = await create_admin(resource)
     token = await client.token('admin', 'admin')
     client.set_token(token)
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 1
     await create_entities(num_entities)
@@ -342,7 +342,7 @@ async def test_update_not_valid_payload(create_admin):
     admin, client, create_entities = await create_admin(resource)
     token = await client.token('admin', 'admin')
     client.set_token(token)
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 1
     await create_entities(num_entities)
@@ -379,7 +379,7 @@ async def test_delete(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 5
     await create_entities(num_entities)
@@ -403,7 +403,7 @@ async def test_delete_entity_that_not_exists(create_admin):
     token = await client.token('admin', 'admin')
     client.set_token(token)
     # TODO this is ugly
-    primary_key = admin._resources[0]._primary_key
+    primary_key = admin['admin_handler'].resources[0].primary_key
 
     num_entities = 1
     await create_entities(num_entities)

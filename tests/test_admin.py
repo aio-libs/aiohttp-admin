@@ -24,7 +24,8 @@ def test_get_admin_with_app_key(loop):
 
 def test_admin_default_ctor(loop):
     app = web.Application(loop=loop)
-    admin = aiohttp_admin.AdminHandler(app, loop=loop)
+    resources = tuple()
+    admin = aiohttp_admin.AdminHandler(app, resources=resources, loop=loop)
     assert admin.name == 'aiohttp_admin'
     assert admin.template == 'admin.html'
 
@@ -33,7 +34,8 @@ def test_admin_ctor(loop):
     app = web.Application(loop=loop)
     name = 'custom admin name'
     template = 'other.html'
-    admin = aiohttp_admin.AdminHandler(app, name=name, template=template,
-                                       loop=loop)
+    resources = tuple()
+    admin = aiohttp_admin.AdminHandler(
+        app, resources=resources, name=name, template=template, loop=loop)
     assert name == admin.name
     assert template == admin.template
