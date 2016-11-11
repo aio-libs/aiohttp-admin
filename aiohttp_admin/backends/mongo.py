@@ -15,11 +15,15 @@ __all__ = ['MotorResource']
 class MotorResource(AbstractResource):
 
     def __init__(self, collection, schema, primary_key='_id', url=None):
-        super().__init__(url)
+        super().__init__(primary_key=primary_key, resource_name=url)
         self._collection = collection
         self._primary_key = primary_key
         self._schema = schema
         self._update_schema = create_validator(schema, primary_key)
+
+    @property
+    def primary_key(self):
+        return self._primary_key
 
     async def list(self, request):
         await require(request, Permissions.view)

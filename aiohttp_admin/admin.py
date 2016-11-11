@@ -13,13 +13,16 @@ __all__ = ['AdminHandler', 'setup_admin_handlers']
 
 class AdminHandler:
 
-    def __init__(self, admin, *,  name=None, template=None, loop):
+    def __init__(self, admin, *, resources, name=None, template=None, loop):
         self._admin = admin
         self._loop = loop
-        self._resources = []
         self._name = name or 'aiohttp_admin'
         self._temalate = template or 'admin.html'
         self._login_template = 'login.html'
+
+        for r in resources:
+            r.setup(self._admin, URL('/'))
+        self._resources = tuple(resources)
 
     @property
     def template(self):
@@ -29,9 +32,9 @@ class AdminHandler:
     def name(self):
         return self._name
 
-    def add_resource(self, resource):
-        resource.setup(self._admin, URL('/'))
-        self._resources.append(resource)
+    @property
+    def resources(self):
+        return self._resources
 
     async def index_page(self, request):
         t = self._temalate

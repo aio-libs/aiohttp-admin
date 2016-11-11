@@ -27,14 +27,10 @@ def setup(app, admin_conf_path, *, resources, static_url=None,
     aiohttp_jinja2.setup(admin, loader=loader, app_key=TEMPLATE_APP_KEY)
 
     template_name = template_name or 'admin.html'
-    admin_handler = AdminHandler(admin, name=name, template=template_name,
-                                 loop=app.loop)
-    for r in resources:
-        admin_handler.add_resource(r)
+    admin_handler = AdminHandler(admin, resources=resources, name=name,
+                                 template=template_name, loop=app.loop)
 
     admin['admin_handler'] = admin_handler
-    # TODO: fix this hack
-    admin._resources = admin_handler._resources
 
     static_url = static_url or '/admin/static'
     static_folder = static_folder or str(PROJ_ROOT / 'static')

@@ -6,9 +6,14 @@ from .utils import json_response, validate_query
 
 class AbstractResource(metaclass=ABCMeta):
 
-    def __init__(self, resource_name=None):
+    def __init__(self, *, primary_key, resource_name=None):
         class_name = self.__class__.__name__.lower()
         self._resource_name = resource_name or class_name
+        self._primary_key = primary_key
+
+    @property
+    def primary_key(self):
+        return self._primary_key
 
     @abstractmethod
     async def list(self, request):  # pragma: no cover

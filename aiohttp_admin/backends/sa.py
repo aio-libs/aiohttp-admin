@@ -14,7 +14,7 @@ __all__ = ['PGResource', 'MySQLResource']
 class PGResource(AbstractResource):
 
     def __init__(self, db, table, primary_key='id', url=None):
-        super().__init__(url)
+        super().__init__(primary_key=primary_key, resource_name=url)
         self._db = db
         self._table = table
         self._primary_key = primary_key
