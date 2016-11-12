@@ -21,9 +21,8 @@ async def init_mongo(conf, loop):
     mongo_uri = "mongodb://{}:{}".format(conf['host'], conf['port'])
     conn = aiomotor.AsyncIOMotorClient(
         mongo_uri,
-        max_pool_size=conf['max_pool_size'],
+        maxPoolSize=conf['max_pool_size'],
         io_loop=loop)
-    await conn.open()
     db_name = conf['database']
     return conn[db_name]
 

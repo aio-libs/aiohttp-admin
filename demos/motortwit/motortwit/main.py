@@ -42,7 +42,7 @@ def setup_admin(app, mongo):
 async def setup_mongo(app, conf, loop):
     mongo = await init_mongo(conf['mongo'], loop)
     async def close_mongo(app):
-        mongo.connection.close()
+        mongo.client.close()
 
     app.on_cleanup.append(close_mongo)
     return mongo
