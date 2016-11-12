@@ -13,8 +13,7 @@ entities = [
 
 config_str = generate_config(entities, base_url)
 path = Path(__file__).parent.absolute()
-import ipdb
-ipdb.set_trace()
+
 config_location = path / '..' / 'static/js/config2.js'
 with open(str(config_location), 'w') as f:
     f.write(config_str)

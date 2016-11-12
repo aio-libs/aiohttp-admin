@@ -47,7 +47,7 @@ def generate_config(entities, base_url, template_name=None,
 
     context = {
         "admin_description": desc,
-        "base_url": base_url if base_url.endswith("/") else base_url + '/' ,
+        "base_url": base_url if base_url.endswith("/") else base_url + '/',
         "entities": [entity_description(n, pk, s) for n, pk, s in entities],
         "extra_context": extra_context,
     }
