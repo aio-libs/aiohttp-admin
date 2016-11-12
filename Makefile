@@ -17,7 +17,7 @@ cov cover coverage: flake
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 ci: flake
-	py.test --dp -s -v  --cov-report term --cov aiohttp_admin ./tests
+	py.test --dp -s -v --uvloop  --cov-report term --cov aiohttp_admin ./tests
 	npm run eslint
 
 clean:

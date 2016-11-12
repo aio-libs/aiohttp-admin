@@ -3,12 +3,23 @@ import gc
 import socket
 
 import pytest
+import uvloop
+
+
+def pytest_addoption(parser):
+    parser.addoption("--uvloop", action="store_true", default=False,
+                     help=("Use uvloop"))
 
 
 @pytest.yield_fixture
 def loop(request):
     old_loop = asyncio.get_event_loop()
-    loop = asyncio.new_event_loop()
+    use_uvloop = request.config.getoption("--uvloop")
+
+    if use_uvloop:
+        loop = uvloop.new_event_loop()
+    else:
+        loop = asyncio.new_event_loop()
     asyncio.set_event_loop(None)
 
     yield loop
