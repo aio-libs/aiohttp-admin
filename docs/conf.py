@@ -261,6 +261,20 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'aiohttp_admindoc'
 
+import guzzle_sphinx_theme
+
+extensions.append("guzzle_sphinx_theme")
+html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+# Guzzle theme options (see theme.conf for more information)
+
+html_theme_options = {
+
+    "project_nav_name": "aiohttp admin",
+    "projectlink": "http://github.com/aio-libs/aiohttp_admin",
+}
+
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
