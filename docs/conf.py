@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# aiohttp_admin documentation build configuration file, created by
-# sphinx-quickstart on Sun Sep 18 23:15:39 2016.
+# aiohttp-admin documentation build configuration file, created by
+# sphinx-quickstart on Sun Nov 13 21:04:19 2016.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'aiohttp_admin'
+project = 'aiohttp-admin'
 copyright = '2016, Nikolay Novik'
 author = 'Nikolay Novik'
 
@@ -126,26 +126,13 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+import guzzle_sphinx_theme
 
-html_theme_options = {
-    # 'logo': 'aiohttp-icon-128x128.png',
-    'description': 'Yet another URL library',
-    'github_user': 'aio-libs',
-    'github_repo': 'aiohttp_admin',
-    'github_button': True,
-    'github_type': 'star',
-    'github_banner': True,
-    'travis_button': True,
-    'codecov_button': True,
-    'pre_bg': '#FFF6E5',
-    'note_bg': '#E5ECD1',
-    'note_border': '#BFCF8C',
-    'body_text': '#482C0A',
-    'sidebar_text': '#49443E',
-    'sidebar_header': '#4B4032',
-    'sidebar_collapse': False,
-}
+extensions.append("guzzle_sphinx_theme")
+html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+# Guzzle theme options (see theme.conf for more information)
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -159,7 +146,7 @@ html_theme_options = {
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-# html_title = 'aiohttp_admin v0.0.1'
+# html_title = 'aiohttp-admin v0.0.1'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
@@ -259,21 +246,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'aiohttp_admindoc'
-
-import guzzle_sphinx_theme
-
-extensions.append("guzzle_sphinx_theme")
-html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
-html_theme = 'guzzle_sphinx_theme'
-# Guzzle theme options (see theme.conf for more information)
-
-html_theme_options = {
-
-    "project_nav_name": "aiohttp admin",
-    "projectlink": "http://github.com/aio-libs/aiohttp_admin",
-}
+htmlhelp_basename = 'aiohttp-admindoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -299,7 +272,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'aiohttp_admin.tex', 'aiohttp\\_admin Documentation',
+    (master_doc, 'aiohttp-admin.tex', 'aiohttp-admin Documentation',
      'Nikolay Novik', 'manual'),
 ]
 
@@ -341,7 +314,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'aiohttp_admin', 'aiohttp_admin Documentation',
+    (master_doc, 'aiohttp-admin', 'aiohttp-admin Documentation',
      [author], 1)
 ]
 
@@ -356,8 +329,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'aiohttp_admin', 'aiohttp_admin Documentation',
-     author, 'aiohttp_admin', 'One line description of project.',
+    (master_doc, 'aiohttp-admin', 'aiohttp-admin Documentation',
+     author, 'aiohttp-admin', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -376,91 +349,6 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
-
-
-# -- Options for Epub output ----------------------------------------------
-
-# Bibliographic Dublin Core info.
-epub_title = project
-epub_author = author
-epub_publisher = author
-epub_copyright = copyright
-
-# The basename for the epub file. It defaults to the project name.
-# epub_basename = project
-
-# The HTML theme for the epub output. Since the default themes are not
-# optimized for small screen space, using the same theme for HTML and epub
-# output is usually not wise. This defaults to 'epub', a theme designed to save
-# visual space.
-#
-# epub_theme = 'epub'
-
-# The language of the text. It defaults to the language option
-# or 'en' if the language is not set.
-#
-# epub_language = ''
-
-# The scheme of the identifier. Typical schemes are ISBN or URL.
-# epub_scheme = ''
-
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#
-# epub_identifier = ''
-
-# A unique identification for the text.
-#
-# epub_uid = ''
-
-# A tuple containing the cover image and cover page html template filenames.
-#
-# epub_cover = ()
-
-# A sequence of (type, uri, title) tuples for the guide element of content.opf.
-#
-# epub_guide = ()
-
-# HTML files that should be inserted before the pages created by sphinx.
-# The format is a list of tuples containing the path and title.
-#
-# epub_pre_files = []
-
-# HTML files that should be inserted after the pages created by sphinx.
-# The format is a list of tuples containing the path and title.
-#
-# epub_post_files = []
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
-
-# The depth of the table of contents in toc.ncx.
-#
-# epub_tocdepth = 3
-
-# Allow duplicate toc entries.
-#
-# epub_tocdup = True
-
-# Choose between 'default' and 'includehidden'.
-#
-# epub_tocscope = 'default'
-
-# Fix unsupported image types using the Pillow.
-#
-# epub_fix_images = False
-
-# Scale large images.
-#
-# epub_max_image_width = 0
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#
-# epub_show_urls = 'inline'
-
-# If false, no index is generated.
-#
-# epub_use_index = True
 
 
 # Example configuration for intersphinx: refer to the Python standard library.

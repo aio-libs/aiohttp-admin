@@ -1,9 +1,9 @@
-.. aiohttp_admin documentation master file, created by
-   sphinx-quickstart on Sun Sep 18 23:15:39 2016.
+.. aiohttp-admin documentation master file, created by
+   sphinx-quickstart on Sun Nov 13 21:04:19 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to aiohttp_admin's documentation!
+Welcome to aiohttp-admin's documentation!
 =========================================
 
 Contents:
