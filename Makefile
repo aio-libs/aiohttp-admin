@@ -7,17 +7,17 @@ flake:
 	flake8 aiohttp_admin tests demos setup.py
 
 test: flake
-	py.test -s -v $(FLAGS) ./tests/
+	py.test -s -v --no-pull$(FLAGS) ./tests/
 
 vtest:
-	py.test -s -v $(FLAGS) ./tests/
+	py.test -s -v --no-pull$(FLAGS) ./tests/
 
 cov cover coverage: flake
-	py.test -s -v  --cov-report term --cov-report html --cov aiohttp_admin ./tests
+	py.test -s -v --no-pull --cov-report term --cov-report html --cov aiohttp_admin ./tests
 	@echo "open file://`pwd`/htmlcov/index.html"
 
 ci: flake
-	py.test --dp -s -v  --cov-report term --cov aiohttp_admin ./tests
+	py.test -s -v  --cov-report term --cov aiohttp_admin ./tests
 	npm run eslint
 
 clean:

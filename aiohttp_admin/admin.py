@@ -70,14 +70,13 @@ class AdminHandler:
         return response
 
 
-def setup_admin_handlers(admin, admin_handler, static_url, static_folder,
-                         admin_conf_path):
+def setup_admin_handlers(admin, admin_handler, static_folder, admin_conf_path):
     add_route = admin.router.add_route
     add_static = admin.router.add_static
     a = admin_handler
-    add_route('GET', '/', a.index_page, name='admin.index')
+    add_route('GET', '', a.index_page, name='admin.index')
     add_route('GET', '/login', a.login_page, name='admin.login')
     add_route('POST', '/token', a.token, name='admin.token')
     add_route('DELETE', '/logout', a.logout, name='admin.logout')
-    add_static(static_url, path=static_folder, name='admin.static')
+    add_static('/static', path=static_folder, name='admin.static')
     add_static('/config', path=admin_conf_path, name='admin.config')

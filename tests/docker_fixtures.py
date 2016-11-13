@@ -15,13 +15,13 @@ TEMP_FOLDER = Path(tempfile.gettempdir()) / 'aiohttp_admin'
 
 
 def pytest_addoption(parser):
-    parser.addoption("--dp", action="store_true", default=False,
+    parser.addoption("--no-pull", action="store_true", default=False,
                      help=("Force docker pull"))
 
 
 @pytest.fixture(scope='session')
 def docker_pull(request):
-    return request.config.getoption("--dp")
+    return not request.config.getoption("--no-pull")
 
 
 @pytest.fixture(scope='session')
