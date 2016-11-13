@@ -14,14 +14,13 @@ __all__ = ['AdminHandler', 'setup', 'get_admin', 'Permissions', 'require',
 __version__ = '0.0.1'
 
 
-def setup(app, admin_conf_path, *, resources, static_url=None,
-          static_folder=None, template_folder=None, template_name=None,
-          name=None, app_key=APP_KEY):
+def setup(app, admin_conf_path, *, resources, static_folder=None,
+          template_folder=None, template_name=None, name=None,
+          app_key=APP_KEY):
 
     admin = web.Application(loop=app.loop)
     app[app_key] = admin
 
-    # init aiohttp_jinja plugin
     tf = gather_template_folders(template_folder)
     loader = jinja2.FileSystemLoader(tf)
     aiohttp_jinja2.setup(admin, loader=loader, app_key=TEMPLATE_APP_KEY)
@@ -31,11 +30,10 @@ def setup(app, admin_conf_path, *, resources, static_url=None,
                                  template=template_name, loop=app.loop)
 
     admin['admin_handler'] = admin_handler
+    admin['layout_path'] = admin_conf_path
 
-    static_url = static_url or '/admin/static'
     static_folder = static_folder or str(PROJ_ROOT / 'static')
-    setup_admin_handlers(admin, admin_handler, static_url, static_folder,
-                         admin_conf_path)
+    setup_admin_handlers(admin, admin_handler, static_folder, admin_conf_path)
     return admin
 
 

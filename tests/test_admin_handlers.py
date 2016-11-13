@@ -23,7 +23,7 @@ async def test_login_page(create_admin):
 @pytest.mark.run_loop
 async def test_admin_page_redirect(create_admin):
     _, client = await prepare_admin(create_admin)
-    path = client.admin_prefix + '/'
+    path = client.admin_prefix
     resp = await client.request('GET', path)
     page = await resp.read()
     assert resp.status == 200
