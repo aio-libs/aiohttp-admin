@@ -107,7 +107,7 @@ def wait_for_container(callable, image, skip_exception):
 
 @pytest.fixture(scope='session')
 def pg_server(host, unused_port, container_starter):
-    tag = "9.5"
+    tag = "9.6"
     image = 'postgres:{}'.format(tag)
 
     internal_port = 5432
