@@ -45,8 +45,7 @@ class SiteHandler:
         endpoint = request.match_info.route.name
         return {"messages": messages,
                 "user": user,
-                "endpoint": endpoint,
-                "endpoint": request.match_info.route.name}
+                "endpoint": endpoint}
 
     @aiohttp_jinja2.template('timeline.html')
     async def public_timeline(self, request):
