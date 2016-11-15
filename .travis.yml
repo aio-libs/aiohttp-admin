@@ -16,7 +16,6 @@ install:
     - pip install codecov
     - pip install -Ur requirements-dev.txt
     - python setup.py develop
-    - yarn install
 
 script:
     make ci
