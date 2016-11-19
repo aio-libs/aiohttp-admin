@@ -77,6 +77,7 @@ def build_field(column):
     return field
 
 
+# TODO: rename to table_to_trafaret
 def validator_from_table(table, primary_key, skip_pk=False):
     trafaret = {}
     for name, column in table.c.items():
