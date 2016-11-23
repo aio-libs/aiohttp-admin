@@ -1,4 +1,4 @@
-{% import 'views.j2' as list_view  -%}
+{% import 'views.j2' as views  -%}
 (function () {
     "use strict";
     var onSubmitError = function(error, form, progression, notification) {
@@ -48,17 +48,18 @@
         {% for entity in entities -%}
             var {{ entity.name }} = nga.entity('{{ entity.name }}').identifier(nga.field('{{ entity.pk}}'));
         {% endfor %}
+
         {% for entity in entities -%}
         admin.addEntity({{ entity.name }});
-        {% endfor %}
+        {% endfor -%}
 
         {% for entity in entities %}
-            {{ list_view.list_view(entity) }}
-            {{ list_view.create_view(entity) }}
-            {{ list_view.edit_view(entity) }}
-            {{ list_view.show_view(entity) }}
-            {{ list_view.delete_view(entity) }}
-        {% endfor %}
+            {{ views.list_view(entity) }}
+            {{ views.create_view(entity) }}
+            {{ views.edit_view(entity) }}
+            {{ views.show_view(entity) }}
+            {{ views.delete_view(entity) }}
+        {% endfor -%}
 
         nga.configure(admin);
     }]);

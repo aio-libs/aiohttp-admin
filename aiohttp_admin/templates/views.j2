@@ -1,3 +1,17 @@
+{%- macro render_field(field) %}
+{% if field.name == 'choice' -%}
+    nga.field('{{ field.name }}', '{{ field.type }}'),
+      .choices([
+        {% for value, label in field.extra.choices -%}
+        { value: {{ value }}, label: {{ lablel }} },
+        {% endfor %}
+      ]);
+{% else %}
+    nga.field('{{ field.name }}', '{{ field.type }}'),
+{% endif -%}
+{% endmacro %}
+
+
 {%- macro list_view(entity) %}
 {{ entity.name }}.listView()
     .title('List entity {{ entity.name }}')
@@ -8,12 +22,12 @@
             {% if f.name == entity.pk -%}
                 nga.field('{{ f.name }}', '{{ f.type }}').isDetailLink(true),
             {% endif -%}
-
         {% endfor %}
     ])
     .sortField('{{ entity.sort_field }}')
     .listActions(['show', 'edit', 'delete']);
 {% endmacro %}
+
 
 {% macro create_view(entity) %}
 {{ entity.name }}.creationView()
@@ -58,9 +72,9 @@
     ]);
 {% endmacro %}
 
+
 {% macro delete_view(entity) %}
 {{ entity.name }}.deletionView()
     .title('Deletion confirmation for entity {{ entity.name }}');
 {% endmacro %}
-
 
