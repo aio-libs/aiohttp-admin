@@ -1,0 +1,67 @@
+{% import 'views.j2' as views  -%}
+(function () {
+    "use strict";
+    var onSubmitError = function(error, form, progression, notification) {
+            // mark fields based on errors from the response
+            if (!('error_details' in error.data)){
+                return true;
+            }
+            _.mapObject(error.data.error_details, function(error_msg, field_name) {
+                if (form[field_name]) {
+                    form[field_name].$valid = false;
+                }
+                return {}
+            });
+            // stop the progress bar
+            progression.done();
+            // add a notification
+            notification.log(`Some values are invalid, see details in the form`,
+                             { addnCls: 'humane-flatty-error' });
+            // cancel the default action (default error messages)
+            return false;
+        }
+
+    var app = angular.module('aiohttp_admin', ['ng-admin']);
+    app.config(['RestangularProvider', function(RestangularProvider) {
+        var token = window.localStorage.getItem('aiohttp_admin_token');
+        RestangularProvider.setDefaultHeaders({'Authorization': token});
+    }]);
+
+    app.config(['NgAdminConfigurationProvider', function (NgAdminConfigurationProvider) {
+        var nga = NgAdminConfigurationProvider;
+
+        var admin = nga.application("{{ admin_description }}")
+            .debug(true)
+            .baseApiUrl('{{ base_url}}');
+
+        admin.errorMessage(function (response) {
+            var msg = '<p>Oops error occured with status code: ' + response.status + '</p>\n';
+
+            if ('error_details' in response.data ){
+                msg += '<code>';
+                msg += JSON.stringify(response.data.error_details, null, 2);
+                msg += '</code>';
+            }
+            return msg;
+        });
+
+        {% for entity in entities -%}
+            var {{ entity.name }} = nga.entity('{{ entity.name }}').identifier(nga.field('{{ entity.pk}}'));
+        {% endfor %}
+
+        {% for entity in entities -%}
+        admin.addEntity({{ entity.name }});
+        {% endfor -%}
+
+        {% for entity in entities %}
+            {{ views.list_view(entity) }}
+            {{ views.create_view(entity) }}
+            {{ views.edit_view(entity) }}
+            {{ views.show_view(entity) }}
+            {{ views.delete_view(entity) }}
+        {% endfor -%}
+
+        nga.configure(admin);
+    }]);
+
+}());

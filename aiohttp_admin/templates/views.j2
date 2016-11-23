@@ -1,0 +1,80 @@
+{%- macro render_field(field) %}
+{% if field.name == 'choice' -%}
+    nga.field('{{ field.name }}', '{{ field.type }}'),
+      .choices([
+        {% for value, label in field.extra.choices -%}
+        { value: {{ value }}, label: {{ lablel }} },
+        {% endfor %}
+      ]);
+{% else %}
+    nga.field('{{ field.name }}', '{{ field.type }}'),
+{% endif -%}
+{% endmacro %}
+
+
+{%- macro list_view(entity) %}
+{{ entity.name }}.listView()
+    .title('List entity {{ entity.name }}')
+    .description('List of {{ entity.name }}')
+    .perPage({{ entity.per_page }})
+    .fields([
+        {% for f in entity.fields -%}
+            {% if f.name == entity.pk -%}
+                nga.field('{{ f.name }}', '{{ f.type }}').isDetailLink(true),
+            {% endif -%}
+        {% endfor %}
+    ])
+    .sortField('{{ entity.sort_field }}')
+    .listActions(['show', 'edit', 'delete']);
+{% endmacro %}
+
+
+{% macro create_view(entity) %}
+{{ entity.name }}.creationView()
+    .title('Create entity {{ entity.name }}')
+    .fields([
+        {% for f in entity.fields if f.name != entity.pk -%}
+        nga.field('{{ f.name }}', '{{ f.type }}'),
+        {% endfor %}
+    ]);
+{{ entity.name }}.creationView()
+    .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
+{% endmacro %}
+
+
+{% macro edit_view(entity) %}
+{{ entity.name }}.editionView()
+    .title('Edit entity {{ entity.name }}')
+    .fields([
+        {% for f in entity.fields -%}
+            {% if f.name == entity.pk -%}
+                nga.field('{{ f.name }}', '{{ f.type }}').editable(false),
+            {% endif -%}
+        {% endfor %}
+        {% for f in entity.fields -%}
+            {% if f.name != entity.pk -%}
+                nga.field('{{ f.name }}', '{{ f.type }}'),
+            {% endif -%}
+        {% endfor %}
+    ]);
+{{ entity.name }}.editionView()
+    .onSubmitError(['error', 'form', 'progression', 'notification', onSubmitError]);
+{% endmacro %}
+
+
+{% macro show_view(entity) %}
+{{ entity.name }}.showView()
+    .title('Show entity {{ entity.name }}')
+    .fields([
+        {% for f in entity.fields -%}
+        nga.field('{{ f.name }}', '{{ f.type }}'),
+        {% endfor %}
+    ]);
+{% endmacro %}
+
+
+{% macro delete_view(entity) %}
+{{ entity.name }}.deletionView()
+    .title('Deletion confirmation for entity {{ entity.name }}');
+{% endmacro %}
+
