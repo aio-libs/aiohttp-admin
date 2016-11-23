@@ -5,7 +5,7 @@ from ..exceptions import ObjectNotFound
 from ..security import require, Permissions
 from ..utils import (json_response, validate_payload, validate_query,
                      calc_pagination, ASC)
-from .sa_utils import validator_from_table, create_filter
+from .sa_utils import table_to_trafaret, create_filter
 
 
 __all__ = ['PGResource', 'MySQLResource']
@@ -20,10 +20,10 @@ class PGResource(AbstractResource):
         self._primary_key = primary_key
         self._pk = table.c[primary_key]
         # TODO: do we ability to pass custom validator for table?
-        self._create_validator = validator_from_table(table, primary_key,
-                                                      skip_pk=True)
-        self._update_validator = validator_from_table(table, primary_key,
-                                                      skip_pk=True)
+        self._create_validator = table_to_trafaret(table, primary_key,
+                                                   skip_pk=True)
+        self._update_validator = table_to_trafaret(table, primary_key,
+                                                   skip_pk=True)
 
     @property
     def pool(self):

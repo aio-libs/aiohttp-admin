@@ -10,7 +10,7 @@ from ..exceptions import JsonValidaitonError
 from ..utils import MULTI_FIELD_TEXT_QUERY
 
 
-__all__ = ['validator_from_table', 'create_filter']
+__all__ = ['table_to_trafaret', 'create_filter']
 
 
 AnyDict = t.Dict({}).allow_extra('*')
@@ -77,8 +77,7 @@ def build_field(column):
     return field
 
 
-# TODO: rename to table_to_trafaret
-def validator_from_table(table, primary_key, skip_pk=False):
+def table_to_trafaret(table, primary_key, skip_pk=False):
     trafaret = {}
     for name, column in table.c.items():
         if skip_pk and column.name == primary_key:

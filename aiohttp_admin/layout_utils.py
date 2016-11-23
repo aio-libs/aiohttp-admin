@@ -2,7 +2,7 @@ import jinja2
 import sqlalchemy as sa
 import trafaret as t
 from trafaret.contrib.rfc_3339 import DateTime
-from .backends.sa_utils import validator_from_table
+from .backends.sa_utils import table_to_trafaret
 from .utils import gather_template_folders
 
 
@@ -43,7 +43,7 @@ def trafaret_entity(entity_name, primary_key, schema):
 
 
 def table_entity(entity_name, primary_key, table):
-    schema = validator_from_table(table, primary_key, skip_pk=False)
+    schema = table_to_trafaret(table, primary_key, skip_pk=False)
     entity = trafaret_entity(entity_name, primary_key, schema)
     return entity
 
