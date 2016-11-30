@@ -9,7 +9,7 @@ docker-compose==1.9.0
 docker-py==1.10.6
 flake8==3.2.1
 ipdb==0.10.1
-motor==1.0
+motor==1.1
 pytest-cov==2.4.0
 pytest-sugar==0.7.1
 pytest==3.0.4
