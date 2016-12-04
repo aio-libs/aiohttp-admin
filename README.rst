@@ -27,7 +27,7 @@ Design
   be disabled if database do not support some kind of filtering.
 
 
-.. image:: https://cdn.rawgit.com/aio-libs/aiohttp_admin/master/docs/diagram.svg
+.. image:: https://cdn.rawgit.com/aio-libs/aiohttp_admin/master/docs/diagram2.svg
     :align: center
 
 
