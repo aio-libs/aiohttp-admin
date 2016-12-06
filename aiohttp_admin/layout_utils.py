@@ -71,5 +71,4 @@ def generate_config(entities, base_url, template_name=None,
     template = env.get_template(template_name)
 
     text = template.render(context)
-    print(text)
     return text
