@@ -7,14 +7,22 @@ similar to django one.
 Installation
 ============
 
+Clone repo and install library::
+
+    $ git clone git@github.com:aio-libs/aiohttp_admin.git
+    $ cd aiohttp_admin
+    $ pip install -e .
+    $ pip install -r requirements-dev.txt
+
 Install the app::
 
     $ cd demos/polls
     $ pip install -e .
 
-Create database for your project::
+Create database for your project with fake data::
 
-    bash sql/install.sh
+    make docker_start_pg
+    make fake_data
 
 Run application::
 
@@ -23,10 +31,7 @@ Run application::
 
 Open browser::
 
-    http://localhost:8080/
-
-.. image:: https://raw.githubusercontent.com/andriisoldatenko/aiohttp_polls/master/images/example.png
-    :align: center
+    http://127.0.0.1:9002/admin
 
 
 Requirements
