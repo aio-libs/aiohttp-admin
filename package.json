@@ -18,6 +18,6 @@
     "eslint": "3.7.1"
   },
   "dependencies": {
-    "ng-admin": "1.0.0-beta2"
+    "ng-admin": "1.0.0-beta3"
   }
 }
