@@ -12,7 +12,7 @@ ipdb==0.10.1
 motor==1.1
 pytest-cov==2.4.0
 pytest-sugar==0.8.0
-pytest==3.0.5
+pytest==3.0.6
 python-dateutil==2.6.0
 sqlalchemy==1.1.5
 trafaret==0.7.5
