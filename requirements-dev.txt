@@ -16,5 +16,5 @@ pytest==3.0.5
 python-dateutil==2.6.0
 sqlalchemy==1.1.5
 trafaret==0.7.5
-yarl==0.8.1
+yarl==0.9.1
 -r requirements-doc.txt
