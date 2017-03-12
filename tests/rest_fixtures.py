@@ -84,10 +84,10 @@ class AdminRESTClient:
             else:
                 raise JsonRestError(resp.status, jsoned)
 
-    def close(self):
+    async def close(self):
         # TODO: make coroutine
         if self._session:
-            self._session.close()
+            await self._session.close()
 
     def set_token(self, token):
         self._headers["Authorization"] = token
@@ -198,4 +198,4 @@ def create_app_and_client(create_server, loop):
 
     yield maker
     if client is not None:
-        client.close()
+        loop.run_until_complete(client.close())
