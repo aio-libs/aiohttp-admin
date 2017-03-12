@@ -173,7 +173,7 @@ def create_server(loop, unused_port):
             if app is None:
                 continue
             await handler.finish_connections()
-            await app.finish()
+            # await app.finish()
             srv.close()
             await srv.wait_closed()
 
