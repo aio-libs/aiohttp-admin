@@ -11,11 +11,11 @@
         <script type="text/javascript">
         var data = window.localStorage.getItem('aiohttp_admin_token');
         if (!data) {
-            window.location.href = "./admin/login";
+            window.location.href = "{{ url('admin.login') }}";
         }
         function logout() {
             window.localStorage.removeItem('aiohttp_admin_token');
-            window.location.href = "./admin/login";
+            window.location.href = "{{ url('admin.login') }}";
         }
         </script>
         {% block body %}
