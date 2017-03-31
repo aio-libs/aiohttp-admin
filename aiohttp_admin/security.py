@@ -1,6 +1,10 @@
 from abc import abstractmethod
 from enum import Enum
 
+from hmac import HMAC
+from hashlib import sha512
+import os
+
 from aiohttp_security import AbstractAuthorizationPolicy
 from aiohttp_security import AbstractIdentityPolicy
 from aiohttp_security import permits
@@ -79,9 +83,6 @@ class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
             Provide a secret (20+ bytes) or we'll pick one
             at runtime.
         '''
-        from hmac import HMAC
-        from hashlib import sha512
-        import os
 
         if server_secret is None:
             server_secret = os.urandom(32)
