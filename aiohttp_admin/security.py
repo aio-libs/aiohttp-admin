@@ -73,9 +73,11 @@ class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
 
     def __init__(self, server_secret=None):
         '''
-            Makes identity tokens using HMAC(SHA-512) over a server-side secret.
+            Makes identity tokens using HMAC(SHA-512) over a
+            server-side secret.
 
-            Provide a secret (20+ bytes) or we'll pick one at runtime.
+            Provide a secret (20+ bytes) or we'll pick one
+            at runtime.
         '''
         from hmac import HMAC
         from hashlib import sha512
@@ -101,7 +103,7 @@ class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
 
     async def remember(self, request, response, identity, **kwargs):
         # save token in storage and reply to client
-        response.headers['X-Token'] = identity + ':' + self._make_hmac(identity)
+        response.headers['X-Token'] = identity+':'+self._make_hmac(identity)
 
     async def forget(self, request, response):
         token = request.headers.get("Authorization")
