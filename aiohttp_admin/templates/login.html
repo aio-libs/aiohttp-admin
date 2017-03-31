@@ -14,7 +14,7 @@
 
         <div id="error-message"></div>
 
-        <form action="/admin/token" method="post" id="login-form">
+        <form action="{{ url('admin.token') }}" method="post" id="login-form">
             <div class="control-group">
                 <input type="text" class="login-field" placeholder="username" name="username" required autofocus>
             </div>
