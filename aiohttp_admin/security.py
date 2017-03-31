@@ -71,16 +71,40 @@ class DummyAuthPolicy(AdminAbstractAuthorizationPolicy):
 
 class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
 
+    def __init__(self, server_secret=None):
+        '''
+            Makes identity tokens using HMAC(SHA-512) over a server-side secret.
+
+            Provide a secret (20+ bytes) or we'll pick one at runtime.
+        '''
+        from hmac import HMAC
+        from hashlib import sha512
+        import os
+
+        if server_secret is None:
+            server_secret = os.urandom(32)
+
+        self.hmac = HMAC(server_secret, digestmod=sha512)
+
+    def _make_hmac(self, ident):
+        hm = self.hmac.copy()
+        hm.update(ident.encode('utf8'))
+        return hm.hexdigest()
+
     async def identify(self, request):
         # validate token
-        identity = request.headers.get("Authorization")
+        hdr = request.headers.get("Authorization")
+        identity, check = hdr.rsplit(':', 1)
+        if check != self._make_hmac(identity):
+            return None
         return identity
 
     async def remember(self, request, response, identity, **kwargs):
         # save token in storage and reply to client
-        response.headers['X-Token'] = identity
+        response.headers['X-Token'] = identity + ':' + self._make_hmac(identity)
 
     async def forget(self, request, response):
         token = request.headers.get("Authorization")
-        # destroy token,  remove it from storage
         assert token
+        assert ':' in token
+        # no real way to force client side to forget
