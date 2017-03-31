@@ -17,7 +17,7 @@ class AdminHandler:
         self._admin = admin
         self._loop = loop
         self._name = name or 'aiohttp_admin'
-        self._temalate = template or 'admin.html'
+        self._template = template or 'admin.html'
         self._login_template = 'login.html'
 
         for r in resources:
@@ -26,7 +26,7 @@ class AdminHandler:
 
     @property
     def template(self):
-        return self._temalate
+        return self._template
 
     @property
     def name(self):
@@ -37,7 +37,7 @@ class AdminHandler:
         return self._resources
 
     async def index_page(self, request):
-        t = self._temalate
+        t = self._template
         context = {'name': self._name}
         return render_template(t, request, context, app_key=TEMPLATE_APP_KEY)
 
