@@ -96,6 +96,8 @@ class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
     async def identify(self, request):
         # validate token
         hdr = request.headers.get("Authorization")
+        if not hdr or ':' not in hdr:
+            return None
         identity, check = hdr.rsplit(':', 1)
         if check != self._make_hmac(identity):
             return None
