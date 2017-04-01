@@ -18,7 +18,7 @@ def setup(app, admin_conf_path, *, resources, static_folder=None,
           template_folder=None, template_name=None, name=None,
           app_key=APP_KEY):
 
-    admin = web.Application(loop=app.loop)
+    admin = web.Application()
     app[app_key] = admin
 
     tf = gather_template_folders(template_folder)

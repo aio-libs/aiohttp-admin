@@ -158,7 +158,7 @@ def create_server(loop, unused_port):
         url = "{}://127.0.0.1:{}".format(proto, port)
 
         async def app_starter():
-            handler = app.make_handler(keep_alive_on=False)
+            handler = app.make_handler(keep_alive_on=False, loop=loop)
             srv = await loop.create_server(handler, '127.0.0.1', port,
                                            ssl=ssl_ctx)
             cleanup.append((app, handler, srv))
@@ -173,7 +173,6 @@ def create_server(loop, unused_port):
             if app is None:
                 continue
             await handler.finish_connections()
-            # await app.finish()
             srv.close()
             await srv.wait_closed()
 
