@@ -21,7 +21,7 @@ def pg_admin_creator(loop, create_app_and_client, postgres,
         resources = (PGResource(postgres, sa_table, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
-        app.router.add_subapp('/admin', admin)
+        app.add_subapp('/admin', admin)
         await app_starter()
         return admin, client, create_table
     return pg_admin
@@ -35,7 +35,7 @@ def mysql_admin_creator(loop, create_app_and_client, mysql, sa_table,
         resources = (MySQLResource(mysql, sa_table, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
-        app.router.add_subapp('/admin', admin)
+        app.add_subapp('/admin', admin)
         await app_starter()
         return admin, client, create_table
     return mysql_admin
@@ -50,7 +50,7 @@ def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
         resources = (MotorResource(m, document_schema, url=resource_name),)
         admin = aiohttp_admin.setup(app, '/', resources=resources)
         security(admin)
-        app.router.add_subapp('/admin', admin)
+        app.add_subapp('/admin', admin)
         await app_starter()
         return admin, client, create_document
 
