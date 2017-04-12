@@ -1,7 +1,7 @@
 aiohttp-jinja2==0.13.0
 aiohttp-security==0.1.0
 aiohttp-session==0.8.0
-aiohttp==2.0.5
+aiohttp==2.0.7
 aiomysql==0.0.9
 aiopg==0.13.0
 coverage==4.3.4
