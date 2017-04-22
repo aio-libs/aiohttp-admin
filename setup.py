@@ -48,6 +48,7 @@ classifiers = [
     'Operating System :: POSIX',
     'Environment :: Web Environment',
     'Development Status :: 3 - Alpha',
+    'Framework :: AsyncIO',
 ]
 
 
