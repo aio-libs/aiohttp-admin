@@ -20,7 +20,7 @@ Install the app::
 
 Create database for your project::
 
-    make docker_start_mongo
+    make docker_start_pg
     make fake_data
 
 
