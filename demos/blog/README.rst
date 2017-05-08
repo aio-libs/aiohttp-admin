@@ -15,7 +15,7 @@ Clone repo and install library::
 
 Install the app::
 
-    $ cd demos/motortwit
+    $ cd demos/blog
     $ pip install -e .
 
 Create database for your project::
