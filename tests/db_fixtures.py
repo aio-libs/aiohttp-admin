@@ -14,7 +14,7 @@ from trafaret.contrib.rfc_3339 import DateTime
 
 
 def pytest_namespace():
-    dbs = 'pg', 'mysql', 'mongo'
+    dbs = 'pg', 'mongo'
     return {'admin_type_list': dbs}
 
 
