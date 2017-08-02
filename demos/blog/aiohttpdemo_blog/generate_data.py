@@ -34,7 +34,7 @@ async def delete_tables(pg, tables):
                 pass
 
 
-async def preapre_tables(pg):
+async def prepare_tables(pg):
     tables = [db.post, db.tag, db.comment]
     await delete_tables(pg, tables)
     async with pg.acquire() as conn:
@@ -105,7 +105,7 @@ async def init(loop):
     pg = await init_postgres(conf['postgres'], loop)
     fake = Factory.create()
     fake.seed(1234)
-    await preapre_tables(pg)
+    await prepare_tables(pg)
 
     rows = 1000
 
