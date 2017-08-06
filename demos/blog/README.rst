@@ -36,11 +36,11 @@ Open browser::
 Requirements
 ============
 * aiohttp_
-* motor_
+* aiopg_
 * aiohttp_jinja2_
 
 
 .. _Python: https://www.python.org
 .. _aiohttp: https://github.com/KeepSafe/aiohttp
-.. _motor: https://github.com/mongodb/motor
+.. _aiopg: https://github.com/aio-libs/aiopg
 .. _aiohttp_jinja2: https://github.com/aio-libs/aiohttp_jinja2
