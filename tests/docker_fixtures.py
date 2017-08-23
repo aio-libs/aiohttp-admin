@@ -1,6 +1,5 @@
 import os
 import time
-import tempfile
 from pathlib import Path
 
 import psycopg2
@@ -11,7 +10,7 @@ import pytest
 from docker import Client as DockerClient
 
 
-TEMP_FOLDER = Path(tempfile.gettempdir()) / 'aiohttp_admin'
+TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
 
 
 def pytest_addoption(parser):
