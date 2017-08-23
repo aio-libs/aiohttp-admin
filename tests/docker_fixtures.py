@@ -144,7 +144,7 @@ def mysql_params(mysql_server):
 
 @pytest.fixture(scope='session')
 def mysql_server(host, unused_port, container_starter):
-    tag = '8.0'
+    tag = '5.7'
     image = 'mysql:{}'.format(tag)
 
     internal_port = 3306
