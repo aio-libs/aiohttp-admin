@@ -7,7 +7,7 @@ from sqlalchemy.sql import or_
 from trafaret.contrib.rfc_3339 import DateTime
 
 from ..exceptions import JsonValidaitonError
-from ..utils import MULTI_FIELD_TEXT_QUERY
+from ..utils import MULTI_FIELD_TEXT_QUERY, as_dict
 
 
 __all__ = ['table_to_trafaret', 'create_filter']
@@ -149,7 +149,7 @@ def check_value(column, value):
             value = trafaret.check_and_return(value)
 
     except t.DataError as exc:
-        raise JsonValidaitonError(**exc.as_dict())
+        raise JsonValidaitonError(**as_dict(exc))
     return value
 
 

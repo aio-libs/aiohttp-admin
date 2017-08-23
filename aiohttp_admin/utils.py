@@ -98,7 +98,7 @@ def validate_query_structure(query):
         q = ListQuery(query_dict)
     except t.DataError as exc:
         msg = '_filters query invalid'
-        raise JsonValidaitonError(msg, **exc.as_dict())
+        raise JsonValidaitonError(msg, **as_dict(exc))
 
     return q
 
@@ -113,7 +113,7 @@ def validate_payload(raw_payload, schema):
     try:
         data = schema(parsed)
     except t.DataError as exc:
-        raise JsonValidaitonError(**exc.as_dict())
+        raise JsonValidaitonError(**as_dict(exc))
     return data
 
 
@@ -157,3 +157,10 @@ def calc_pagination(query_dict, default_sort_direction):
     offset = (page - 1) * per_page
     limit = per_page
     return PagingParams(limit, offset, sort_field, sort_dir)
+
+
+def as_dict(exc, value=None):
+    result = exc.as_dict(value)
+    if isinstance(result, str):
+        return {"error": result}
+    return result

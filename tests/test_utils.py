@@ -6,7 +6,7 @@ from bson import ObjectId
 
 from aiohttp_admin.exceptions import JsonValidaitonError
 from aiohttp_admin.utils import (validate_query_structure, jsonify,
-                                 validate_payload)
+                                 validate_payload, as_dict)
 
 
 def test_validate_query_empty_defaults():
@@ -102,3 +102,15 @@ def test_validate_payload_not_valid_schema():
 
     error = json.loads(ctx.value.text)
     assert error['error'] == 'Invalid json payload'
+
+
+def test_as_dict():
+    exc = t.DataError()
+    resp = as_dict(exc)
+    assert isinstance(resp, dict)
+
+    exc = t.DataError()
+    assert isinstance(exc.as_dict("boom"), str)
+
+    resp = as_dict(exc, 'boom')
+    assert isinstance(resp, dict)
