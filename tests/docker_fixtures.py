@@ -11,7 +11,7 @@ import pytest
 from docker import Client as DockerClient
 
 
-TEMP_FOLDER = Path(tempfile.gettempdir()) / 'aiohttp_admin'
+TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
 
 
 def pytest_addoption(parser):
