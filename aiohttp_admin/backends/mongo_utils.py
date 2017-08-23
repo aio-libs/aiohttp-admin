@@ -3,7 +3,7 @@ import trafaret as t
 from trafaret.contrib.object_id import MongoId
 
 from ..exceptions import JsonValidaitonError
-from ..utils import MULTI_FIELD_TEXT_QUERY
+from ..utils import MULTI_FIELD_TEXT_QUERY, as_dict
 
 
 __all__ = ['create_validator', 'create_filter']
@@ -72,7 +72,7 @@ def _check_value(column_traf_map, field_name, value):
     try:
         value = apply_trafaret(trafaret, value)
     except t.DataError as exc:
-        raise JsonValidaitonError(**exc.as_dict())
+        raise JsonValidaitonError(**as_dict(exc))
 
     return value
 
