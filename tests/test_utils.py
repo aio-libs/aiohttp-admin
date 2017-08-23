@@ -31,8 +31,8 @@ def test_validate_query_all_possible_params():
     expected = query.copy()
     expected['_filters'] = filters
     assert q == expected
-    
-    
+
+
 def test_simple_type():
     assert 42 == SimpleType(42)
     assert 13.37 == SimpleType(13.37)
