@@ -6,7 +6,7 @@ from bson import ObjectId
 
 from aiohttp_admin.exceptions import JsonValidaitonError
 from aiohttp_admin.utils import (validate_query_structure, jsonify,
-                                 validate_payload, as_dict)
+                                 validate_payload, as_dict, SimpleType)
 
 
 def test_validate_query_empty_defaults():
@@ -20,6 +20,32 @@ def test_validate_query_empty_defaults():
 def test_validate_query_all_possible_params():
     filters = {'views': {'ge': 20},
                'id': {'in': [1, 2, 3]}}
+
+    query = {'_page': 1,
+             '_perPage': 30,
+             '_sortField': 'id',
+             '_sortDir': 'DESC',
+             '_filters': json.dumps(filters)}
+    q = validate_query_structure(query)
+
+    expected = query.copy()
+    expected['_filters'] = filters
+    assert q == expected
+    
+    
+def test_simple_type():
+    assert 42 == SimpleType(42)
+    assert 13.37 == SimpleType(13.37)
+    assert True is SimpleType(True)
+    assert 'string' == SimpleType('string')
+    assert '42' == SimpleType('42')
+    assert '13.37' == SimpleType('13.37')
+
+
+def test_validate_query_numeric_string():
+    filters = {
+        'views': "20"
+    }
 
     query = {'_page': 1,
              '_perPage': 30,
