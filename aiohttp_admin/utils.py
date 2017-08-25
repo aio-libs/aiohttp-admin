@@ -47,7 +47,7 @@ json_response = partial(web.json_response, dumps=jsonify)
 OptKey = partial(t.Key, optional=True)
 
 
-SimpleType = t.Int | t.Bool | t.String | t.Float
+SimpleType = t.IntRaw | t.Bool | t.String | t.FloatRaw
 Filter = t.Dict({
     OptKey('in'): t.List(SimpleType),
     OptKey('gt'): SimpleType,
