@@ -83,7 +83,7 @@ def text_filter(query, value, schema):
                       if isinstance(s.trafaret, t.String)]
     query_list = []
     for column_name in string_columns:
-        query_list.append(op({}, column_name, "like", value))
+        query_list.append(op(defaultdict(lambda: {}), column_name, "like", value))
     query["$or"] = query_list
     return query
 
