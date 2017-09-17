@@ -1,4 +1,5 @@
 import re
+from collections import defauldict
 import trafaret as t
 from trafaret.contrib.object_id import MongoId
 
@@ -11,21 +12,21 @@ __all__ = ['create_validator', 'create_filter']
 
 def op(filter, field, operation, value):
     if operation == 'in':
-        filter[field] = {'$in': value}
+        filter[field].update({'$in': value})
     elif operation == 'like':
-        filter[field] = {'$regex': '^{}'.format(re.escape(value))}
+        filter[field].update({'$regex': '^{}'.format(re.escape(value))})
     elif operation == 'eq':
-        filter[field] = {'$eq': value}
+        filter[field].update({'$eq': value})
     elif operation == 'ne':
-        filter[field] = {'$ne': value}
+        filter[field].update({'$ne': value})
     elif operation == 'le':
-        filter[field] = {'$lte': value}
+        filter[field].update({'$lte': value})
     elif operation == 'lt':
-        filter[field] = {'$lt': value}
+        filter[field].update({'$lt': value})
     elif operation == 'gt':
-        filter[field] = {'$gt': value}
+        filter[field].update({'$gt': value})
     elif operation == 'ge':
-        filter[field] = {'$gte': value}
+        filter[field].update({'$gte': value})
     else:
         raise ValueError('Operation not supported {}'.format(operation))
     return filter
@@ -92,7 +93,7 @@ def text_filter(query, value, schema):
 # same level
 def create_filter(filter, schema):
     column_traf_map = {s.name: s.trafaret for s in schema.keys}
-    query = {}
+    query = defaultdict(lambda: {})
     for field_name, operation in filter.items():
         # case for special q filter, {"q": "text"}
         if field_name == MULTI_FIELD_TEXT_QUERY:
