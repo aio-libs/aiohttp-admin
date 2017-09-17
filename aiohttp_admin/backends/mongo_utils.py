@@ -1,5 +1,5 @@
 import re
-from collections import defauldict
+from collections import defaultdict
 import trafaret as t
 from trafaret.contrib.object_id import MongoId
 
