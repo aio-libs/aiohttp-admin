@@ -104,7 +104,7 @@ def sa_table():
 
 @pytest.fixture
 def create_entries(with_list_field=False):
-    def f(rows):
+    def f(rows, with_list_field=with_list_filed):
         values = []
         for i in range(rows):
             values.append({
