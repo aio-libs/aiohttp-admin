@@ -57,7 +57,10 @@ def apply_trafaret(trafaret, value):
     if isinstance(trafaret, MongoId):
         validate = trafaret.converter
 
-    value = validate(value)
+    if isinstance(value, list) and not isinstance(trafaret, t.List):
+        value = [validate(v) for v in value]
+    else:
+        value = validate(value)
     return value
 
 
