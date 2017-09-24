@@ -112,7 +112,7 @@ def create_entries():
                 'category': 'category field {}'.format(i),
                 'body': 'body field {}'.format(i),
                 'views': i,
-                'le_views': [v for v in range(i)]
+                'le_views': [v for v in range(i)],
                 'average_note': i * 0.1,
                 # json is not supported in released sqlalchemy for mysql 5.7
                 # 'pictures': {'foo': 'bar', 'i': i},
