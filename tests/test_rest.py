@@ -204,6 +204,10 @@ async def test_list_filtering(create_admin):
     resp = await client.list(resource, page=1, per_page=30, filters=filters)
     assert len(resp) == 9
 
+    filters = {'views': {'gt': 10, 'lt': 15}}
+    resp = await client.list(resource, page=1, per_page=30, filters=filters)
+    assert len(resp) == 4
+
     filters = {'views': {'ge': 15}}
     resp = await client.list(resource, page=1, per_page=30, filters=filters)
     assert len(resp) == 10
