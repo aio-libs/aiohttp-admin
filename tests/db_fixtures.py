@@ -103,7 +103,7 @@ def sa_table():
 
 
 @pytest.fixture
-def create_entries():
+def create_entries(with_list_field=False):
     def f(rows):
         values = []
         for i in range(rows):
@@ -112,7 +112,6 @@ def create_entries():
                 'category': 'category field {}'.format(i),
                 'body': 'body field {}'.format(i),
                 'views': i,
-                'le_views': [v for v in range(i)],
                 'average_note': i * 0.1,
                 # json is not supported in released sqlalchemy for mysql 5.7
                 # 'pictures': {'foo': 'bar', 'i': i},
@@ -122,6 +121,9 @@ def create_entries():
                 'status': 'c',
                 'visible': bool(i % 2),
             })
+        if with_list_field:
+            values = [entry.update({'le_views': [v for v in range(i)]})
+                      for (i, entry) in enumerate(values)]
         return values
     return f
 
@@ -157,7 +159,7 @@ def document_schema():
         t.Key('title'): t.String(max_length=200),
         t.Key('category'): t.String(max_length=200),
         t.Key('body'): t.String,
-        t.Key('views'): t.Int,
+        t.Key('views', optional=True): t.Int,
         t.Key('le_views'): t.List(t.Int),
         t.Key('average_note'): t.Float,
         # t.Key('pictures'): t.Dict({}).allow_extra('*'),
@@ -203,7 +205,7 @@ def create_document(request, document_schema, mongo_collection, loop,
                     create_entries):
     async def f(rows):
         await mongo_collection.drop()
-        values = create_entries(rows)
+        values = create_entries(rows, True)
         for doc in values:
             await mongo_collection.insert(doc)
         return sa_table
