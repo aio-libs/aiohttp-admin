@@ -58,8 +58,11 @@ def apply_trafaret(trafaret, value):
     if isinstance(trafaret, MongoId):
         validate = trafaret.converter
 
-    if isinstance(value, list) and not isinstance(trafaret, t.List):
-        value = [validate(v) for v in value]
+    if isinstance(value, list):
+        try:
+            value = validate(value)
+        except t.DataError:
+            value = [validate(v) for v in value]
     else:
         value = validate(value)
     return value
