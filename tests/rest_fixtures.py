@@ -172,7 +172,7 @@ def create_server(loop, unused_port):
         for app, handler, srv in cleanup:
             if app is None:
                 continue
-            await handler.finish_connections()
+            await handler.shutdown()
             srv.close()
             await srv.wait_closed()
 
