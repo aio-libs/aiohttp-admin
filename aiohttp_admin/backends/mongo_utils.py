@@ -59,7 +59,10 @@ def apply_trafaret(trafaret, value):
         validate = trafaret.converter
 
     if isinstance(value, list):
-        value = [validate(v) for v in value]
+        try:
+            value = validate(value)
+        except t.DataError:
+            value = [validate(v) for v in value]
     else:
         value = validate(value)
     return value
