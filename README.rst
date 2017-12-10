@@ -8,7 +8,7 @@ aiohttp_admin
 **aiohttp_admin** will help you on building an admin interface
 on top of an existing data model. Library designed to be database agnostic and
 decoupled of any ORM or database layer. Admin module relies on async/await syntax (PEP492)
-thus *not* compatible with Python older then 3.5.
+thus *not* compatible with Python older than 3.5.
 
 
 .. image:: https://raw.githubusercontent.com/aio-libs/aiohttp_admin/master/docs/demo.gif
