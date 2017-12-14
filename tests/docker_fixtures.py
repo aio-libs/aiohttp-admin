@@ -7,8 +7,8 @@ import pymongo
 import pymysql
 import pytest
 
-from docker import Client as DockerClient
-
+from docker import APIClient
+from docker import from_env
 
 TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
 
@@ -37,9 +37,9 @@ def host():
 @pytest.fixture(scope='session')
 def docker():
     if os.environ.get('DOCKER_MACHINE_IP') is not None:
-        docker = DockerClient.from_env(assert_hostname=False)
+        docker = from_env(assert_hostname=False)
     else:
-        docker = DockerClient(version='auto')
+        docker = APIClient(version='auto')
     return docker
 
 
