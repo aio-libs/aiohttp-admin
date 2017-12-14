@@ -15,7 +15,7 @@ TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
 
 def pytest_addoption(parser):
     parser.addoption("--no-pull", action="store_true", default=False,
-                     help=("Force docker pull"))
+                     help=("Do not pull docker images"))
 
 
 @pytest.fixture(scope='session')

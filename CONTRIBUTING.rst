@@ -1,6 +1,3 @@
-Contributing
-============
-
 Running Tests
 -------------
 
@@ -29,21 +26,32 @@ After that please install libraries required for development::
 
 Congratulations, you are ready to run the test suite::
 
-    $ py.test --dp -s -v ./tests
+    $ py.test -s -v ./tests
 
 Under the hood python docker client pulls images for PostgreSQL, MySQL
 and Mongodb. Fixtures start databases and insert testing data. You do not
 have to install any database at all.
 
-Next time  `--dp` (docker pull) flag could be dropped since all required
-images are cached on local machine. To make sure you have required images
-please execute::
+.. note::
+
+    If you have troubles running specified command, you may try this one
+    (from the project root folder)::
+
+        $ python -m pytest -s -v ./tests
+
+    More information `here <https://docs.pytest.org/en/latest/usage.html#cmdline>`_.
+
+Next time you can add `--no-pull` flag since all required images are present::
+
+    $ py.test --no-pull -s -v ./tests
+
+To make sure you have required images please execute::
 
     $ docker images
 
 Among results you should find something like::
 
-    postgres  9.5  247a11721cbd  2 weeks ago  265.9 MB
+    postgres  9.6  247a11721cbd  2 weeks ago  265.9 MB
     mysql     5.7  63a92d0c131d  8 weeks ago  374.1 MB
     mongo     2.6  150dd5b5bd1b  9 weeks ago  390.9 MB
 
