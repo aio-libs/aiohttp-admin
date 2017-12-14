@@ -52,7 +52,7 @@ async def init(loop):
     # setup admin views
     admin_config = str(PROJ_ROOT / 'static' / 'js')
     admin = setup_admin(app, pg, admin_config)
-    app.router.add_subapp('/admin', admin)
+    app.add_subapp('/admin', admin)
 
     app.on_cleanup.append(close_pg)
 

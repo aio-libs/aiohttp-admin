@@ -1,6 +1,5 @@
 postgres:
-    image: postgres:9.5
-    environment:
+    image: postgres:9.6
     environment:
         - POSTGRES_USER=aiohttp_admin_user
         - POSTGRES_PASSWORD=mysecretpassword
