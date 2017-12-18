@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 
@@ -8,7 +7,7 @@ import pymysql
 import pytest
 
 from docker import APIClient
-from docker import from_env
+
 
 TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
 
@@ -30,16 +29,8 @@ def session_id():
 
 
 @pytest.fixture(scope='session')
-def host():
-    return os.environ.get('DOCKER_MACHINE_IP', '127.0.0.1')
-
-
-@pytest.fixture(scope='session')
 def docker():
-    if os.environ.get('DOCKER_MACHINE_IP') is not None:
-        docker = from_env(assert_hostname=False)
-    else:
-        docker = APIClient(version='auto')
+    docker = APIClient(version='auto')
     return docker
 
 
@@ -105,7 +96,7 @@ def wait_for_container(callable, image, skip_exception):
 
 
 @pytest.fixture(scope='session')
-def pg_server(host, unused_port, container_starter):
+def pg_server(unused_port, container_starter):
     tag = "9.6"
     image = 'postgres:{}'.format(tag)
 
@@ -123,7 +114,7 @@ def pg_server(host, unused_port, container_starter):
     params = dict(database='aiohttp_admin',
                   user='aiohttp_admin_user',
                   password='mysecretpassword',
-                  host=host,
+                  host='127.0.0.1',
                   port=host_port)
 
     def connect():
@@ -143,7 +134,7 @@ def mysql_params(mysql_server):
 
 
 @pytest.fixture(scope='session')
-def mysql_server(host, unused_port, container_starter):
+def mysql_server(unused_port, container_starter):
     tag = '5.7'
     image = 'mysql:{}'.format(tag)
 
@@ -160,7 +151,7 @@ def mysql_server(host, unused_port, container_starter):
     params = dict(database='aiohttp_admin',
                   user='aiohttp_admin_user',
                   password='mysecretpassword',
-                  host=host,
+                  host='127.0.0.1',
                   port=host_port)
 
     def connect():
@@ -181,7 +172,7 @@ def mongo_params(mongo_server):
 
 
 @pytest.fixture(scope='session')
-def mongo_server(host, unused_port, container_starter):
+def mongo_server(unused_port, container_starter):
     tag = '3.3'
     image = 'mongo:{}'.format(tag)
 
@@ -192,7 +183,7 @@ def mongo_server(host, unused_port, container_starter):
     container = container_starter(image, internal_port, host_port,
                                   volume=volume, command=command)
 
-    params = dict(host=host, port=host_port)
+    params = dict(host='127.0.0.1', port=host_port)
 
     def connect():
         client = pymongo.MongoClient(**params)
