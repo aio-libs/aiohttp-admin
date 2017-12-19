@@ -10,8 +10,7 @@ Fist of all just clone repository::
 
     $ git clone git@github.com:aio-libs/aiohttp_admin.git
 
-Install docker_ using instruction_ from the official site, for OSX we
-use docker-machine_.
+Install docker_ using instruction_ from the official site.
 
 Create virtualenv with python3.5 (older version are not supported). For example
 using *virtualenvwrapper* commands could look like::
@@ -56,13 +55,6 @@ Among results you should find something like::
     mongo     2.6  150dd5b5bd1b  9 weeks ago  390.9 MB
 
 
-For OSX users one extra step is required, before running tests, please
-init environment variables::
-
-    $ eval $(docker-machine env default)
-    $ export DOCKER_MACHINE_IP=$(docker-machine ip)
-
-
 Reporting an Issue
 ------------------
 If you have found issue with `aiohttp-admin` please do
@@ -82,4 +74,3 @@ information:
 
 .. _docker: https://www.docker.com/
 .. _instruction: https://docs.docker.com/engine/installation/linux/ubuntulinux/
-.. _docker-machine: https://docs.docker.com/machine/

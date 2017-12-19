@@ -1,5 +1,4 @@
 import yaml
-import os
 import aiopg.sa
 
 
@@ -11,8 +10,6 @@ def load_config(fname):
 
 
 async def init_postgres(conf, loop):
-    host = os.environ.get('DOCKER_MACHINE_IP')
-    conf['host'] = host
     engine = await aiopg.sa.create_engine(
         database=conf['database'],
         user=conf['user'],
