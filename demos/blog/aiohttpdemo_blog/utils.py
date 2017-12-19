@@ -1,5 +1,3 @@
-import os
-
 import aiopg.sa
 import yaml
 

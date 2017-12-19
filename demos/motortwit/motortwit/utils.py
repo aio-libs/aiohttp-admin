@@ -1,5 +1,4 @@
 import pytz
-import os
 import yaml
 from hashlib import md5
 from dateutil.parser import parse
