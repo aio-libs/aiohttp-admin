@@ -1,12 +1,21 @@
-<link rel="stylesheet" type="text/css"
-href="{{ url('static', filename='style.css') }}" />
-
-{% if questions %}
-    <ul>
-    {% for question in questions %}
-    <li><a href="{{ url('poll', question_id=question.id) }}">{{ question.question_text }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No polls are available.</p>
-{% endif %}
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>aiohttp admid polls demo</title>
+        <link rel="stylesheet" type="text/css" href="{{ url('static', filename='style.css') }}" />
+    </head>
+    <body>
+        <h1>Poll admin demo: <a href="/admin">admin page</a></h1>
+        {% if questions %}
+            <ul>
+            {% for question in questions %}
+            <li><a href="{{ url('poll', question_id=question.id) }}">{{ question.question_text }}</a></li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No polls are available.</p>
+        {% endif %}
+    </body>
+</html>

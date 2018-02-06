@@ -67,7 +67,7 @@ async def init(loop):
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT)))
 
     admin = setup_admin(app, pg)
-    app.router.add_subapp('/admin/', admin)
+    app.add_subapp('/admin/', admin)
 
     # setup views and routes
     handler = SiteHandler(pg)
