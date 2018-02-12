@@ -5,7 +5,7 @@ aiohttp==3.0.1
 aiomysql==0.0.12
 aiopg==0.13.2
 coverage==4.5.1
-docker==2.6.1
+docker==3.0.1
 docker-compose==1.17.1
 flake8==3.5.0
 ipdb==0.10.3
