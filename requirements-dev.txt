@@ -14,7 +14,7 @@ pytest-cov==2.5.1
 pytest-sugar==0.9.1
 pytest==3.4.0
 python-dateutil==2.6.1
-sqlalchemy==1.1.15
+sqlalchemy==1.2.2
 trafaret==0.10.4
 pymysql==0.7.11
 -r requirements-doc.txt
