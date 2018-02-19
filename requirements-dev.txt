@@ -3,7 +3,7 @@ aiohttp-security==0.2.0
 aiohttp-session==2.3.0
 aiohttp==3.0.1
 aiomysql==0.0.12
-aiopg==0.13.1
+aiopg==0.13.2
 coverage==4.4.2
 docker==2.6.1
 docker-compose==1.17.1
