@@ -123,6 +123,5 @@ def create_validator(schema, primary_key):
     # create validator without primary key, used for update queries
     # where pk supplied in url and rest in body
     keys = [s for s in schema.keys if s.get_name() != primary_key]
-    new_schema = t.Dict({})
-    new_schema.keys = keys
+    new_schema = t.Dict(*keys)
     return new_schema.ignore_extra(primary_key)
