@@ -36,7 +36,7 @@ class PGResource(AbstractResource):
     async def list(self, request):
         await require(request, Permissions.view)
         columns_names = list(self._table.c.keys())
-        q = validate_query(request.GET, columns_names)
+        q = validate_query(request.query, columns_names)
         paging = calc_pagination(q, self._primary_key)
 
         filters = q.get('_filters')
