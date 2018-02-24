@@ -28,7 +28,7 @@ class MotorResource(AbstractResource):
     async def list(self, request):
         await require(request, Permissions.view)
         possible_fields = [k.name for k in self._schema.keys]
-        q = validate_query(request.GET, possible_fields)
+        q = validate_query(request.query, possible_fields)
         paging = calc_pagination(q, self._primary_key)
 
         filters = q.get('_filters')
