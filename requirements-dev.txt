@@ -11,7 +11,7 @@ flake8==3.5.0
 ipdb==0.11
 motor==1.2.1
 pytest-cov==2.5.1
-pytest-sugar==0.9.0
+pytest-sugar==0.9.1
 pytest==3.4.1
 python-dateutil==2.6.1
 sqlalchemy==1.1.15
