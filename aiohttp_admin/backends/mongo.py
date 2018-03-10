@@ -79,7 +79,7 @@ class MotorResource(AbstractResource):
         data = validate_payload(raw_payload, self._update_schema)
         query = {self._primary_key: ObjectId(entity_id)}
 
-        doc = await self._collection.find_and_modify(
+        doc = await self._collection.find_one_and_update(
             query, {"$set": data}, upsert=False, new=True)
 
         if not doc:
@@ -91,7 +91,6 @@ class MotorResource(AbstractResource):
     async def delete(self, request):
         await require(request, Permissions.delete)
         entity_id = request.match_info['entity_id']
-        # TODO: fix ObjectId is not always valid case
-        query = {self._primary_key: ObjectId(entity_id)}
-        await self._collection.remove(query)
+        query = {self._primary_key: ObjectId(entity_id) if ObjectId.is_valid(entity_id) else entity_id}
+        await self._collection.delete_one(query)
         return json_response({'status': 'deleted'})
