@@ -6,7 +6,7 @@ import pymongo
 import pymysql
 import pytest
 
-from docker import Client
+from docker import APIClient
 
 
 TEMP_FOLDER = Path('/tmp') / 'aiohttp_admin'
@@ -30,7 +30,7 @@ def session_id():
 
 @pytest.fixture(scope='session')
 def docker():
-    docker = Client(version='auto')
+    docker = APIClient(version='auto')
     return docker
 
 
