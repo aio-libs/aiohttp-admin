@@ -26,7 +26,7 @@ class SiteHandler:
 
         if user_id is None:
             router = request.app.router
-            location = router['public_timeline'].url()
+            location = router['public_timeline'].url_for().human_repr()
             raise web.HTTPFound(location=location)
         user = await self.mongo.user.find_one({'_id': ObjectId(user_id)})
 
