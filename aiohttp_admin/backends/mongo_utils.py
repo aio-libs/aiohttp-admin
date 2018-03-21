@@ -56,7 +56,7 @@ def apply_trafaret(trafaret, value):
     validate = trafaret.check_and_return
 
     if isinstance(trafaret, MongoId):
-        validate = trafaret.converter
+        validate = trafaret.check_and_return
 
     if isinstance(value, list):
         try:
