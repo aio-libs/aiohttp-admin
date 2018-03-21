@@ -14,6 +14,6 @@ pytest-sugar==0.9.1
 pytest==3.4.1
 python-dateutil==2.6.1
 sqlalchemy==1.2.4
-trafaret==1.1.1
+trafaret==2.0.0a1
 pymysql==0.7.11
 -r requirements-doc.txt
