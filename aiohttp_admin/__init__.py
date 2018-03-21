@@ -11,7 +11,7 @@ from .utils import gather_template_folders
 
 __all__ = ['AdminHandler', 'setup', 'get_admin', 'Permissions', 'require',
            'authorize']
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 def setup(app, admin_conf_path, *, resources, static_folder=None,
