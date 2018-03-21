@@ -52,7 +52,7 @@ class AdminHandler:
         await authorize(request, data['username'], data['password'])
 
         router = request.app.router
-        location = router["admin.index"].url()
+        location = router["admin.index"].url_for().human_repr()
         payload = {"location": location}
         response = json_response(payload)
         await remember(request, response, data['username'])
@@ -63,7 +63,7 @@ class AdminHandler:
             msg = "Auth header is not present, can not destroy token"
             raise JsonValidaitonError(msg)
         router = request.app.router
-        location = router["admin.login"].url()
+        location = router["admin.login"].url_for().human_repr()
         payload = {"location": location}
         response = json_response(payload)
         await forget(request, response)

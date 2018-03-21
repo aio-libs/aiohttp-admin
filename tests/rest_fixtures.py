@@ -158,7 +158,7 @@ def create_server(loop, unused_port):
         url = "{}://127.0.0.1:{}".format(proto, port)
 
         async def app_starter():
-            handler = app.make_handler(keep_alive_on=False)
+            handler = app.make_handler(tcp_keepalive=False)
             srv = await loop.create_server(handler, '127.0.0.1', port,
                                            ssl=ssl_ctx)
             cleanup.append((app, handler, srv))
