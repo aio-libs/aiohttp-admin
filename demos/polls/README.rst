@@ -9,7 +9,7 @@ Installation
 
 Clone repo and install library::
 
-    $ git clone git@github.com:aio-libs/aiohttp_admin.git
+    $ git clone https://github.com/aio-libs/aiohttp_admin.git
     $ cd aiohttp_admin
     $ pip install -e .
     $ pip install -r requirements-dev.txt
@@ -33,6 +33,10 @@ Open browser::
 
     http://127.0.0.1:9002/admin
 
+Login::
+
+    username: admin
+    password: admin
 
 Requirements
 ============

@@ -23,7 +23,8 @@ install_requires = ['aiohttp',
                     'trafaret',
                     'aiohttp_jinja2',
                     'pyyaml',
-                    'aiopg']
+                    'aiopg',
+                    'faker']
 
 
 setup(name='aiohttpdemo_polls',

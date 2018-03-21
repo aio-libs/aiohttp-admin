@@ -68,7 +68,7 @@ async def init(loop):
     setup_jinja(app)
 
     admin = setup_admin(app, mongo)
-    app.router.add_subapp('/admin', admin)
+    app.add_subapp('/admin', admin)
 
     app.router.add_static('/static', path=str(PROJ_ROOT / 'static'))
 
