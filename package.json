@@ -12,12 +12,28 @@
   "scripts": {
     "preinstall": "rm -rf ./aiohttp_admin/static/ng-admin/",
     "postinstall": "mkdir ./aiohttp_admin/static/ng-admin/; cp ./node_modules/ng-admin/build/* ./aiohttp_admin/static/ng-admin/",
-    "eslint": "node node_modules/eslint/bin/eslint.js **/*.js"
+    "eslint": "node node_modules/eslint/bin/eslint.js **/*.js",
+    "start": "webpack --mode=development -w",
+    "build": "webpack --mode=production"
   },
   "devDependencies": {
-    "eslint": "3.7.1"
-  },
-  "dependencies": {
-    "ng-admin": "1.0.0-beta3"
+    "admin-on-rest": "^1.4.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "css-loader": "^0.28.11",
+    "eslint": "3.7.1",
+    "eslint-plugin-react": "^7.7.0",
+    "ng-admin": "1.0.0-beta3",
+    "node-sass": "^4.8.3",
+    "prop-types": "^15.6.1",
+    "react": "^16.3.0",
+    "react-dom": "^16.3.0",
+    "sass-loader": "^6.0.7",
+    "style-loader": "^0.20.3",
+    "webpack": "^4.4.1",
+    "webpack-cli": "^2.0.13"
   }
 }

@@ -1,0 +1,24 @@
+version: 1
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+    formatter: generic
+    level: DEBUG
+
+formatters:
+  generic:
+    format: "%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"
+    datefmt: "%H:%M:%S"
+
+loggers:
+  aiohttp:
+    level: DEBUG
+    handlers:
+    - console
+
+root:
+  level: DEBUG
+  handlers:
+  - console
