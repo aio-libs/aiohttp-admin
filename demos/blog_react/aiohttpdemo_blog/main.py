@@ -41,7 +41,6 @@ def setup_admin(app, pg):
     aiohttp_security.setup(admin, ident_policy, auth_policy)
 
     app.add_subapp('/admin/', admin)
-    return admin
 
 
 async def setup_pg(app, conf, loop):
@@ -69,7 +68,7 @@ async def init(loop):
         app, loader=jinja2.FileSystemLoader(str(TEMPLATES_ROOT))
     )
 
-    admin = setup_admin(app, pg)
+    setup_admin(app, pg)
 
     # setup views and routes
     handler = SiteHandler(pg)

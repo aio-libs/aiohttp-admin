@@ -1,1 +1,1 @@
-from .admin import Schema
+from .admin import Schema  # noqa

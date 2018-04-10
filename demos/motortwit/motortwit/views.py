@@ -38,10 +38,10 @@ class SiteHandler:
 
         query = {'$or': [{'author_id': ObjectId(user_id)},
                          {'author_id': {'$in': followed['whom_id']}}]}
-        messages = await (self.mongo.message
-                          .find(query)
-                          .sort('pub_date', -1)
-                          .to_list(30))
+        messages = await self.mongo.message\
+            .find(query)\
+            .sort('pub_date', -1)\
+            .to_list(30)
         endpoint = request.match_info.route.name
         return {"messages": messages,
                 "user": user,
@@ -49,10 +49,10 @@ class SiteHandler:
 
     @aiohttp_jinja2.template('timeline.html')
     async def public_timeline(self, request):
-        messages = await (self.mongo.message
-                          .find()
-                          .sort('pub_date', -1)
-                          .to_list(30))
+        messages = await self.mongo.message\
+            .find()\
+            .sort('pub_date', -1)\
+            .to_list(30)
         return {"messages": messages,
                 "endpoint": request.match_info.route.name}
 
@@ -73,10 +73,10 @@ class SiteHandler:
                  'whom_id': {'$in': [ObjectId(profile_user['_id'])]}})
             followed = followed is not None
 
-        messages = await (self.mongo.message
-                          .find({'author_id': ObjectId(profile_user['_id'])})
-                          .sort('pub_date', -1)
-                          .to_list(30))
+        messages = await self.mongo.message\
+            .find({'author_id': ObjectId(profile_user['_id'])})\
+            .sort('pub_date', -1)\
+            .to_list(30)
 
         profile_user['_id'] = str(profile_user['_id'])
         return {"messages": messages,
