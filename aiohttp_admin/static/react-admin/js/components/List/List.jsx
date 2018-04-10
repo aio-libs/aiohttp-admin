@@ -6,6 +6,8 @@ import {
     TextField,
     DateField,
     NumberField,
+    BooleanField,
+    FunctionField,
 } from 'admin-on-rest';
 
 
@@ -14,6 +16,8 @@ const DATA_TYPES = {
   'number': NumberField,
   'string': TextField,
   'date': DateField,
+  'bool': BooleanField,
+  'json': FunctionField,
 };
 
 
@@ -26,6 +30,16 @@ function getFields(fields) {
       Component = DATA_TYPES[type_field];
     } else {
       Component = TextField;
+    }
+
+    if (type_field === 'json') {
+      return (
+        <FunctionField
+          key={index}
+          label={key}
+          render={res => JSON.stringify(res[key])}
+        />
+      );
     }
 
     return <Component key={index} source={key} />;

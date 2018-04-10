@@ -7,7 +7,7 @@ from ..db import post
 
 @schema.register
 class Posts(models.ModelAdmin):
-    fields = ('id', 'title',)
+    fields = ('id', 'title', 'pictures', 'backlinks', 'subcategory',)
 
     class Meta:
         resource_type = PGResource

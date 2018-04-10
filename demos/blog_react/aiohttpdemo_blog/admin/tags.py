@@ -7,7 +7,7 @@ from ..db import tag
 
 @schema.register
 class Tags(models.ModelAdmin):
-    fields = ('id', 'title',)
+    fields = ('id', 'name', 'published', )
 
     class Meta:
         resource_type = PGResource

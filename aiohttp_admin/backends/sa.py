@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
@@ -16,6 +17,8 @@ DATA_TYPES = {
     sa.Text: 'string',
     sa.Float: 'number',
     sa.Date: 'date',
+    sa.Boolean: 'bool',
+    postgresql.JSON: 'json',
 }
 
 
