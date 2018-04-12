@@ -11,10 +11,10 @@
         window.appData = {
           tokenUrl: "{{ url('admin.token') }}",
           tokenName: "aiohttp_admin_token",
-          loginUrl: "{{ url('admin.token') }}",
           mainUrl: "{{ url('admin.index') }}",
           state: {{ initial_state|safe }},
           restUrl: "{{ url('admin.index') }}",
+          logoutUrl: "{{ url('admin.logout') }}",
         };
     </script>
 </head>

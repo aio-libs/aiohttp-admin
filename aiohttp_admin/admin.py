@@ -103,6 +103,9 @@ class AdminOnRestHandler:
         return self._resources
 
     async def index_page(self, request):
+        """
+        Return index page with initial state for admin
+        """
         context = {"initial_state": self.schema.to_json()}
 
         return render_template(
@@ -113,6 +116,9 @@ class AdminOnRestHandler:
         )
 
     async def token(self, request):
+        """
+        Validation of user data and generate auth token
+        """
         raw_payload = await request.read()
         data = validate_payload(raw_payload, LoginForm)
         await authorize(request, data['username'], data['password'])
@@ -122,10 +128,21 @@ class AdminOnRestHandler:
         payload = {"location": location}
         response = json_response(payload)
         await remember(request, response, data['username'])
+
         return response
 
     async def logout(self, request):
-        pass
+        """
+        Simple handler for logout
+        """
+        if "Authorization" not in request.headers:
+            msg = "Auth header is not present, can not destroy token"
+            raise JsonValidaitonError(msg)
+
+        response = json_response()
+        await forget(request, response)
+
+        return response
 
 
 def setup_admin_on_rest_handlers(admin, admin_handler):
@@ -140,5 +157,4 @@ def setup_admin_on_rest_handlers(admin, admin_handler):
     add_route('GET', '', a.index_page, name='admin.index')
     add_route('POST', '/token', a.token, name='admin.token')
     add_static('/static', path=static_folder, name='admin.static')
-    # TODO: does it need?
     add_route('DELETE', '/logout', a.logout, name='admin.logout')
