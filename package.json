@@ -28,6 +28,7 @@
     "eslint-plugin-react": "^7.7.0",
     "ng-admin": "1.0.0-beta3",
     "node-sass": "^4.8.3",
+    "pre-commit": "^1.2.2",
     "prop-types": "^15.6.1",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
@@ -35,5 +36,9 @@
     "style-loader": "^0.20.3",
     "webpack": "^4.4.1",
     "webpack-cli": "^2.0.13"
-  }
+  },
+  "pre-commit": [
+    "eslint",
+    "build"
+  ]
 }
