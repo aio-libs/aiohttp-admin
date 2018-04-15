@@ -14,7 +14,8 @@
     "postinstall": "mkdir ./aiohttp_admin/static/ng-admin/; cp ./node_modules/ng-admin/build/* ./aiohttp_admin/static/ng-admin/",
     "eslint": "node node_modules/eslint/bin/eslint.js **/*.js",
     "start": "webpack --mode=development -w",
-    "build": "webpack --mode=production"
+    "build": "webpack --mode=production",
+    "addbundle": "git add ./aiohttp_admin/static/react-admin/dist/bundle.js"
   },
   "devDependencies": {
     "admin-on-rest": "^1.4.0",
@@ -39,6 +40,7 @@
   },
   "pre-commit": [
     "eslint",
-    "build"
+    "build",
+    "addbundle"
   ]
 }
