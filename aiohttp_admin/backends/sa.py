@@ -47,12 +47,16 @@ class PGResource(AbstractResource):
     @staticmethod
     def get_type_of_fields(fields, table):
         """
-        Return data types of `fields` that are in `table`.
+        Return data types of `fields` that are in `table`. If a given
+        parameter is empty return primary key.
 
         :param fields: list - list of fields that need to be returned
         :param table: sa.Table - the current table
         :return: list - list of the tuples `(field_name, fields_type)`
         """
+
+        if not fields:
+            fields = table.primary_key
 
         actual_fields = [
             field for field in table.c.items() if field[0] in fields
