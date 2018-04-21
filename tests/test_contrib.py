@@ -43,7 +43,7 @@ def test_registration_model(initialize_base_schema):
 def test_get_type_of_fields(resources):
     table = sa.Table(
         'Test', sa.MetaData(),
-        sa.Column('integer', sa.Integer),
+        sa.Column('integer', sa.Integer, primary_key=True),
         sa.Column('text', sa.Text),
         sa.Column('float', sa.Float),
         sa.Column('date', sa.Date),
@@ -60,6 +60,14 @@ def test_get_type_of_fields(resources):
         'date': 'date',
         'boolean': 'bool',
         'json': 'json',
+    }
+
+    assert data_type_fields == expected_type_fields
+
+    fields = None
+    data_type_fields = resources.get_type_of_fields(fields, table)
+    expected_type_fields = {
+        'integer': 'integer',
     }
 
     assert data_type_fields == expected_type_fields

@@ -6,7 +6,6 @@ class ModelAdmin:
 
 
     class Users(models.ModelAdmin):
-        fields = ('id', 'username', )
 
         class Meta:
             resource_type = PGResource
@@ -17,6 +16,7 @@ class ModelAdmin:
     can_create = True
     can_delete = True
     per_page = 10
+    fields = None
 
     def __init__(self):
         self.name = self.__class__.__name__.lower()
