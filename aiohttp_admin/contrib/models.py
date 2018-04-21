@@ -13,6 +13,10 @@ class ModelAdmin:
             table = users
 
     """
+    can_edit = True
+    can_create = True
+    can_delete = True
+    per_page = 10
 
     def __init__(self):
         self.name = self.__class__.__name__.lower()
@@ -22,6 +26,12 @@ class ModelAdmin:
         Return dict with the all base information about the instance.
         """
 
-        data = {"name": self.name}
+        data = {
+            "name": self.name,
+            "canEdit": self.can_edit,
+            "canCreate": self.can_create,
+            "canDelete": self.can_delete,
+            "perPage": self.per_page,
+        }
 
         return data

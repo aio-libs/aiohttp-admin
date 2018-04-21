@@ -1,14 +1,12 @@
 import { stringify } from 'query-string';
 import {
     GET_LIST,
-    GET_MATCHING,
     GET_ONE,
     GET_MANY,
     GET_MANY_REFERENCE,
     CREATE,
     UPDATE,
     DELETE,
-    queryParameters,
     fetchUtils,
 } from 'admin-on-rest';
 
