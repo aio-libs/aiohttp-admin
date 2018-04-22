@@ -39,3 +39,17 @@ def test_admin_ctor(loop):
         app, resources=resources, name=name, template=template, loop=loop)
     assert name == admin.name
     assert template == admin.template
+
+
+def test_admin_on_rest_ctor(loop, initialize_base_schema):
+    app = web.Application(loop=loop)
+    resources = tuple()
+    admin = aiohttp_admin.AdminOnRestHandler(
+        app,
+        loop=loop,
+        resources=resources,
+        schema=initialize_base_schema,
+    )
+
+    assert initialize_base_schema == admin.schema
+    assert resources == admin.resources

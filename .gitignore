@@ -11,7 +11,6 @@ env/
 pyvenv/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 lib/

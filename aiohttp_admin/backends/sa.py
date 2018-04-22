@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 from ..resource import AbstractResource
 from ..exceptions import ObjectNotFound
@@ -9,6 +10,16 @@ from .sa_utils import table_to_trafaret, create_filter
 
 
 __all__ = ['PGResource', 'MySQLResource']
+
+
+DATA_TYPES = {
+    sa.Integer: 'integer',
+    sa.Text: 'string',
+    sa.Float: 'number',
+    sa.Date: 'date',
+    sa.Boolean: 'bool',
+    postgresql.JSON: 'json',
+}
 
 
 class PGResource(AbstractResource):
@@ -32,6 +43,27 @@ class PGResource(AbstractResource):
     @property
     def table(self):
         return self._table
+
+    @staticmethod
+    def get_type_of_fields(fields, table):
+        """
+        Return data types of `fields` that are in `table`.
+
+        :param fields: list - list of fields that need to be returned
+        :param table: sa.Table - the current table
+        :return: list - list of the tuples `(field_name, fields_type)`
+        """
+
+        actual_fields = [
+            field for field in table.c.items() if field[0] in fields
+        ]
+
+        data_type_fields = {
+            name: DATA_TYPES.get(type(field_type.type), 'string')
+            for name, field_type in actual_fields
+        }
+
+        return data_type_fields
 
     async def list(self, request):
         await require(request, Permissions.view)

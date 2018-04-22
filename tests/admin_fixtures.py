@@ -1,9 +1,12 @@
 import pytest
+import sqlalchemy as sa
 import aiohttp_admin
 import aiohttp_security
 from aiohttp_admin.backends.sa import PGResource, MySQLResource
 from aiohttp_admin.backends.mongo import MotorResource
 from aiohttp_admin.security import DummyAuthPolicy, DummyTokenIdentityPolicy
+from aiohttp_admin.contrib.admin import Schema
+from aiohttp_admin.contrib import models
 
 
 def setup_security(app):
@@ -66,3 +69,34 @@ def create_admin(request, admin_type):
     else:
         f = request.getfuncargvalue('pg_admin_creator')
     return f
+
+
+@pytest.fixture
+def initialize_base_schema():
+    schema = Schema()
+
+    @schema.register
+    class Test(models.ModelAdmin):
+        fields = ('id',)
+
+        class Meta:
+            resource_type = PGResource
+            table = sa.Table(
+                'test',
+                sa.MetaData(),
+                sa.Column('id', sa.Integer)
+            )
+
+    @schema.register
+    class Test2(models.ModelAdmin):
+        fields = ('id',)
+
+        class Meta:
+            resource_type = PGResource
+            table = sa.Table(
+                'test',
+                sa.MetaData(),
+                sa.Column('id', sa.Integer)
+            )
+
+    return schema

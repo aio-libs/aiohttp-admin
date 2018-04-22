@@ -2,13 +2,16 @@ from aiohttp_jinja2 import render_template
 from aiohttp_security import remember, forget
 from yarl import URL
 
-from .consts import TEMPLATE_APP_KEY
+from .consts import TEMPLATE_APP_KEY, PROJ_ROOT
 from .exceptions import JsonValidaitonError
 from .security import authorize
 from .utils import json_response, validate_payload, LoginForm
 
 
-__all__ = ['AdminHandler', 'setup_admin_handlers']
+__all__ = [
+    'AdminHandler', 'setup_admin_handlers', 'setup_admin_on_rest_handlers',
+    'AdminOnRestHandler',
+]
 
 
 class AdminHandler:
@@ -80,3 +83,78 @@ def setup_admin_handlers(admin, admin_handler, static_folder, admin_conf_path):
     add_route('DELETE', '/logout', a.logout, name='admin.logout')
     add_static('/static', path=static_folder, name='admin.static')
     add_static('/config', path=admin_conf_path, name='admin.config')
+
+
+class AdminOnRestHandler:
+
+    template = 'admin_on_rest.jinja2'
+
+    def __init__(self, admin, *, resources, loop, schema):
+        self._admin = admin
+        self._loop = loop
+        self.schema = schema
+
+        for r in resources:
+            r.setup(self._admin, URL('/'))
+        self._resources = tuple(resources)
+
+    @property
+    def resources(self):
+        return self._resources
+
+    async def index_page(self, request):
+        """
+        Return index page with initial state for admin
+        """
+        context = {"initial_state": self.schema.to_json()}
+
+        return render_template(
+            self.template,
+            request,
+            context,
+            app_key=TEMPLATE_APP_KEY,
+        )
+
+    async def token(self, request):
+        """
+        Validation of user data and generate auth token
+        """
+        raw_payload = await request.read()
+        data = validate_payload(raw_payload, LoginForm)
+        await authorize(request, data['username'], data['password'])
+
+        router = request.app.router
+        location = router["admin.index"].url_for().human_repr()
+        payload = {"location": location}
+        response = json_response(payload)
+        await remember(request, response, data['username'])
+
+        return response
+
+    async def logout(self, request):
+        """
+        Simple handler for logout
+        """
+        if "Authorization" not in request.headers:
+            msg = "Auth header is not present, can not destroy token"
+            raise JsonValidaitonError(msg)
+
+        response = json_response()
+        await forget(request, response)
+
+        return response
+
+
+def setup_admin_on_rest_handlers(admin, admin_handler):
+    """
+    Initialize routes.
+    """
+    add_route = admin.router.add_route
+    add_static = admin.router.add_static
+    static_folder = str(PROJ_ROOT / 'static')
+    a = admin_handler
+
+    add_route('GET', '', a.index_page, name='admin.index')
+    add_route('POST', '/token', a.token, name='admin.token')
+    add_static('/static', path=static_folder, name='admin.static')
+    add_route('DELETE', '/logout', a.logout, name='admin.logout')
