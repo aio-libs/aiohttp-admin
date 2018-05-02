@@ -12,8 +12,7 @@ import {
 export const BaseCreate = (props) => (
     <Create {...props}>
         <SimpleForm>
-            <TextInput source="title" />
-            <LongTextInput source="body" />
+            <TextInput source="body" />
         </SimpleForm>
     </Create>
 );
