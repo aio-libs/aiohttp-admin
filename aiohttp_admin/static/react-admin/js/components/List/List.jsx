@@ -9,6 +9,8 @@ import {
     BooleanField,
     FunctionField,
 } from 'admin-on-rest';
+import { EditButton } from '../Button/EditButton';
+import { ShowButton } from '../Button/ShowButton';
 
 
 const DATA_TYPES = {
@@ -18,6 +20,13 @@ const DATA_TYPES = {
   'date': DateField,
   'bool': BooleanField,
   'json': FunctionField,
+};
+
+const fieldStyle = {
+  maxWidth: '18em',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 };
 
 
@@ -42,7 +51,7 @@ function getFields(fields) {
       );
     }
 
-    return <Component key={index} source={key} />;
+    return <Component key={index} source={key} style={fieldStyle} />;
   });
 }
 
@@ -50,9 +59,11 @@ function getFields(fields) {
 export const BaseList = props => (
   <List {...props}
     title={`List of ${props.resource}`}
+    perPage={props.data.perPage}
   >
     <Datagrid>
         {getFields(props.data.fields)}
+        {props.data.canEdit ? <EditButton /> : <ShowButton />}
     </Datagrid>
   </List>
 );
@@ -61,6 +72,8 @@ export const BaseList = props => (
 BaseList.propTypes = {
   resource: PropTypes.string.isRequired,
   data: PropTypes.shape({
-    fields: PropTypes.object
+    fields: PropTypes.object.isRequired,
+    canEdit: PropTypes.bool.isRequired,
+    perPage: PropTypes.number.isRequired
   }),
 };
