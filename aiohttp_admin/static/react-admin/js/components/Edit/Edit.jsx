@@ -2,33 +2,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
-  Datagrid,
-  List,
-  TextField,
-  DateField,
-  NumberField,
-  BooleanField,
-  FunctionField,
-  TabbedForm,
-  FormTab,
-  TextInput,
-  DateInput,
-  ReferenceManyField,
-  NbItemsField,
-  EditButton,
-  ProductReferenceField,
-  StarRatingField,
-  SegmentsInput,
-  NullableBooleanInput,
   Edit,
   SimpleForm
 } from 'admin-on-rest';
 
+import { getInputs } from '../../utils/inputs';
+
 
 export const BaseEdit = (props) => (
   <Edit {...props}>
-      <SimpleForm>
-        <TextInput source="id" style={{ display: 'block' }} />
-      </ SimpleForm>
+    <SimpleForm>
+      {getInputs(props.data.editPage)}
+    </ SimpleForm>
   </Edit>
 );
+
+BaseEdit.propTypes = {
+  data: PropTypes.objectOf({
+    editPage: PropTypes.object,
+  })
+};
+
+export default BaseEdit;

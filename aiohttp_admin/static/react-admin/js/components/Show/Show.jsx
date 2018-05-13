@@ -1,17 +1,25 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import {
   Show,
-  TextField,
   SimpleShowLayout
 } from 'admin-on-rest';
+
+import { getFields } from '../../utils/fields';
 
 
 export const BaseShow = (props) => (
   <Show {...props}>
     <SimpleShowLayout>
-      <TextField source="id" />
+      {getFields(props.data.showPage)}
     </SimpleShowLayout>
   </Show>
 );
+
+BaseShow.propTypes = {
+  data: PropTypes.objectOf({
+    showPage: PropTypes.object,
+  }),
+};
+
+export default BaseShow;
