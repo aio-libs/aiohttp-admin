@@ -7,18 +7,28 @@ from ..security import require, Permissions
 from ..utils import (json_response, validate_payload, validate_query,
                      calc_pagination, ASC)
 from .sa_utils import table_to_trafaret, create_filter
+from ..contrib.constants import ReactComponent as rc
 
 
 __all__ = ['PGResource', 'MySQLResource']
 
 
-DATA_TYPES = {
-    sa.Integer: 'integer',
-    sa.Text: 'string',
-    sa.Float: 'number',
-    sa.Date: 'date',
-    sa.Boolean: 'bool',
-    postgresql.JSON: 'json',
+FIELD_TYPES = {
+    sa.Integer: rc.TEXT_FIELD.value,
+    sa.Text: rc.TEXT_FIELD.value,
+    sa.Float: rc.NUMBER_FIELD.value,
+    sa.Date: rc.DATE_FIELD.value,
+    sa.Boolean: rc.BOOLEAN_FIELD.value,
+    postgresql.JSON: rc.JSON_FIELD.value,
+}
+
+INPUT_TYPES = {
+    sa.Integer: rc.TEXT_INPUT.value,
+    sa.Text: rc.TEXT_INPUT.value,
+    sa.Float: rc.TEXT_INPUT.value,
+    sa.Date: rc.DATE_INPUT.value,
+    sa.Boolean: rc.NULLABLE_BOOLEAN_INPUT.value,
+    postgresql.JSON: rc.JSON_INPUT.value,
 }
 
 
@@ -63,11 +73,30 @@ class PGResource(AbstractResource):
         ]
 
         data_type_fields = {
-            name: DATA_TYPES.get(type(field_type.type), 'string')
+            name: FIELD_TYPES.get(type(field_type.type), rc.TEXT_FIELD.value)
             for name, field_type in actual_fields
         }
 
         return data_type_fields
+
+    @staticmethod
+    def get_type_for_inputs(table):
+        """
+        Return information about table's fields in dictionary type.
+
+        :param table: sa.Table - the current table
+        :return: list - list of the dictionaries
+        """
+        return [
+            dict(
+                type=INPUT_TYPES.get(
+                    type(field_type.type), rc.TEXT_INPUT.value
+                ),
+                name=name,
+                isPrimaryKey=(name in table.primary_key),
+                props=None,
+            ) for name, field_type in table.c.items()
+        ]
 
     async def list(self, request):
         await require(request, Permissions.view)

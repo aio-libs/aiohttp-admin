@@ -82,7 +82,6 @@ def table_to_trafaret(table, primary_key, skip_pk=False):
     for name, column in table.c.items():
         if skip_pk and column.name == primary_key:
             continue
-        key = name
         default = column.server_default
         key = build_key(name, default)
 
