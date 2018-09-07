@@ -44,7 +44,10 @@ class MotorResource(AbstractResource):
                   .sort(paging.sort_field, sort_direction))
 
         entities = await cursor.to_list(paging.limit)
-        count = await self._collection.find(query).count()
+        try:
+          count = await self._collection.find(query).count()
+        except AttributeError:
+          count = await self._collection.count_documents(query)
         headers = {'X-Total-Count': str(count)}
         return json_response(entities, headers=headers)
 
