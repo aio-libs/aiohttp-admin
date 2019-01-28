@@ -9,7 +9,7 @@ docker==3.7.0
 flake8==3.6.0
 ipdb==0.11
 motor==2.0.0
-pytest-cov==2.5.1
+pytest-cov==2.6.1
 pytest-sugar==0.9.1
 pytest==4.1.1
 python-dateutil==2.7.3
