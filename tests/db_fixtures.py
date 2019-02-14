@@ -13,9 +13,7 @@ from trafaret.contrib.object_id import MongoId
 from trafaret.contrib.rfc_3339 import DateTime
 
 
-def pytest_namespace():
-    dbs = 'pg', 'mongo', 'mysql'
-    return {'admin_type_list': dbs}
+ADMIN_TYPE_LIST = 'pg', 'mongo', 'mysql'
 
 
 @pytest.fixture
@@ -27,9 +25,9 @@ def admin_type():
 @pytest.fixture
 def database(request, admin_type):
     if admin_type == 'mysql':
-        f = request.getfuncargvalue('mysql')
+        f = request.getfixturevalue('mysql')
     else:
-        f = request.getfuncargvalue('postgres')
+        f = request.getfixturevalue('postgres')
     return f
 
 

@@ -1,5 +1,7 @@
 import pytest
 
+from db_fixtures import ADMIN_TYPE_LIST
+
 
 async def prepare_admin(create_admin):
     resource = 'posts'
@@ -9,7 +11,7 @@ async def prepare_admin(create_admin):
     return admin, client
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_login_page(create_admin):
     _, client = await prepare_admin(create_admin)
@@ -19,7 +21,7 @@ async def test_login_page(create_admin):
     assert b'username' in page
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_admin_page_redirect(create_admin):
     _, client = await prepare_admin(create_admin)
@@ -30,7 +32,7 @@ async def test_admin_page_redirect(create_admin):
     assert b"ng-admin" in page
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_token(create_admin):
     _, client = await prepare_admin(create_admin)
@@ -44,7 +46,7 @@ async def test_token(create_admin):
     assert ctx.value.error_json == msg
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_token_invalid_payload(create_admin):
     _, client = await prepare_admin(create_admin)
@@ -60,7 +62,7 @@ async def test_token_invalid_payload(create_admin):
     assert ctx.value.error_json == msg
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_logout(create_admin):
     _, client = await prepare_admin(create_admin)

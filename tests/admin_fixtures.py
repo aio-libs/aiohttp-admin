@@ -63,11 +63,11 @@ def mongo_admin_creator(loop, create_app_and_client, mongo_collection,
 @pytest.fixture
 def create_admin(request, admin_type):
     if admin_type == 'mongo':
-        f = request.getfuncargvalue('mongo_admin_creator')
+        f = request.getfixturevalue('mongo_admin_creator')
     elif admin_type == 'mysql':
-        f = request.getfuncargvalue('mysql_admin_creator')
+        f = request.getfixturevalue('mysql_admin_creator')
     else:
-        f = request.getfuncargvalue('pg_admin_creator')
+        f = request.getfixturevalue('pg_admin_creator')
     return f
 
 

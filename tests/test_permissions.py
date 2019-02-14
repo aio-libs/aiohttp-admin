@@ -5,6 +5,8 @@ import aiohttp_security
 from aiohttp_admin.security import DummyAuthPolicy, DummyTokenIdentityPolicy
 from aiohttp_admin.security import Permissions
 
+from db_fixtures import ADMIN_TYPE_LIST
+
 
 def setup_security(app, permissions=None):
     # setup dummy auth and identity
@@ -24,7 +26,7 @@ async def prepare_admin(create_admin, permissions=None):
     return resource, client
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_without_permisson(create_admin):
     p = [Permissions.edit, Permissions.add, Permissions.delete]

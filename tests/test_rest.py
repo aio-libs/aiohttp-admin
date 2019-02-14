@@ -1,7 +1,9 @@
 import pytest
 
+from db_fixtures import ADMIN_TYPE_LIST
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_basic_rest(create_admin):
     resource = 'posts'
@@ -22,7 +24,7 @@ async def test_basic_rest(create_admin):
     assert entity == resp[0]
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_detail_entity_that_not_exists(create_admin):
     resource = 'posts'
@@ -57,7 +59,7 @@ async def test_detail_entity_that_not_exists(create_admin):
     assert err.error_json == err_dict
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_pagination(create_admin):
     resource = 'posts'
@@ -83,7 +85,7 @@ async def test_list_pagination(create_admin):
     assert set(all_ids) == set(paged_ids)
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_filtering_by_pk(create_admin):
     resource = 'posts'
@@ -108,7 +110,7 @@ async def test_list_filtering_by_pk(create_admin):
     assert entity == resp[0]
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_text_like_filtering(create_admin):
     resource = 'posts'
@@ -131,7 +133,7 @@ async def test_list_text_like_filtering(create_admin):
     assert len(resp) == 6
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_q_filter(create_admin):
     resource = 'posts'
@@ -156,7 +158,7 @@ async def test_list_q_filter(create_admin):
     assert len(resp) == 6
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_sorting(create_admin):
     resource = 'posts'
@@ -182,7 +184,7 @@ async def test_list_sorting(create_admin):
     assert sorted_values == expected[::-1]
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_list_filtering(create_admin):
     resource = 'posts'
@@ -233,7 +235,7 @@ async def test_list_filtering(create_admin):
     assert len(resp) == 3
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_create(create_admin):
     resource = 'posts'
@@ -264,7 +266,7 @@ async def test_create(create_admin):
     assert resp['title'] == entity['title']
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_update(create_admin):
     resource = 'posts'
@@ -302,7 +304,7 @@ async def test_update(create_admin):
     assert new_entity == entity
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_update_deleted_entity(create_admin):
     resource = 'posts'
@@ -339,7 +341,7 @@ async def test_update_deleted_entity(create_admin):
     assert err.error_json == err_dict
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_update_not_valid_payload(create_admin):
     resource = 'posts'
@@ -375,7 +377,7 @@ async def test_update_not_valid_payload(create_admin):
     assert foo_error == 'foo is not allowed key'
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_delete(create_admin):
     resource = 'posts'
@@ -399,7 +401,7 @@ async def test_delete(create_admin):
     assert len(all_rows) == 0
 
 
-@pytest.mark.parametrize('admin_type', pytest.admin_type_list)
+@pytest.mark.parametrize('admin_type', ADMIN_TYPE_LIST)
 @pytest.mark.run_loop
 async def test_delete_entity_that_not_exists(create_admin):
     resource = 'posts'
