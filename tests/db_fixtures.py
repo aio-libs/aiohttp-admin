@@ -201,7 +201,7 @@ def create_document(request, document_schema, mongo_collection, loop,
         await mongo_collection.drop()
         values = create_entries(rows)
         for doc in values:
-            await mongo_collection.insert(doc)
+            await mongo_collection.insert_one(doc)
         return sa_table
     yield f
     loop.run_until_complete(mongo_collection.drop())

@@ -44,7 +44,7 @@ class MotorResource(AbstractResource):
                   .sort(paging.sort_field, sort_direction))
 
         entities = await cursor.to_list(paging.limit)
-        count = await self._collection.find(query).count()
+        count = await self._collection.count_documents(query)
         headers = {'X-Total-Count': str(count)}
         return json_response(entities, headers=headers)
 
@@ -66,8 +66,8 @@ class MotorResource(AbstractResource):
         raw_payload = await request.read()
         data = validate_payload(raw_payload, self._update_schema)
 
-        entity_id = await self._collection.insert(data)
-        query = {self._primary_key: ObjectId(entity_id)}
+        result = await self._collection.insert_one(data)
+        query = {self._primary_key: result.inserted_id}
         doc = await self._collection.find_one(query)
 
         return json_response(doc)
@@ -79,7 +79,7 @@ class MotorResource(AbstractResource):
         data = validate_payload(raw_payload, self._update_schema)
         query = {self._primary_key: ObjectId(entity_id)}
 
-        doc = await self._collection.find_and_modify(
+        doc = await self._collection.find_one_and_update(
             query, {"$set": data}, upsert=False, new=True)
 
         if not doc:
@@ -93,5 +93,5 @@ class MotorResource(AbstractResource):
         entity_id = request.match_info['entity_id']
         # TODO: fix ObjectId is not always valid case
         query = {self._primary_key: ObjectId(entity_id)}
-        await self._collection.remove(query)
+        await self._collection.delete_one(query)
         return json_response({'status': 'deleted'})
