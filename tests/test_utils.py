@@ -131,11 +131,11 @@ def test_validate_payload_not_valid_schema():
 
 
 def test_as_dict():
-    exc = t.DataError()
+    exc = t.DataError('err')
     resp = as_dict(exc)
     assert isinstance(resp, dict)
 
-    exc = t.DataError()
+    exc = t.DataError('err')
     assert isinstance(exc.as_dict("boom"), str)
 
     resp = as_dict(exc, 'boom')
