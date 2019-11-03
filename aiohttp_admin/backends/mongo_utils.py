@@ -35,8 +35,8 @@ def op(filter, field, operation, value):
 # TODO: fix comparators, keys should be something better
 comparator_map = {
     t.String: ('eq', 'ne', 'like', 'in'),
-    t.Int: ('eq', 'ne', 'lt', 'le', 'gt', 'ge', 'in'),
-    t.Float: ('eq', 'ne', 'lt', 'le', 'gt', 'ge'),
+    t.ToInt: ('eq', 'ne', 'lt', 'le', 'gt', 'ge', 'in'),
+    t.ToFloat: ('eq', 'ne', 'lt', 'le', 'gt', 'ge'),
     # t.Date: ('eq', 'ne', 'lt', 'le', 'gt', 'ge'),
 }
 
