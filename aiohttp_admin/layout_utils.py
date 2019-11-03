@@ -9,13 +9,13 @@ from .utils import gather_template_folders
 def build_field(key, value, relations=None):
     extra = None
     name = key
-    if isinstance(value, t.Int):
+    if isinstance(value, t.ToInt):
         v = "number"
     elif isinstance(value, (t.String, t.URL)):
         v = "string"
     elif isinstance(value, t.Email):
         v = "email"
-    elif isinstance(value, t.Float):
+    elif isinstance(value, t.ToFloat):
         v = "float"
     elif isinstance(value, t.Enum):
         v = "choice"

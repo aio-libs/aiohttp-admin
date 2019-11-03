@@ -154,13 +154,13 @@ def document_schema():
         t.Key('title'): t.String(max_length=200),
         t.Key('category'): t.String(max_length=200),
         t.Key('body'): t.String,
-        t.Key('views'): t.Int,
-        t.Key('average_note'): t.Float,
+        t.Key('views'): t.ToInt,
+        t.Key('average_note'): t.ToFloat,
         # t.Key('pictures'): t.Dict({}).allow_extra('*'),
         t.Key('published_at'): DateTime,
         # t.Key('tags'): t.List(t.Int),
         t.Key('status'): t.Enum(*choices),
-        t.Key('visible'): t.StrBool,
+        t.Key('visible'): t.ToBool,
     })
     return schema
 
