@@ -47,7 +47,7 @@ json_response = partial(web.json_response, dumps=jsonify)
 OptKey = partial(t.Key, optional=True)
 
 
-SimpleType = t.Int | t.Bool | t.String | t.Float
+SimpleType = t.IntRaw | t.Bool | t.String | t.FloatRaw
 Filter = t.Dict({
     OptKey('in'): t.List(SimpleType),
     OptKey('gt'): SimpleType,
@@ -65,8 +65,8 @@ DESC = 'DESC'
 
 
 ListQuery = t.Dict({
-    OptKey('_page', default=1): t.ToInt[1:],
-    OptKey('_perPage', default=30): t.ToInt[1:],
+    OptKey('_page', default=1): t.Int[1:],
+    OptKey('_perPage', default=30): t.Int[1:],
     OptKey('_sortField'): t.String,
     OptKey('_sortDir', default=DESC): t.Enum(DESC, ASC),
 

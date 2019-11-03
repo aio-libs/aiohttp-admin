@@ -29,10 +29,10 @@ def build_trafaret(sa_type, **kwargs):
         trafaret = t.String(max_length=sa_type.length, **kwargs)
 
     elif isinstance(sa_type, sa.sql.sqltypes.Integer):
-        trafaret = t.ToInt(**kwargs)
+        trafaret = t.Int(**kwargs)
 
     elif isinstance(sa_type, sa.sql.sqltypes.Float):
-        trafaret = t.ToFloat(**kwargs)
+        trafaret = t.Float(**kwargs)
 
     elif isinstance(sa_type, sa.sql.sqltypes.DateTime):
         trafaret = DateTime(**kwargs)  # RFC3339
@@ -41,7 +41,7 @@ def build_trafaret(sa_type, **kwargs):
         trafaret = DateTime(**kwargs)  # RFC3339
 
     elif isinstance(sa_type, sa.sql.sqltypes.Boolean):
-        trafaret = t.ToBool(**kwargs)
+        trafaret = t.StrBool(**kwargs)
 
     # Add PG related JSON and ARRAY
     elif isinstance(sa_type, postgresql.JSON):
