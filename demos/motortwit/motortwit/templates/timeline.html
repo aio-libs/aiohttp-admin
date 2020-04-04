@@ -17,11 +17,11 @@
           This is you!
         {% elif followed %}
           You are currently following this user.
-          <a class=unfollow href="{{ url('unfollow_user', parts={'username': profile_user.username})
+          <a class=unfollow href="{{ url('unfollow_user', username=profile_user.username)
                   }}">Unfollow user</a>.
         {% else %}
           You are not yet following this user.
-          <a class=follow href="{{ url('follow_user', parts={'username': profile_user.username})
+          <a class=follow href="{{ url('follow_user', username=profile_user.username)
                   }}">Follow user</a>.
         {% endif %}
       </div>
@@ -38,7 +38,7 @@
   <ul class=messages>
     {% for message in messages %}
       <li><img src="{{ message.username|robo_avatar_url(size=48)}}"><p>
-          <strong><a href="{{ url('user_timeline', parts={'username': message.username})
+          <strong><a href="{{ url('user_timeline', username=message.username)
                 }}">{{ message.username }}</a></strong>
         {{ message.text }}
         <small>&mdash; {{ message.pub_date|datetimeformat }}</small>

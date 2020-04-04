@@ -6,7 +6,7 @@ from trafaret.contrib.rfc_3339 import DateTime
 user = t.Dict({
     t.Key('_id'): MongoId(),
     t.Key('username'): t.String(max_length=50),
-    t.Key('email'): t.Email(),
+    t.Key('email'): t.Email,
     t.Key('pw_hash'): t.String(),
     # t.Key('first_name'): t.String(max_length=50),
     # t.Key('last_name'): t.String(max_length=50),
