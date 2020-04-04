@@ -30,8 +30,9 @@ def setup_admin(app, mongo):
     resources = (MotorResource(m.user, db.user, url="user"),
                  MotorResource(m.message, db.message, url="message"),
                  MotorResource(m.follower, db.follower, url="follower"))
-    admin = aiohttp_admin.setup(app, admin_config_path, 
-                                resources=resources, template_folder=TEMPLATES_ROOT)
+    admin = aiohttp_admin.setup(app, admin_config_path,
+                                resources=resources,
+                                template_folder=TEMPLATES_ROOT)
 
     # setup dummy auth and identity
     ident_policy = DummyTokenIdentityPolicy()
