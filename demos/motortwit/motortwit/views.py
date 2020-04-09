@@ -137,7 +137,7 @@ class SiteHandler:
             elif user_id is not None:
                 error = 'The username is already taken'
             else:
-                await self.mongo.user.insert(
+                await self.mongo.user.insert_one(
                     {'username': form['username'],
                      'email': form['email'],
                      'pw_hash': generate_password_hash(form['password'])})
@@ -158,11 +158,11 @@ class SiteHandler:
         if whom_id is None:
             raise web.HTTPFound()
 
-        await self.mongo.follower.update(
+        await self.mongo.follower.update_many(
             {'who_id': ObjectId(user_id)},
             {'$push': {'whom_id': whom_id}}, upsert=True)
 
-        return redirect(request, 'user_timeline', parts={"username": username})
+        return redirect(request, 'user_timeline', username=username)
 
     async def unfollow_user(self, request):
         """Removes the current user as follower of the given user."""
@@ -176,10 +176,10 @@ class SiteHandler:
         if whom_id is None:
             raise web.HTTPFound()
 
-        await self.mongo.follower.update(
+        await self.mongo.follower.update_many(
             {'who_id': ObjectId(session['user_id'])},
             {'$pull': {'whom_id': whom_id}})
-        return redirect(request, 'user_timeline', parts={"username": username})
+        return redirect(request, 'user_timeline', username=username)
 
     async def add_message(self, request):
         """Registers a new message for the user."""
@@ -194,7 +194,7 @@ class SiteHandler:
                 {'_id': ObjectId(session['user_id'])},
                 {'email': 1, 'username': 1})
 
-            await self.mongo.message.insert(
+            await self.mongo.message.insert_one(
                 {'author_id': ObjectId(user_id),
                  'email': user['email'],
                  'username': user['username'],

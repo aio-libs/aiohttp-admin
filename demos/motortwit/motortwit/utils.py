@@ -9,7 +9,7 @@ import motor.motor_asyncio as aiomotor
 
 def load_config(fname):
     with open(fname, 'rt') as f:
-        data = yaml.load(f)
+        data = yaml.load(f, Loader=yaml.FullLoader)
     # TODO: add config validation
     return data
 
@@ -40,5 +40,5 @@ def format_datetime(timestamp):
 
 def redirect(request, name, **kw):
     router = request.app.router
-    location = router[name].url(**kw)
+    location = router[name].url_for(**kw)
     return web.HTTPFound(location=location)
