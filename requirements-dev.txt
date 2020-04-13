@@ -4,7 +4,7 @@ aiohttp-session==2.9.0
 aiohttp==3.6.2
 aiomysql==0.0.20
 aiopg==1.0.0
-coverage==5.0.4
+coverage==5.1
 docker==4.2.0
 flake8==3.7.9
 ipdb==0.13.2
