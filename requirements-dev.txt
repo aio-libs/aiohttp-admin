@@ -7,7 +7,7 @@ aiopg==1.0.0
 coverage==5.1
 docker==4.2.1
 flake8==3.8.3
-ipdb==0.13.2
+ipdb==0.13.3
 motor==2.1.0
 pytest-cov==2.10.0
 pytest-sugar==0.9.3
