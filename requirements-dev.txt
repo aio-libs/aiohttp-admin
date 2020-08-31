@@ -5,7 +5,7 @@ aiohttp==3.6.2
 aiomysql==0.0.20
 aiopg==1.0.0
 coverage==5.2.1
-docker==4.3.0
+docker==4.3.1
 flake8==3.8.3
 ipdb==0.13.3
 motor==2.2.0
