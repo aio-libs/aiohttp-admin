@@ -8,7 +8,7 @@ coverage==5.3
 docker==4.3.1
 flake8==3.8.3
 ipdb==0.13.3
-motor==2.2.0
+motor==2.3.0
 pytest-cov==2.10.1
 pytest-sugar==0.9.4
 pytest==6.1.0
