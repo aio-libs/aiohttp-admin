@@ -1,74 +1,86 @@
-import aiohttp_jinja2
-import jinja2
+import secrets
+from pathlib import Path
+from typing import Optional
+
+import aiohttp_security
+import aiohttp_session
 from aiohttp import web
+from aiohttp.typedefs import Handler
+from aiohttp_security import AbstractAuthorizationPolicy
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from pydantic import parse_obj_as, ValidationError
 
-from .admin import (
-    AdminHandler,
-    setup_admin_handlers,
-    setup_admin_on_rest_handlers,
-    AdminOnRestHandler,
-)
-from .consts import PROJ_ROOT, TEMPLATE_APP_KEY, APP_KEY, TEMPLATES_ROOT
-from .security import Permissions, require, authorize
-from .utils import gather_template_folders
+from .backends.abc import Permissions
+from .routes import setup_resources, setup_routes
+from .security import TokenIdentityPolicy
+from .types import Schema, UserDetails
 
-
-__all__ = ['AdminHandler', 'setup', 'get_admin', 'Permissions', 'require',
-           'authorize', '_setup', ]
-__version__ = '0.0.2'
+__all__ = ("Permissions", "UserDetails", "setup")
+__version__ = "0.1.0a0"
 
 
-def setup(app, admin_conf_path, *, resources, static_folder=None,
-          template_folder=None, template_name=None, name=None,
-          app_key=APP_KEY):
+@web.middleware
+async def pydantic_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
+    try:
+        return await handler(request)
+    except ValidationError as e:
+        raise web.HTTPBadRequest(text=str(e))
 
-    admin = web.Application(loop=app.loop)
-    app[app_key] = admin
 
-    tf = gather_template_folders(template_folder)
-    loader = jinja2.FileSystemLoader(tf)
-    aiohttp_jinja2.setup(admin, loader=loader, app_key=TEMPLATE_APP_KEY)
+def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,
+          *, path: str = "/admin", secret: Optional[bytes] = None) -> web.Application:
+    """Initialize the admin.
 
-    template_name = template_name or 'admin.html'
-    admin_handler = AdminHandler(admin, resources=resources, name=name,
-                                 template=template_name, loop=app.loop)
+    Args:
+        app - Parent application to add the admin sub app to.
+        schema - Schema to define admin layout/behaviour.
+        auth_policy - aiohttp-security auth policy.
+        path - The path used when adding the admin sub app to app.
+        secret - Cookie encryption key. If not provided, a random key is generated, which
+            will result in users being logged out each time the app is restarted. To
+            avoid this (or if using multiple servers) it is recommended to generate a
+            random secret (e.g. secrets.token_bytes()) and save the value.
 
-    admin['admin_handler'] = admin_handler
-    admin['layout_path'] = admin_conf_path
+    Returns the admin application.
+    """
+    async def on_startup(admin: web.Application) -> None:
+        """Configuration steps which require the application to be already configured.
 
-    static_folder = static_folder or str(PROJ_ROOT / 'static')
-    setup_admin_handlers(admin, admin_handler, static_folder, admin_conf_path)
+        This is very awkward, as we need the nested function to be able to reference
+        prefixed_subapp at the end of the setup. Once we have that object the app
+        is frozen and we can't modify the app, in order to add this startup function.
+        Therefore, we add this function first, then we can get the reference from the
+        enclosing scope later.
+        """
+        storage._cookie_params["path"] = prefixed_subapp.canonical
+        admin["state"]["urls"] = {
+            "token": str(admin.router["token"].url_for()),
+            "logout": str(admin.router["logout"].url_for())
+        }
+        for res in schema["resources"]:
+            m = res["model"]
+            urls = {r.kwargs["name"].removeprefix(m.name + "_"): (r.method, str(admin.router[r.kwargs["name"]].url_for())) for r in m.routes}
+            admin["state"]["resources"][m.name]["urls"] = urls
+
+    schema = parse_obj_as(Schema, schema)
+    if secret is None:
+        secret = secrets.token_bytes()
+
+    admin = web.Application()
+    admin.middlewares.append(pydantic_middleware)
+    admin.on_startup.append(on_startup)
+    admin["check_credentials"] = schema["security"]["check_credentials"]
+    admin["state"] = {"view": schema.get("view", {})}
+
+    max_age = schema["security"].get("max_age")
+    secure = schema["security"].get("secure", True)
+    storage = EncryptedCookieStorage(
+        secret, max_age=max_age, httponly=True, samesite="Strict", secure=secure)
+    identity_policy = TokenIdentityPolicy(storage._fernet, schema)
+    aiohttp_session.setup(admin, storage)
+    aiohttp_security.setup(admin, identity_policy, auth_policy)
+
+    setup_routes(admin)
+    setup_resources(admin, schema)
+    prefixed_subapp = app.add_subapp(path, admin)
     return admin
-
-
-def _setup(app, *, schema,  title=None, app_key=APP_KEY, db=None):
-    """Initialize the admin-on-rest admin"""
-
-    admin = web.Application(loop=app.loop)
-    app[app_key] = admin
-    loader = jinja2.FileSystemLoader([TEMPLATES_ROOT, ])
-    aiohttp_jinja2.setup(admin, loader=loader, app_key=TEMPLATE_APP_KEY)
-
-    if title:
-        schema.title = title
-
-    resources = [
-        init(db, info['table'], url=info['url'])
-        for init, info in schema.resources
-    ]
-
-    admin_handler = AdminOnRestHandler(
-        admin,
-        resources=resources,
-        loop=app.loop,
-        schema=schema,
-    )
-
-    admin['admin_handler'] = admin_handler
-    setup_admin_on_rest_handlers(admin, admin_handler)
-
-    return admin
-
-
-def get_admin(app, *, app_key=APP_KEY):
-    return app.get(app_key)

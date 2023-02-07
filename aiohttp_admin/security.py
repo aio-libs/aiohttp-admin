@@ -1,115 +1,77 @@
-from abc import abstractmethod
+import json
 from enum import Enum
+from typing import Awaitable, Callable, List, Optional, TypedDict
 
-from hmac import HMAC
-from hashlib import sha512
-import os
+from aiohttp import web
+from aiohttp_security import SessionIdentityPolicy
+from cryptography.fernet import Fernet, InvalidToken
+from pydantic import Json, ValidationError, parse_obj_as
 
-from aiohttp_security import AbstractAuthorizationPolicy
-from aiohttp_security import AbstractIdentityPolicy
-from aiohttp_security import permits
-from aiohttp_security.api import AUTZ_KEY
-
-from .exceptions import JsonForbiddenError
+from .types import IdentityDict, Schema, UserDetails
 
 
-__all__ = ["Permissions", "require", "authorize"]
+class TokenIdentityPolicy(SessionIdentityPolicy):
+    def __init__(self, fernet: Fernet, schema: Schema):
+        super().__init__()
+        self._fernet = fernet
+        config = schema["security"]
+        self._identity_callback = config.get("identity_callback")
+        self._max_age = config.get("max_age")
 
-
-class Permissions(str, Enum):
-    view = "aiohttp_admin.view"
-    edit = "aiohttp_admin.edit"
-    add = "aiohttp_admin.add"
-    delete = "aiohttp_admin.delete"
-
-
-class AdminAbstractAuthorizationPolicy(AbstractAuthorizationPolicy):
-
-    @abstractmethod
-    async def check_credential(self, identity, password):  # pragma: no cover
-        pass
-
-
-async def require(request, permission):
-    has_perm = await permits(request, permission)
-    if not has_perm:
-        msg = 'User has no permission {}'.format(permission)
-        raise JsonForbiddenError(msg)
-
-
-async def authorize(request, username, password):
-    autz_policy = request.app.get(AUTZ_KEY)
-    assert autz_policy, "aiohttp_security should inited first"
-    is_user = await autz_policy.check_credential(username, password)
-    if not is_user:
-        msg = "Wrong username or password"
-        raise JsonForbiddenError(msg)
-    return is_user
-
-
-class DummyAuthPolicy(AdminAbstractAuthorizationPolicy):
-
-    def __init__(self, username, password, permissions=None):
-        self._username = username
-        self._password = password
-        self._permissions = permissions or [p for p in Permissions]
-
-    async def authorized_userid(self, identity):
-        user_id = None
-        if identity == self._username:
-            user_id = 0
-        return user_id
-
-    async def permits(self, identity, permission, context=None):
-        if identity is None:
-            return False
-        is_user = self._username == identity
-        is_perm = permission in self._permissions
-        return is_user and is_perm
-
-    async def check_credential(self, identity, password):
-        is_user = self._username == identity
-        is_pass = self._password == password
-        return is_user and is_pass
-
-
-class DummyTokenIdentityPolicy(AbstractIdentityPolicy):
-
-    def __init__(self, server_secret=None):
-        '''
-            Makes identity tokens using HMAC(SHA-512) over a
-            server-side secret.
-
-            Provide a secret (20+ bytes) or we'll pick one
-            at runtime.
-        '''
-
-        if server_secret is None:
-            server_secret = os.urandom(32)
-
-        self.hmac = HMAC(server_secret, digestmod=sha512)
-
-    def _make_hmac(self, ident):
-        hm = self.hmac.copy()
-        hm.update(ident.encode('utf8'))
-        return hm.hexdigest()
-
-    async def identify(self, request):
-        # validate token
+    async def identify(self, request: web.Request) -> Optional[str]:
+        """Return the identity of an authorised user."""
+        # Validate JS token
         hdr = request.headers.get("Authorization")
-        if not hdr or ':' not in hdr:
+        try:
+            identity_data = parse_obj_as(Json[IdentityDict], hdr)
+        except ValidationError:
             return None
-        identity, check = hdr.rsplit(':', 1)
-        if check != self._make_hmac(identity):
+
+        auth = identity_data["auth"].encode("utf-8")
+        try:
+            token_identity = self._fernet.decrypt(auth, ttl=self._max_age).decode("utf-8")
+        except InvalidToken:
             return None
-        return identity
 
-    async def remember(self, request, response, identity, **kwargs):
-        # save token in storage and reply to client
-        response.headers['X-Token'] = identity+':'+self._make_hmac(identity)
+        # Validate cookie token
+        cookie_identity = await super().identify(request)
 
-    async def forget(self, request, response):
-        token = request.headers.get("Authorization")
-        assert token
-        assert ':' in token
-        # no real way to force client side to forget
+        # Both identites must match.
+        return token_identity if token_identity == cookie_identity else None
+
+    async def remember(self, request: web.Request, response: web.Response,
+                       identity: str, **kwargs: object) -> None:
+        """Send auth tokens to client for authentication."""
+        # For proper security we send a token for JS to store and an HTTP only cookie:
+        # https://www.redotheweb.com/2015/11/09/api-security.html
+        # Send token that will be saved in local storage by the JS client.
+        response.headers["X-Token"] = json.dumps(await self.user_identity_dict(request, identity))
+        # Send httponly cookie, which will be invisible to JS.
+        await super().remember(request, response, identity, **kwargs)
+
+    async def forget(self, request: web.Request, response: web.Response) -> None:
+        """Delete session cookie (JS client should choose to delete its token)."""
+        await super().forget(request, response)
+
+    async def user_identity_dict(self, request: web.Request, identity: str) -> IdentityDict:
+        """Create the identity information sent back to the admin client.
+
+        The 'auth' key will be used for the server authentication, everything else is
+        just information that the client can use. For example, 'permissions' will be
+        returned by the react-admin's getPermissions() and some values like
+        'fullName' or 'avatar' will be automatically used:
+            https://marmelab.com/react-admin/AuthProviderWriting.html#getidentity
+
+        All details (except auth) can be specified using the identity callback.
+        """
+        if self._identity_callback is None:
+            user_details: UserDetails = {}
+        else:
+            user_details = await self._identity_callback(request, identity)
+            if "auth" in user_details:
+                raise ValueError("Callback should not return a dict with 'auth' key.")
+
+        auth = self._fernet.encrypt(identity.encode("utf-8")).decode("utf-8")
+        identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": ()}
+        identity_dict.update(user_details)
+        return identity_dict
