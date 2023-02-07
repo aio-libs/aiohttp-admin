@@ -1,72 +1,43 @@
-import os
 import re
 import sys
+from pathlib import Path
 from setuptools import setup, find_packages
 
-
-PY_VER = sys.version_info
-
-if not PY_VER >= (3, 5):
-    raise RuntimeError("aiohttp_admin doesn't support Python earlier than 3.5")
-
-
-def read(f):
-    return open(os.path.join(os.path.dirname(__file__), f)).read().strip()
-
-
-install_requires = ['aiohttp',
-                    'aiohttp_jinja2',
-                    'aiohttp_security',
-                    'python-dateutil',
-                    'trafaret',
-                    'yarl']
-
-extras_require = {'motor': ['motor'],
-                  'aiopg': ['aiopg', 'sqlalchemy'],
-                  'aiomysql': ['aiomysql', 'sqlalchemy']}
+if not sys.version_info >= (3, 9):
+    raise RuntimeError("aiohttp_admin doesn't support Python earlier than 3.9")
 
 
 def read_version():
     regexp = re.compile(r"^__version__\W*=\W*'([\d.abrc]+)'")
-    init_py = os.path.join(os.path.dirname(__file__),
-                           'aiohttp_admin', '__init__.py')
-    with open(init_py) as f:
+    init_py = Path(__file__) / "aiohttp_admin" / "__init__.py"
+    with init_py.open() as f:
         for line in f:
             match = regexp.match(line)
             if match is not None:
                 return match.group(1)
-        else:
-            msg = 'Cannot find version in aiohttp_admin/__init__.py'
-            raise RuntimeError(msg)
+    raise RuntimeError("Cannot find version in aiohttp_admin/__init__.py")
 
 
-classifiers = [
-    'License :: OSI Approved :: MIT License',
-    'Intended Audience :: Developers',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.5',
-    'Operating System :: POSIX',
-    'Environment :: Web Environment',
-    'Development Status :: 3 - Alpha',
-    'Framework :: AsyncIO',
-]
+classifiers = (
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Topic :: Internet :: WWW/HTTP",
+    "Framework :: AsyncIO",
+    "Framework :: Aiohttp",
+)
 
 
-setup(name='aiohttp-admin',
+setup(name="aiohttp-admin",
       version=read_version(),
-      description=('admin interface for aiohttp application'),
-      long_description='\n\n'.join((read('README.rst'), read('CHANGES.txt'))),
+      description="admin interface for aiohttp application",
+      long_description="\n\n".join((Path("README.rst").read_text(), Path("CHANGES.rst").read_text())),
       classifiers=classifiers,
-      platforms=['POSIX'],
-      author="Nikolay Novik",
-      author_email="nickolainovik@gmail.com",
-      url='https://github.com/aio-libs/aiohttp_admin',
-      download_url='https://github.com/aio-libs/aiohttp_admin',
-      license='Apache 2',
+      url="https://github.com/aio-libs/aiohttp_admin",
+      download_url="https://github.com/aio-libs/aiohttp_admin",
+      license="Apache 2",
       packages=find_packages(),
-      install_requires=install_requires,
-      extras_require=extras_require,
-      entry_points={
-            'console_scripts': ['aioadmin=aiohttp_admin.cli:main'],
-        },
+      install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session", "pydantic"),
+      extras_require={"sa": ["sqlalchemy>=2,<3"]},
       include_package_data=True)

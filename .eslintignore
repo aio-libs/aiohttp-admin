@@ -1,4 +1,0 @@
-# /node_modules/* ignored by default
-
-# ignore ng-admin source
-/aiohttp_admin/static/js/ng-admin/

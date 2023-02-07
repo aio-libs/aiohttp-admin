@@ -1,4 +1,0 @@
-[run]
-branch = True
-source = aiohttp_admin
-omit = site-packages, .tox
