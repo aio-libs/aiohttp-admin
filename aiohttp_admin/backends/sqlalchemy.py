@@ -39,9 +39,10 @@ class SAResource(AbstractAdminResource):
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
             self.fields[c.name] = {"type": field, "props": props}
-            # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
-            show = c is not table._autoincrement_column
-            self.inputs[c.name] = {"type": inp, "props": props, "show_create": show}
+            if c.computed is None:
+                # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
+                show = c is not table._autoincrement_column
+                self.inputs[c.name] = {"type": inp, "props": props, "show_create": show}
 
         self._db = db
         self._table = table
