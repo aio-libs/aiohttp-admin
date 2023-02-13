@@ -14,6 +14,7 @@ FIELD_TYPES = {
     sa.Text: ("TextField", "TextInput"),
     sa.Float: ("NumberField", "NumberInput"),
     sa.Date: ("DateField", "DateInput"),
+    sa.DateTime: ("DateField", "DateInput"),
     sa.Boolean: ("BooleanField", "BooleanInput"),
     sa.String: ("TextField", "TextInput")
 }
