@@ -1,6 +1,8 @@
+import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 from enum import Enum
-from functools import cached_property
+from functools import cached_property, partial
 from typing import Literal, TypedDict, Union
 
 from aiohttp import web
@@ -8,6 +10,19 @@ from aiohttp_security import check_permission
 from pydantic import Json, parse_obj_as
 
 Record = dict[str, object]
+
+
+class Encoder(json.JSONEncoder):
+    def default(self, o: object) -> str:
+        if isinstance(o, datetime):
+            return str(o)
+        if isinstance(o, Enum):
+            return o.value
+
+        return super().default(o)
+
+
+json_response = partial(web.json_response, dumps=partial(json.dumps, cls=Encoder))
 
 
 class Permissions(str, Enum):
@@ -116,49 +131,49 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetListParams, request.query)
 
         results, total = await self.get_list(query)
-        return web.json_response({"data": results, "total": total})
+        return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.view)
         query = parse_obj_as(GetOneParams, request.query)
 
         result = await self.get_one(query)
-        return web.json_response({"data": result})
+        return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.view)
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
-        return web.json_response({"data": results})
+        return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.add)
         query = parse_obj_as(CreateParams, request.query)
 
         result = await self.create(query)
-        return web.json_response({"data": result})
+        return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.edit)
         query = parse_obj_as(UpdateParams, request.query)
 
         result = await self.update(query)
-        return web.json_response({"data": result})
+        return json_response({"data": result})
 
     async def _delete(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.delete)
         query = parse_obj_as(DeleteParams, request.query)
 
         result = await self.delete(query)
-        return web.json_response({"data": result})
+        return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:
         await check_permission(request, Permissions.delete)
         query = parse_obj_as(DeleteManyParams, request.query)
 
         ids = await self.delete_many(query)
-        return web.json_response({"data": ids})
+        return json_response({"data": ids})
 
     @cached_property
     def routes(self) -> tuple[web.RouteDef, ...]:
