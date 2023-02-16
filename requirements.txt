@@ -1,7 +1,7 @@
 -e .
 aiohttp==3.8.3
 aiohttp-security==0.4.0
-aiohttp-session==2.12.0
+aiohttp-session[secure]==2.12.0
 pydantic==1.10.4
 pytest==7.2.1
 pytest-cov==4.0.0
