@@ -9,7 +9,7 @@ if not sys.version_info >= (3, 9):
 
 def read_version():
     regexp = re.compile(r"^__version__\W*=\W*'([\d.abrc]+)'")
-    init_py = Path(__file__) / "aiohttp_admin" / "__init__.py"
+    init_py = Path(__file__).parent / "aiohttp_admin" / "__init__.py"
     with init_py.open() as f:
         for line in f:
             match = regexp.match(line)
