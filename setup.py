@@ -39,7 +39,7 @@ class sdist(sdist_orig):
 
 setup(name="aiohttp-admin",
       version=read_version(),
-      cmdclass={"sdist": sdist}
+      cmdclass={"sdist": sdist},
       description="admin interface for aiohttp application",
       long_description="\n\n".join((Path("README.rst").read_text(), Path("CHANGES.rst").read_text())),
       classifiers=classifiers,
