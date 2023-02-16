@@ -1,5 +1,6 @@
 import re
 import sys
+from distutils.command.sdist import sdist as sdist_orig
 from pathlib import Path
 from setuptools import setup, find_packages
 
@@ -29,8 +30,16 @@ classifiers = (
 )
 
 
+class sdist(sdist_orig):
+    def run(self):
+        self.spawn(["yarn", "install"])
+        self.spawn(["yarn", "build"])
+        super().run()
+
+
 setup(name="aiohttp-admin",
       version=read_version(),
+      cmdclass={"sdist": sdist}
       description="admin interface for aiohttp application",
       long_description="\n\n".join((Path("README.rst").read_text(), Path("CHANGES.rst").read_text())),
       classifiers=classifiers,
