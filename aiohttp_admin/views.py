@@ -30,7 +30,7 @@ INDEX_TEMPLATE = """<!doctype html>
 async def index(request: web.Request) -> web.Response:
     """Root page which loads react-admin."""
     static = request.app.router["static"]
-    js = static.url_for(filename="js/admin.js")
+    js = static.url_for(filename="admin.js")
     state = json.dumps(request.app["state"])
 
     # __package__ can be None, despite what the documentation claims.
