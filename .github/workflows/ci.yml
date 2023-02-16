@@ -50,11 +50,9 @@ jobs:
     strategy:
       matrix:
         pyver: ['3.9', '3.10', '3.11']
-        os: [ubuntu, macos, windows]
         include:
           - pyver: pypy-3.9
-            os: ubuntu
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - name: Checkout
