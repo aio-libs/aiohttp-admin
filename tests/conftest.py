@@ -1,68 +1,73 @@
-import asyncio
-import gc
-import socket
+from unittest.mock import AsyncMock, create_autospec
 
 import pytest
+from aiohttp import web
+from aiohttp_security import AbstractAuthorizationPolicy
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+import aiohttp_admin
+from aiohttp_admin.backends.sqlalchemy import SAResource
+from _auth import DummyAuthPolicy, check_credentials, identity_callback
+
+@pytest.fixture
+def base() -> DeclarativeBase:
+    class Base(DeclarativeBase):
+        """Base model."""
 
 
-@pytest.yield_fixture
-def loop(request):
-    old_loop = asyncio.get_event_loop()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(None)
+    return Base
 
-    yield loop
+@pytest.fixture
+def mock_engine() -> AsyncMock:
+    return create_autospec(AsyncEngine, instance=True, spec_set=True)
 
-    if not loop._closed:
-        loop.call_soon(loop.stop)
-        loop.run_forever()
-        loop.close()
-        gc.collect()
-    asyncio.set_event_loop(old_loop)
+@pytest.fixture
+def create_admin_client(base: DeclarativeBase, aiohttp_client):
+    async def admin_client(auth_policy: AbstractAuthorizationPolicy):
+        class DummyModel(base):
+            __tablename__ = "dummy"
 
+            id: Mapped[int] = mapped_column(primary_key=True)
 
-@pytest.mark.tryfirst
-def pytest_pycollect_makeitem(collector, name, obj):
-    if collector.funcnamefilter(name):
-        item = pytest.Function(name, parent=collector)
-        if 'run_loop' in item.keywords:
-            return list(collector._genfunctions(name, obj))
+        app = web.Application()
+        app["model"] = DummyModel
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+        app["db"] = async_sessionmaker(engine, expire_on_commit=False)
+        async with engine.begin() as conn:
+            await conn.run_sync(base.metadata.create_all)
+        async with app["db"].begin() as sess:
+            sess.add(DummyModel())
 
+        schema = {
+            "security": {
+                "check_credentials": check_credentials,
+                "identity_callback": identity_callback,
+                "secure": False
+            },
+            "resources": (
+                {"model": SAResource(engine, DummyModel)},
+            )
+        }
+        app["admin"] = aiohttp_admin.setup(app, schema, auth_policy)
 
-@pytest.mark.tryfirst
-def pytest_pyfunc_call(pyfuncitem):
-    """
-    Run asyncio marked test functions in an event loop instead of a normal
-    function call.
-    """
-    if 'run_loop' in pyfuncitem.keywords:
-        funcargs = pyfuncitem.funcargs
-        loop = funcargs['loop']
-        testargs = {arg: funcargs[arg]
-                    for arg in pyfuncitem._fixtureinfo.argnames}
+        return await aiohttp_client(app)
 
-        if not asyncio.iscoroutinefunction(pyfuncitem.obj):
-            func = asyncio.coroutine(pyfuncitem.obj)
-        else:
-            func = pyfuncitem.obj
-        loop.run_until_complete(func(**testargs))
-        return True
+    return admin_client
 
+@pytest.fixture
+async def admin_client(create_admin_client):
+    return await create_admin_client(DummyAuthPolicy())
 
-def pytest_runtest_setup(item):
-    if 'run_loop' in item.keywords and 'loop' not in item.fixturenames:
-        # inject an event loop fixture for all async tests
-        item.fixturenames.append('loop')
+@pytest.fixture
+def login():
+    async def do_login(admin_client):
+        url = admin_client.app["admin"].router["token"].url_for()
+        login = {"username": "admin", "password": "admin123"}
+        async with admin_client.post(url, json=login) as resp:
+            assert resp.status == 200
+            token = resp.headers["X-Token"]
 
+        return {"Authorization": token}
 
-@pytest.fixture(scope='session')
-def unused_port():
-    def f():
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('127.0.0.1', 0))
-            return s.getsockname()[1]
-    return f
-
-
-pytest_plugins = ['docker_fixtures', 'db_fixtures', 'rest_fixtures',
-                  'admin_fixtures']
+    return do_login
