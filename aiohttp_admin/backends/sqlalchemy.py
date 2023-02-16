@@ -2,6 +2,7 @@ import asyncio
 from typing import Type, Union
 
 import sqlalchemy as sa
+from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -80,37 +81,58 @@ class SAResource(AbstractAdminResource):
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(self._table.c["id"] == params["id"])
             result = await conn.execute(stmt)
-            return result.one()._asdict()
+            try:
+                return result.one()._asdict()
+            except sa.exc.NoResultFound:
+                raise web.HTTPNotFound()
 
     async def get_many(self, params: GetManyParams) -> list[Record]:
         async with self._db.connect() as conn:
             # TODO: Handle primary key not called "id"
             stmt = sa.select(self._table).where(self._table.c["id"].in_(params["ids"]))
             result = await conn.execute(stmt)
-            return [r._asdict() for r in result]
+            records = [r._asdict() for r in result]
+        if records:
+            return records
+        raise web.HTTPNotFound()
 
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
-            row = await conn.execute(stmt)
+            try:
+                row = await conn.execute(stmt)
+            except sa.exc.IntegrityError:
+                raise web.HTTPBadRequest(reason="Element already exists.")
             return row.one()._asdict()
 
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c["id"] == params["id"])
             stmt = stmt.values(params["data"]).returning(*self._table.c)
-            row = await conn.execute(stmt)
-            return row.one()._asdict()
+            try:
+                row = await conn.execute(stmt)
+            except sa.exc.CompileError as e:
+                raise web.HTTPBadRequest(reason=str(e))
+            try:
+                return row.one()._asdict()
+            except sa.exc.NoResultFound:
+                raise web.HTTPNotFound()
 
     async def delete(self, params: DeleteParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._table.c["id"] == params["id"])
             row = await conn.execute(stmt.returning(*self._table.c))
-            return row.one()._asdict()
+            try:
+                return row.one()._asdict()
+            except sa.exc.NoResultFound:
+                raise web.HTTPNotFound()
 
     async def delete_many(self, params: DeleteManyParams) -> list[Union[str, int]]:
         async with self._db.begin() as conn:
             # TODO: Handle primary key not called "id"
             stmt = sa.delete(self._table).where(self._table.c["id"].in_(params["ids"]))
-            await conn.execute(stmt)
-        return params["ids"]
+            r = await conn.scalars(stmt.returning(self._table.c["id"]))
+            ids = list(r)
+        if ids:
+            return ids
+        raise web.HTTPNotFound()

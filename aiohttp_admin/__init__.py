@@ -24,7 +24,7 @@ async def pydantic_middleware(request: web.Request, handler: Handler) -> web.Str
     try:
         return await handler(request)
     except ValidationError as e:
-        raise web.HTTPBadRequest(text=str(e))
+        raise web.HTTPBadRequest(text=e.json(), content_type="application/json")
 
 
 def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,
