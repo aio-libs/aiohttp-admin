@@ -32,8 +32,12 @@ classifiers = (
 
 class sdist(sdist_orig):
     def run(self):
+        import time
+        print(time.time())
         self.spawn(["yarn", "install"])
         self.spawn(["yarn", "build"])
+        print(time.time())
+        print("DONE")
         super().run()
 
 
