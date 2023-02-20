@@ -56,13 +56,6 @@ classifiers = (
 )
 
 
-class AdminInstall(install):
-    def run(self):
-        self.spawn(["yarn", "install"])
-        self.spawn(["yarn", "build"])
-        super().run()
-
-
 setup(name="aiohttp-admin",
       version=read_version(),
       cmdclass={"bdist_egg": bdist_egg, "build": build, "build_js": build_js},
