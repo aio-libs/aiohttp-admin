@@ -42,5 +42,5 @@ setup(name="aiohttp-admin",
       packages=find_packages(),
       install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session",
                         "cryptography", "pydantic"),
-      extras_require={"sa": ["sqlalchemy>=2,<3"]},
+      extras_require={"sa": ["sqlalchemy>=2.0.4,<3"]},
       include_package_data=True)
