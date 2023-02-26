@@ -65,6 +65,8 @@ jobs:
         cache-dependency-path: '**/requirements*.txt'
     - name: Install yarn
       run: sudo apt install yarn -y
+    - name: Create static
+      run: mkdir aiohttp_admin/static
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
@@ -115,6 +117,8 @@ jobs:
         python-version: 3.8
     - name: Install yarn
       run: sudo apt install yarn -y
+    - name: Create static
+      run: mkdir aiohttp_admin/static
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
