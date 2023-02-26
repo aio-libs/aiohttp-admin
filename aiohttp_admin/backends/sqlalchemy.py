@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Iterator, Mapping, Type, Union
+from typing import Any, Iterator, Type, Union
 
 import sqlalchemy as sa
 from aiohttp import web
@@ -75,7 +75,7 @@ class SAResource(AbstractAdminResource):
             count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
             sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
-            order_by: sa.UnaryExpression[object] = sa.asc(params["sort"]["field"])
+            order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
             stmt = query.offset(offset).limit(per_page).order_by(order_by)
             result, count = await asyncio.gather(conn.execute(stmt), count_t)
             entities = [r._asdict() for r in result]
