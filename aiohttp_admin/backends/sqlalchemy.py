@@ -22,7 +22,8 @@ FIELD_TYPES = {
 }
 
 
-def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
+def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
+                   filters: dict[str, object]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())
 
@@ -30,6 +31,8 @@ def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[Exp
 class SAResource(AbstractAdminResource):
     def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, Type[DeclarativeBase]]):
         table = model_or_table if isinstance(model_or_table, sa.Table) else model_or_table.__table__
+        if not isinstance(table, sa.Table):
+            raise ValueError("Non-table mappings are not supported.")
         self.name = table.name
         self.fields = {}
         self.inputs = {}
@@ -38,7 +41,7 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props = {"reference": key.column.table.name}
+                props: dict[str, Union[int, str]] = {"reference": key.column.table.name}
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
@@ -72,7 +75,7 @@ class SAResource(AbstractAdminResource):
             count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
             sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
-            order_by = sort_dir(params["sort"]["field"])
+            order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
             stmt = query.offset(offset).limit(per_page).order_by(order_by)
             result, count = await asyncio.gather(conn.execute(stmt), count_t)
             entities = [r._asdict() for r in result]
@@ -100,7 +103,8 @@ class SAResource(AbstractAdminResource):
 
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
+            # https://github.com/sqlalchemy/sqlalchemy/issues/9376
+            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:
@@ -110,7 +114,7 @@ class SAResource(AbstractAdminResource):
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c["id"] == params["id"])
-            stmt = stmt.values(params["data"]).returning(*self._table.c)
+            stmt = stmt.values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
             try:
                 row = await conn.execute(stmt)
             except sa.exc.CompileError as e:

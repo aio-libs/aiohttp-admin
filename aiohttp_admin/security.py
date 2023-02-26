@@ -9,7 +9,7 @@ from pydantic import Json, ValidationError, parse_obj_as
 from .types import IdentityDict, Schema, UserDetails
 
 
-class TokenIdentityPolicy(SessionIdentityPolicy):
+class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]
     def __init__(self, fernet: Fernet, schema: Schema):
         super().__init__()
         self._fernet = fernet
@@ -72,5 +72,6 @@ class TokenIdentityPolicy(SessionIdentityPolicy):
 
         auth = self._fernet.encrypt(identity.encode("utf-8")).decode("utf-8")
         identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": ()}
-        identity_dict.update(user_details)
+        # https://github.com/python/mypy/issues/6462
+        identity_dict.update(user_details)  # type: ignore[typeddict-item]
         return identity_dict

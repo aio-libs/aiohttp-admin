@@ -15,7 +15,7 @@ async def identity_callback(request: web.Request, identity: str) -> UserDetails:
     return {"permissions": tuple(Permissions)}
 
 
-class DummyAuthPolicy(AbstractAuthorizationPolicy):
+class DummyAuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
     async def authorized_userid(self, identity: str) -> Optional[str]:
         return identity if identity == "admin" else None
 

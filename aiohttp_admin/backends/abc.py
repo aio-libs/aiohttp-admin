@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from functools import cached_property, partial
-from typing import Literal, TypedDict, Union
+from typing import Any, Literal, TypedDict, Union
 
 from aiohttp import web
 from aiohttp_security import check_permission
@@ -13,7 +13,7 @@ Record = dict[str, object]
 
 
 class Encoder(json.JSONEncoder):
-    def default(self, o: object) -> str:
+    def default(self, o: object) -> Any:
         if isinstance(o, datetime):
             return str(o)
         if isinstance(o, Enum):

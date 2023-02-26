@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
-from _auth import DummyAuthPolicy, check_credentials, identity_callback
+from _auth_helpers import DummyAuthPolicy, check_credentials, identity_callback
 from _models import Base, SimpleChild, SimpleParent
 
 
@@ -31,7 +31,7 @@ async def create_app() -> web.Application:
     app = web.Application()
 
     # This is the setup required for aiohttp-admin.
-    schema = {
+    schema: aiohttp_admin.Schema = {
         "security": {
             "check_credentials": check_credentials,
             "identity_callback": identity_callback,
