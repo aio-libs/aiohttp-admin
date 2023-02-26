@@ -1,11 +1,10 @@
+import __main__
 import json
 from typing import TypedDict
 
 from aiohttp import web
-from aiohttp_security import remember, forget
+from aiohttp_security import forget, remember
 from pydantic import Json, parse_obj_as
-
-import __main__
 
 
 class _Login(TypedDict):

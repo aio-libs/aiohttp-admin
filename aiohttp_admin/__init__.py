@@ -26,7 +26,7 @@ async def pydantic_middleware(request: web.Request, handler: Handler) -> web.Str
         raise web.HTTPBadRequest(text=e.json(), content_type="application/json")
 
 
-def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,  # type: ignore[no-any-unimported]
+def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,  # type: ignore[no-any-unimported] # noqa: B950
           *, path: str = "/admin", secret: Optional[bytes] = None) -> web.Application:
     """Initialize the admin.
 
@@ -56,10 +56,17 @@ def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizati
             "token": str(admin.router["token"].url_for()),
             "logout": str(admin.router["logout"].url_for())
         }
+
+        def key(r: web.RouteDef) -> str:
+            name: str = r.kwargs["name"]
+            return name.removeprefix(m.name + "_")
+
+        def value(r: web.RouteDef) -> tuple[str, str]:
+            return (r.method, str(admin.router[r.kwargs["name"]].url_for()))
+
         for res in schema["resources"]:
             m = res["model"]
-            urls = {r.kwargs["name"].removeprefix(m.name + "_"): (r.method, str(admin.router[r.kwargs["name"]].url_for())) for r in m.routes}
-            admin["state"]["resources"][m.name]["urls"] = urls
+            admin["state"]["resources"][m.name]["urls"] = {key(r): value(r) for r in m.routes}
 
     schema = parse_obj_as(Schema, schema)
     if secret is None:

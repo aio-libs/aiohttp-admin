@@ -31,6 +31,7 @@ class SimpleParent(Base):
 class SimpleChild(Base):
     __tablename__ = "parent"
 
-    id: Mapped[int] = mapped_column(sa.ForeignKey(SimpleParent.id, ondelete="CASCADE"), primary_key=True)
+    id: Mapped[int] = mapped_column(sa.ForeignKey(SimpleParent.id, ondelete="CASCADE"),
+                                    primary_key=True)
     date: Mapped[datetime]
     currency: Mapped[Currency] = mapped_column(default="USD")

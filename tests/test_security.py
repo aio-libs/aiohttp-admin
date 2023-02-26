@@ -100,13 +100,14 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
         }]
 
 
-async def test_list_without_permisson(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported]
+async def test_list_without_permisson(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                       login: _Login) -> None:
     class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
         async def authorized_userid(self, identity: str) -> Optional[str]:
             return identity if identity == "admin" else None
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum], context: object = None) -> bool:
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
             return identity == "admin" and permission in {Permissions.edit, Permissions.delete}
 
     admin_client = await create_admin_client(AuthPolicy())

@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
+from aiohttp_admin.backends.sqlalchemy import SAResource
 
 _CreateAdmin = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
 
@@ -25,14 +25,14 @@ def base() -> Type[DeclarativeBase]:
 
 @pytest.fixture
 def mock_engine() -> AsyncMock:
-    return create_autospec(AsyncEngine, instance=True, spec_set=True)  # type: ignore[no-any-return]
+    return create_autospec(AsyncEngine, instance=True, spec_set=True)  # type: ignore[no-any-return] # noqa: B950
 
 
 @pytest.fixture
 def create_admin_client(  # type: ignore[misc,no-any-unimported]
     base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]]
 ) -> Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]:
-    async def admin_client(auth_policy: AbstractAuthorizationPolicy) -> TestClient:  # type: ignore[no-any-unimported]
+    async def admin_client(auth_policy: AbstractAuthorizationPolicy) -> TestClient:  # type: ignore[no-any-unimported] # noqa: B950
         class DummyModel(base):  # type: ignore[misc,valid-type]
             __tablename__ = "dummy"
 
@@ -65,7 +65,7 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
 
 
 @pytest.fixture
-async def admin_client(create_admin_client: _CreateAdmin) -> TestClient:  # type: ignore[misc,no-any-unimported]
+async def admin_client(create_admin_client: _CreateAdmin) -> TestClient:  # type: ignore[misc,no-any-unimported] # noqa: B950
     return await create_admin_client(DummyAuthPolicy())
 
 

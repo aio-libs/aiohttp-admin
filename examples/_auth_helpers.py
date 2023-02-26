@@ -12,7 +12,8 @@ class DummyAuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-
     async def authorized_userid(self, identity: str) -> str | None:
         return identity if identity == "admin" else None
 
-    async def permits(self, identity: str | None, permission: str | Enum, context: object = None) -> bool:
+    async def permits(self, identity: str | None, permission: str | Enum,
+                      context: object = None) -> bool:
         return identity == "admin"
 
 

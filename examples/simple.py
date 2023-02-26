@@ -9,9 +9,9 @@ from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import aiohttp_admin
-from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth_helpers import DummyAuthPolicy, check_credentials, identity_callback
 from _models import Base, SimpleChild, SimpleParent
+from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
 async def create_app() -> web.Application:
