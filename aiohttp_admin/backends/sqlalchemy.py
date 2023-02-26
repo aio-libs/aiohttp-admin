@@ -33,9 +33,9 @@ class SAResource(AbstractAdminResource):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
         else:
-            table = model_or_table.__table__
-            if not isinstance(table, sa.Table):
+            if not isinstance(model_or_table.__table__, sa.Table):
                 raise ValueError("Non-table mappings are not supported.")
+            table = model_or_table.__table__
 
         self.name = table.name
         self.fields = {}

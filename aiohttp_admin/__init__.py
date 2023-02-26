@@ -58,7 +58,8 @@ def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizati
         }
 
         def key(r: web.RouteDef) -> str:
-            return r.kwargs["name"].removeprefix(m.name + "_")
+            name: str = r.kwargs["name"]
+            return name.removeprefix(m.name + "_")
 
         def value(r: web.RouteDef) -> tuple[str, str]:
             return (r.method, str(admin.router[r.kwargs["name"]].url_for()))
