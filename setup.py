@@ -1,7 +1,8 @@
 import re
 import sys
 from pathlib import Path
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 if not sys.version_info >= (3, 9):
     raise RuntimeError("aiohttp_admin doesn't support Python earlier than 3.9")
@@ -32,12 +33,13 @@ classifiers = (
 setup(name="aiohttp-admin",
       version=read_version(),
       description="admin interface for aiohttp application",
-      long_description="\n\n".join((Path("README.rst").read_text(), Path("CHANGES.rst").read_text())),
+      long_description="\n\n".join((Path("README.rst").read_text(),
+                                    Path("CHANGES.rst").read_text())),
       classifiers=classifiers,
       url="https://github.com/aio-libs/aiohttp_admin",
       download_url="https://github.com/aio-libs/aiohttp_admin",
       license="Apache 2",
       packages=find_packages(),
-      install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session", "pydantic"),
+      install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session", "cryptograph", "pydantic"),
       extras_require={"sa": ["sqlalchemy>=2,<3"]},
       include_package_data=True)

@@ -11,9 +11,13 @@ ignore = E226,E501,E722,W503
 per-file-ignores =
     # S101: Pytest uses assert
     tests/*:S101
+    # I900: Cause by awkward non-package imports.
+    # S105: Examples, not real passwords
+    examples/*:I900,S105
+    test/*:S105
 
 # flake8-import-order
-application-import-names = aiohttp_admin
+application-import-names = aiohttp_admin, _auth_helpers, _models
 import-order-style = pycharm
 
 # flake8-quotes

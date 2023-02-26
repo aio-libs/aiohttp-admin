@@ -8,8 +8,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import (
-    AbstractAdminResource, CreateParams, DeleteParams, DeleteManyParams, GetListParams,
-    GetOneParams, GetManyParams, Record, UpdateParams)
+    AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
+    GetManyParams, GetOneParams, Record, UpdateParams)
 
 FIELD_TYPES = {
     sa.Integer: ("NumberField", "NumberInput"),
@@ -30,9 +30,13 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
 
 class SAResource(AbstractAdminResource):
     def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, Type[DeclarativeBase]]):
-        table = model_or_table if isinstance(model_or_table, sa.Table) else model_or_table.__table__
-        if not isinstance(table, sa.Table):
-            raise ValueError("Non-table mappings are not supported.")
+        if isinstance(model_or_table, sa.Table):
+            table = model_or_table
+        else:
+            table = model_or_table.__table__
+            if not isinstance(table, sa.Table):
+                raise ValueError("Non-table mappings are not supported.")
+
         self.name = table.name
         self.fields = {}
         self.inputs = {}
@@ -104,7 +108,7 @@ class SAResource(AbstractAdminResource):
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
             # https://github.com/sqlalchemy/sqlalchemy/issues/9376
-            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
+            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type] # noqa: B950
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:

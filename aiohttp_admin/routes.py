@@ -31,7 +31,8 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if k in display_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
 
-        state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields, "repr": repr_field}
+        state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields,
+                 "repr": repr_field}
         admin["state"]["resources"][m.name] = state
 
 
