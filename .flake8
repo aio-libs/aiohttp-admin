@@ -14,10 +14,10 @@ per-file-ignores =
     # I900: Cause by awkward non-package imports.
     # S105: Examples, not real passwords
     examples/*:I900,S105
-    test/*:S105
+    tests/*:I900,S105
 
 # flake8-import-order
-application-import-names = aiohttp_admin, _auth_helpers, _models
+application-import-names = aiohttp_admin, _auth, _auth_helpers, _models
 import-order-style = pycharm
 
 # flake8-quotes

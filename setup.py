@@ -40,6 +40,7 @@ setup(name="aiohttp-admin",
       download_url="https://github.com/aio-libs/aiohttp_admin",
       license="Apache 2",
       packages=find_packages(),
-      install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session", "cryptography", "pydantic"),
+      install_requires=("aiohttp>=3.8.2", "aiohttp_security", "aiohttp_session",
+                        "cryptography", "pydantic"),
       extras_require={"sa": ["sqlalchemy>=2,<3"]},
       include_package_data=True)

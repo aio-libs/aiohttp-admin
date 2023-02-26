@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
+from aiohttp_admin.backends.sqlalchemy import SAResource
 
 _CreateAdmin = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
 
