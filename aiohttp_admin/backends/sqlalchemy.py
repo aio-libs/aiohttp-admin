@@ -22,8 +22,8 @@ FIELD_TYPES = {
 }
 
 
-def create_filters(columns: Mapping[str, sa.Column[object]],
-                   filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
+def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
+                   filters: dict[str, object]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())
 
@@ -70,8 +70,7 @@ class SAResource(AbstractAdminResource):
         async with self._db.connect() as conn:
             query = sa.select(self._table)
             if filters:
-                # https://github.com/sqlalchemy/sqlalchemy/issues/9374
-                query = query.where(*create_filters(self._table.c, filters))  # type: ignore[arg-type]
+                query = query.where(*create_filters(self._table.c, filters))
 
             count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
