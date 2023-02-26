@@ -1,7 +1,9 @@
+from typing import Awaitable, Callable, Type
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 from aiohttp import web
+from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -10,9 +12,11 @@ import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
 
+_CreateAdmin = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
+
 
 @pytest.fixture
-def base() -> DeclarativeBase:
+def base() -> Type[DeclarativeBase]:
     class Base(DeclarativeBase):
         """Base model."""
 
@@ -21,13 +25,15 @@ def base() -> DeclarativeBase:
 
 @pytest.fixture
 def mock_engine() -> AsyncMock:
-    return create_autospec(AsyncEngine, instance=True, spec_set=True)
+    return create_autospec(AsyncEngine, instance=True, spec_set=True)  # type: ignore[no-any-return]
 
 
 @pytest.fixture
-def create_admin_client(base: DeclarativeBase, aiohttp_client):
-    async def admin_client(auth_policy: AbstractAuthorizationPolicy):
-        class DummyModel(base):
+def create_admin_client(  # type: ignore[misc,no-any-unimported]
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]]
+) -> Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]:
+    async def admin_client(auth_policy: AbstractAuthorizationPolicy) -> TestClient:  # type: ignore[no-any-unimported]
+        class DummyModel(base):  # type: ignore[misc,valid-type]
             __tablename__ = "dummy"
 
             id: Mapped[int] = mapped_column(primary_key=True)
@@ -41,7 +47,7 @@ def create_admin_client(base: DeclarativeBase, aiohttp_client):
         async with app["db"].begin() as sess:
             sess.add(DummyModel())
 
-        schema = {
+        schema: aiohttp_admin.Schema = {
             "security": {
                 "check_credentials": check_credentials,
                 "identity_callback": identity_callback,
@@ -59,13 +65,14 @@ def create_admin_client(base: DeclarativeBase, aiohttp_client):
 
 
 @pytest.fixture
-async def admin_client(create_admin_client):
+async def admin_client(create_admin_client: _CreateAdmin) -> TestClient:  # type: ignore[misc,no-any-unimported]
     return await create_admin_client(DummyAuthPolicy())
 
 
 @pytest.fixture
-def login():
-    async def do_login(admin_client):
+def login() -> Callable[[TestClient], Awaitable[dict[str, str]]]:
+    async def do_login(admin_client: TestClient) -> dict[str, str]:
+        assert admin_client.app
         url = admin_client.app["admin"].router["token"].url_for()
         login = {"username": "admin", "password": "admin123"}
         async with admin_client.post(url, json=login) as resp:

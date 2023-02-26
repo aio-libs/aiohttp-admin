@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Iterator, Type, Union
+from typing import Any, Iterator, Mapping, Type, Union
 
 import sqlalchemy as sa
 from aiohttp import web
@@ -22,7 +22,8 @@ FIELD_TYPES = {
 }
 
 
-def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
+def create_filters(columns: Mapping[str, sa.Column[object]],
+                   filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())
 
@@ -30,6 +31,8 @@ def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[Exp
 class SAResource(AbstractAdminResource):
     def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, Type[DeclarativeBase]]):
         table = model_or_table if isinstance(model_or_table, sa.Table) else model_or_table.__table__
+        if not isinstance(table, sa.Table):
+            raise ValueError("Non-table mappings are not supported.")
         self.name = table.name
         self.fields = {}
         self.inputs = {}
@@ -38,7 +41,7 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props = {"reference": key.column.table.name}
+                props: dict[str, Union[int, str]] = {"reference": key.column.table.name}
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
@@ -60,20 +63,21 @@ class SAResource(AbstractAdminResource):
         self.repr_field = self._primary_key[0]
 
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
-        per_page = params["pagination"]["perPage"]
-        offset = (params["pagination"]["page"] - 1) * per_page
+        per_page = params["pagination"]["perPage"]  # type: ignore[index]
+        offset = (params["pagination"]["page"] - 1) * per_page  # type: ignore[index,operator]
 
         filters = params["filter"]
         async with self._db.connect() as conn:
             query = sa.select(self._table)
             if filters:
-                query = query.where(*create_filters(self._table.c, filters))
+                # https://github.com/sqlalchemy/sqlalchemy/issues/9374
+                query = query.where(*create_filters(self._table.c, filters))  # type: ignore[arg-type]
 
             count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
-            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
-            order_by = sort_dir(params["sort"]["field"])
-            stmt = query.offset(offset).limit(per_page).order_by(order_by)
+            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc  # type: ignore[index]
+            order_by = sort_dir(params["sort"]["field"])  # type: ignore[index,var-annotated]
+            stmt = query.offset(offset).limit(per_page).order_by(order_by)  # type: ignore[arg-type]
             result, count = await asyncio.gather(conn.execute(stmt), count_t)
             entities = [r._asdict() for r in result]
 

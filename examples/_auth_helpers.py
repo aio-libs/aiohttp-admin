@@ -8,7 +8,7 @@ from aiohttp_security import AbstractAuthorizationPolicy
 from aiohttp_admin import Permissions, UserDetails
 
 
-class DummyAuthPolicy(AbstractAuthorizationPolicy):
+class DummyAuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
     async def authorized_userid(self, identity: str) -> str | None:
         return identity if identity == "admin" else None
 

@@ -14,7 +14,7 @@ from .routes import setup_resources, setup_routes
 from .security import TokenIdentityPolicy
 from .types import Schema, UserDetails
 
-__all__ = ("Permissions", "UserDetails", "setup")
+__all__ = ("Permissions", "Schema", "UserDetails", "setup")
 __version__ = "0.1.0a0"
 
 
@@ -26,7 +26,7 @@ async def pydantic_middleware(request: web.Request, handler: Handler) -> web.Str
         raise web.HTTPBadRequest(text=e.json(), content_type="application/json")
 
 
-def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,
+def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,  # type: ignore[no-any-unimported]
           *, path: str = "/admin", secret: Optional[bytes] = None) -> web.Application:
     """Initialize the admin.
 

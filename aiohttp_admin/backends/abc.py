@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from functools import cached_property, partial
-from typing import Literal, TypedDict, Union
+from typing import Any, Literal, TypedDict, Union
 
 from aiohttp import web
 from aiohttp_security import check_permission
@@ -13,7 +13,7 @@ Record = dict[str, object]
 
 
 class Encoder(json.JSONEncoder):
-    def default(self, o: object) -> str:
+    def default(self, o: object) -> Any:
         if isinstance(o, datetime):
             return str(o)
         if isinstance(o, Enum):
@@ -57,9 +57,9 @@ class _Params(TypedDict, total=False):
 
 
 class GetListParams(_Params):
-    pagination: Json[_Pagination]
-    sort: Json[_Sort]
-    filter: Json[dict[str, object]]
+    pagination: Json[_Pagination]  # type: ignore[type-arg]
+    sort: Json[_Sort]  # type: ignore[type-arg]
+    filter: Json[dict[str, object]]  # type: ignore[type-arg]
 
 
 class GetOneParams(_Params):
@@ -67,26 +67,26 @@ class GetOneParams(_Params):
 
 
 class GetManyParams(_Params):
-    ids: Json[list[Union[int, str]]]
+    ids: Json[list[Union[int, str]]]  # type: ignore[type-arg]
 
 
 class CreateParams(_Params):
-    data: Json[Record]
+    data: Json[Record]  # type: ignore[type-arg]
 
 
 class UpdateParams(_Params):
     id: Union[int, str]
-    data: Json[Record]
-    previousData: Json[Record]
+    data: Json[Record]  # type: ignore[type-arg]
+    previousData: Json[Record]  # type: ignore[type-arg]
 
 
 class DeleteParams(_Params):
     id: Union[int, str]
-    previousData: Json[Record]
+    previousData: Json[Record]  # type: ignore[type-arg]
 
 
 class DeleteManyParams(_Params):
-    ids: Json[list[Union[int, str]]]
+    ids: Json[list[Union[int, str]]]  # type: ignore[type-arg]
 
 
 class AbstractAdminResource(ABC):

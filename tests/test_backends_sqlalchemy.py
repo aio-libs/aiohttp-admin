@@ -1,3 +1,5 @@
+from typing import Type
+
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -5,8 +7,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
-def test_pk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
-    class TestModel(base):
+def test_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "dummy"
         id: Mapped[int] = mapped_column(primary_key=True)
         num: Mapped[str]
@@ -25,12 +27,12 @@ def test_pk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
     }
 
 
-def test_fk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
-    class TestModel(base):
+def test_fk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "dummy"
         id: Mapped[int] = mapped_column(primary_key=True)
 
-    class TestChildModel(base):
+    class TestChildModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "child"
         id: Mapped[int] = mapped_column(sa.ForeignKey(TestModel.id), primary_key=True)
 
