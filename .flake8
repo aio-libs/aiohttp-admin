@@ -9,7 +9,7 @@ select = A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,B901,B902,B903,B950
 # W503: Mutually exclusive with W504.
 ignore = E226,E501,E722,W503
 per-file-ignores =
-    # I900: Cause by awkward non-package imports.
+    # I900: Caused by awkward non-package imports.
     # S101: Pytest uses assert
     # S105: Examples, not real passwords
     tests/*:S101,I900,S105
