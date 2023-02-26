@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional, Union
 
 from aiohttp import ChainMapProxy, web
 from aiohttp_security import AbstractAuthorizationPolicy
@@ -13,8 +14,8 @@ async def identity_callback(request: web.Request, identity: str) -> UserDetails:
 
 
 class DummyAuthPolicy(AbstractAuthorizationPolicy):
-    async def authorized_userid(self, identity: str) -> str | None:
+    async def authorized_userid(self, identity: str) -> Optional[str]:
         return identity if identity == "admin" else None
 
-    async def permits(self, identity: str | None, permission: str | Enum, context: object = None) -> bool:
+    async def permits(self, identity: Optional[str], permission: Union[str, Enum], context: object = None) -> bool:
         return identity == "admin"
