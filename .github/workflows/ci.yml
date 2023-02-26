@@ -67,8 +67,10 @@ jobs:
       run: sudo apt install yarn -y
     - name: Yarn install
       run: yarn install
+      working-directory: admin-js/
     - name: Yarn build
       run: yarn build
+      working-directory: admin-js/
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
@@ -115,8 +117,10 @@ jobs:
       run: sudo apt install yarn -y
     - name: Yarn install
       run: yarn install
+      working-directory: admin-js/
     - name: Yarn build
       run: yarn build
+      working-directory: admin-js/
     - name: Install dependencies
       run:
         python -m pip install -U pip wheel setuptools build twine
