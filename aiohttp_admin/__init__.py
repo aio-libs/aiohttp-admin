@@ -1,5 +1,4 @@
 import secrets
-from pathlib import Path
 from typing import Optional
 
 import aiohttp_security
@@ -8,7 +7,7 @@ from aiohttp import web
 from aiohttp.typedefs import Handler
 from aiohttp_security import AbstractAuthorizationPolicy
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from pydantic import parse_obj_as, ValidationError
+from pydantic import ValidationError, parse_obj_as
 
 from .backends.abc import Permissions
 from .routes import setup_resources, setup_routes

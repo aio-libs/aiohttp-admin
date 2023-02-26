@@ -1,6 +1,5 @@
 import json
-from enum import Enum
-from typing import Awaitable, Callable, List, Optional, TypedDict
+from typing import Optional
 
 from aiohttp import web
 from aiohttp_security import SessionIdentityPolicy

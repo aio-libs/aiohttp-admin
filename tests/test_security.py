@@ -1,8 +1,6 @@
 from enum import Enum
-from functools import partial
 from typing import Optional, Union
 
-import pytest
 from aiohttp_security import AbstractAuthorizationPolicy
 
 from aiohttp_admin import Permissions
@@ -100,5 +98,6 @@ async def test_list_without_permisson(create_admin_client, login):
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 403
-        expected = "User does not have '{}' permission".format(Permissions.view)
+        # TODO
+        #expected = "User does not have '{}' permission".format(Permissions.view)
         #assert await resp.text() == expected
