@@ -27,6 +27,7 @@ INDEX_TEMPLATE = """<!doctype html>
 </body>
 </html>"""
 
+
 async def index(request: web.Request) -> web.Response:
     """Root page which loads react-admin."""
     static = request.app.router["static"]
@@ -44,6 +45,7 @@ async def index(request: web.Request) -> web.Response:
     output = INDEX_TEMPLATE.format(name=name, icon=icon, js=js, state=state)
     return web.Response(text=output, content_type="text/html")
 
+
 async def token(request: web.Request) -> web.Response:
     """Validate user credentials and log the user in."""
     data = parse_obj_as(Json[_Login], await request.read())
@@ -55,6 +57,7 @@ async def token(request: web.Request) -> web.Response:
     response = web.Response()
     await remember(request, response, data["username"])
     return response
+
 
 async def logout(request: web.Request) -> web.Response:
     """Log the user out."""

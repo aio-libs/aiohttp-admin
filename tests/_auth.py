@@ -6,8 +6,10 @@ from aiohttp_security import AbstractAuthorizationPolicy
 
 from aiohttp_admin import Permissions, UserDetails
 
+
 async def check_credentials(app: ChainMapProxy, username: str, password: str) -> bool:
     return username == "admin" and password == "admin123"
+
 
 async def identity_callback(request: web.Request, identity: str) -> UserDetails:
     return {"permissions": tuple(Permissions)}

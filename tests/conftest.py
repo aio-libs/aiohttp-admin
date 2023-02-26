@@ -10,17 +10,19 @@ import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
 
+
 @pytest.fixture
 def base() -> DeclarativeBase:
     class Base(DeclarativeBase):
         """Base model."""
 
-
     return Base
+
 
 @pytest.fixture
 def mock_engine() -> AsyncMock:
     return create_autospec(AsyncEngine, instance=True, spec_set=True)
+
 
 @pytest.fixture
 def create_admin_client(base: DeclarativeBase, aiohttp_client):
@@ -55,9 +57,11 @@ def create_admin_client(base: DeclarativeBase, aiohttp_client):
 
     return admin_client
 
+
 @pytest.fixture
 async def admin_client(create_admin_client):
     return await create_admin_client(DummyAuthPolicy())
+
 
 @pytest.fixture
 def login():

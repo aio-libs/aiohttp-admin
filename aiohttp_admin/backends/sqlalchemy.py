@@ -21,6 +21,7 @@ FIELD_TYPES = {
     sa.String: ("TextField", "TextInput")
 }
 
+
 def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())

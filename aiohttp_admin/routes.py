@@ -7,6 +7,7 @@ from aiohttp import web
 from . import views
 from .types import Schema
 
+
 def setup_resources(admin: web.Application, schema: Schema) -> None:
     admin["resources"] = []
     admin["state"]["resources"] = {}
@@ -32,6 +33,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
 
         state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields, "repr": repr_field}
         admin["state"]["resources"][m.name] = state
+
 
 def setup_routes(admin: web.Application) -> None:
     """Add routes to the admin application."""

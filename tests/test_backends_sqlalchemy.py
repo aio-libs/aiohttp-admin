@@ -11,7 +11,6 @@ def test_pk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
         id: Mapped[int] = mapped_column(primary_key=True)
         num: Mapped[str]
 
-
     r = SAResource(mock_engine, TestModel)
     assert r.name == "dummy"
     assert r.repr_field == "id"
@@ -25,16 +24,15 @@ def test_pk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
         "num": {"type": "TextInput", "show_create": True, "props": {}}
     }
 
+
 def test_fk(base: DeclarativeBase, mock_engine: AsyncEngine) -> None:
     class TestModel(base):
         __tablename__ = "dummy"
         id: Mapped[int] = mapped_column(primary_key=True)
 
-
     class TestChildModel(base):
         __tablename__ = "child"
         id: Mapped[int] = mapped_column(sa.ForeignKey(TestModel.id), primary_key=True)
-
 
     r = SAResource(mock_engine, TestChildModel)
     assert r.name == "child"
