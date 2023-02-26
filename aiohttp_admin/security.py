@@ -22,7 +22,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         # Validate JS token
         hdr = request.headers.get("Authorization")
         try:
-            identity_data = parse_obj_as(Json[IdentityDict], hdr)  # type: ignore[misc]
+            identity_data = parse_obj_as(Json[IdentityDict], hdr)
         except ValidationError:
             return None
 

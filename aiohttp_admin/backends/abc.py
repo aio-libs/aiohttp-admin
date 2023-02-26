@@ -57,9 +57,9 @@ class _Params(TypedDict, total=False):
 
 
 class GetListParams(_Params):
-    pagination: Json[_Pagination]  # type: ignore[type-arg]
-    sort: Json[_Sort]  # type: ignore[type-arg]
-    filter: Json[dict[str, object]]  # type: ignore[type-arg]
+    pagination: Json[_Pagination]
+    sort: Json[_Sort]
+    filter: Json[dict[str, object]]
 
 
 class GetOneParams(_Params):
@@ -67,26 +67,26 @@ class GetOneParams(_Params):
 
 
 class GetManyParams(_Params):
-    ids: Json[list[Union[int, str]]]  # type: ignore[type-arg]
+    ids: Json[list[Union[int, str]]]
 
 
 class CreateParams(_Params):
-    data: Json[Record]  # type: ignore[type-arg]
+    data: Json[Record]
 
 
 class UpdateParams(_Params):
     id: Union[int, str]
-    data: Json[Record]  # type: ignore[type-arg]
-    previousData: Json[Record]  # type: ignore[type-arg]
+    data: Json[Record]
+    previousData: Json[Record]
 
 
 class DeleteParams(_Params):
     id: Union[int, str]
-    previousData: Json[Record]  # type: ignore[type-arg]
+    previousData: Json[Record]
 
 
 class DeleteManyParams(_Params):
-    ids: Json[list[Union[int, str]]]  # type: ignore[type-arg]
+    ids: Json[list[Union[int, str]]]
 
 
 class AbstractAdminResource(ABC):

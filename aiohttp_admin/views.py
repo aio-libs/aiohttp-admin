@@ -48,7 +48,7 @@ async def index(request: web.Request) -> web.Response:
 
 async def token(request: web.Request) -> web.Response:
     """Validate user credentials and log the user in."""
-    data = parse_obj_as(Json[_Login], await request.read())  # type: ignore[misc]
+    data = parse_obj_as(Json[_Login], await request.read())
 
     check_credentials = request.app["check_credentials"]
     if not await check_credentials(request.config_dict, data["username"], data["password"]):

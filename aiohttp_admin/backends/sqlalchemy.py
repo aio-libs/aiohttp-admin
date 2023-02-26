@@ -63,8 +63,8 @@ class SAResource(AbstractAdminResource):
         self.repr_field = self._primary_key[0]
 
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
-        per_page = params["pagination"]["perPage"]  # type: ignore[index]
-        offset = (params["pagination"]["page"] - 1) * per_page  # type: ignore[index,operator]
+        per_page = params["pagination"]["perPage"]
+        offset = (params["pagination"]["page"] - 1) * per_page
 
         filters = params["filter"]
         async with self._db.connect() as conn:
@@ -75,9 +75,9 @@ class SAResource(AbstractAdminResource):
 
             count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
-            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc  # type: ignore[index]
-            order_by = sort_dir(params["sort"]["field"])  # type: ignore[index,var-annotated]
-            stmt = query.offset(offset).limit(per_page).order_by(order_by)  # type: ignore[arg-type]
+            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
+            order_by: sa.UnaryExpression[object] = sa.asc(params["sort"]["field"])
+            stmt = query.offset(offset).limit(per_page).order_by(order_by)
             result, count = await asyncio.gather(conn.execute(stmt), count_t)
             entities = [r._asdict() for r in result]
 
@@ -104,7 +104,8 @@ class SAResource(AbstractAdminResource):
 
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
+            # https://github.com/sqlalchemy/sqlalchemy/issues/9376
+            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:
@@ -114,7 +115,7 @@ class SAResource(AbstractAdminResource):
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c["id"] == params["id"])
-            stmt = stmt.values(params["data"]).returning(*self._table.c)
+            stmt = stmt.values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
             try:
                 row = await conn.execute(stmt)
             except sa.exc.CompileError as e:
