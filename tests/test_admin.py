@@ -3,6 +3,7 @@ from aiohttp import web
 import aiohttp_admin
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
 
+
 def test_path() -> None:
     app = web.Application()
     schema = {"security": {"check_credentials": check_credentials,

@@ -7,6 +7,7 @@ from aiohttp import web
 from . import views
 from .types import Schema
 
+
 def setup_resources(admin: web.Application, schema: Schema) -> None:
     admin["resources"] = []
     admin["state"]["resources"] = {}
@@ -22,7 +23,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             display_fields = list(m.fields.keys())
         else:
             if not all(f in m.fields for f in display_fields):
-                raise ValueError("Display includes non-existent field {}".format(display_fields))
+                raise ValueError(f"Display includes non-existent field {display_fields}")
 
         repr_field = r.get("repr", m.repr_field)
 
@@ -32,6 +33,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
 
         state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields, "repr": repr_field}
         admin["state"]["resources"][m.name] = state
+
 
 def setup_routes(admin: web.Application) -> None:
     """Add routes to the admin application."""

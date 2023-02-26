@@ -1,10 +1,11 @@
 import asyncio
-from typing import Type, Union
+from typing import Any, Iterator, Type, Union
 
 import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteParams, DeleteManyParams, GetListParams,
@@ -20,7 +21,8 @@ FIELD_TYPES = {
     sa.String: ("TextField", "TextInput")
 }
 
-def create_filters(columns, filters: dict[str, Union[str, int]]):
+
+def create_filters(columns, filters: dict[str, Union[str, int]]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())
 

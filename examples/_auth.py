@@ -20,5 +20,6 @@ async def check_credentials(app: ChainMapProxy, username: str, password: str) ->
     """Return True if username and password are for a valid login, False otherwise."""
     return username == "admin" and password == "admin"
 
+
 async def identity_callback(request: web.Request, identity: str) -> UserDetails:
     return {"permissions": tuple(Permissions)}  # All permissions

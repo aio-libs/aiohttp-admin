@@ -13,6 +13,7 @@ from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import DummyAuthPolicy, check_credentials, identity_callback
 from _models import Base, SimpleChild, SimpleParent
 
+
 async def create_app() -> web.Application:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     session = async_sessionmaker(engine, expire_on_commit=False)

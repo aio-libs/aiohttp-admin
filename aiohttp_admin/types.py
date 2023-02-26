@@ -3,7 +3,7 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict
 from aiohttp import ChainMapProxy
 from aiohttp import web
 
-from .backends.abc import AbstractAdminResource, FieldState, InputState
+from .backends.abc import FieldState, InputState
 
 
 class _IdentityDict(TypedDict, total=False):

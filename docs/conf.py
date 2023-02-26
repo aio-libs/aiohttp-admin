@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # aiohttp-admin documentation build configuration file, created by
 # sphinx-quickstart on Sun Nov 13 21:04:19 2016.
 #

@@ -123,7 +123,6 @@ class AbstractAdminResource(ABC):
     async def delete_many(self, params: DeleteManyParams) -> list[Union[int, str]]:
         """Delete the matching records and return their IDs."""
 
-
     # https://marmelab.com/react-admin/DataProviderWriting.html
 
     async def _get_list(self, request: web.Request) -> web.Response:
