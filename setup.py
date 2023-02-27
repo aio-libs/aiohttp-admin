@@ -26,7 +26,7 @@ classifiers = (
     "Development Status :: 3 - Alpha",
     "Topic :: Internet :: WWW/HTTP",
     "Framework :: AsyncIO",
-    "Framework :: Aiohttp",
+    "Framework :: aiohttp",
 )
 
 
