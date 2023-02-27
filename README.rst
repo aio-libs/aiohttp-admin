@@ -1,7 +1,7 @@
 aiohttp_admin
 =============
-.. image:: https://codecov.io/gh/aio-libs/aiohttp_admin/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/aio-libs/aiohttp_admin
+.. image:: https://codecov.io/gh/aio-libs/aiohttp-admin/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/aio-libs/aiohttp-admin
 
 **aiohttp_admin** allows you to create a admin interface in minutes. It is designed to
 be flexible and database agnostic.
