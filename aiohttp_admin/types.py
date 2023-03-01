@@ -50,6 +50,8 @@ class _ViewSchema(TypedDict, total=False):
 class _Resource(TypedDict, total=False):
     # List of field names that should be shown in the list view.
     display: Sequence[str]
+    # Display label in admin.
+    label: str
     # name of the field that should be used for repr
     # (e.g. when displaying a foreign key reference).
     repr: str

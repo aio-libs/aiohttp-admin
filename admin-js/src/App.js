@@ -151,6 +151,7 @@ function createResources(resources) {
             edit={AiohttpEdit(r)}
             list={AiohttpList(r)}
             show={AiohttpShow(r)}
+            options={{ label: r["label"] }}
             recordRepresentation={r["repr"]}
         />);
     }
@@ -158,7 +159,7 @@ function createResources(resources) {
 }
 
 const App = () => (
-    <Admin dataProvider={dataProvider} authProvider={authProvider} disableTelemetry>
+    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]} disableTelemetry requireAuth>
         {createResources(STATE["resources"])}
     </Admin>
 );
