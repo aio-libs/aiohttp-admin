@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && rm -rf build/",
+    "build": "react-scripts build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
