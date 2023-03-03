@@ -39,7 +39,7 @@ async def index(request: web.Request) -> web.Response:
     package_name = package_name.removesuffix("_app").replace("_", " ").title()
     name = request.app["state"]["view"].get("name", package_name)
 
-    icon = request.app["state"]["view"].get("icon", static.url_for(filename="favicon.ico"))
+    icon = request.app["state"]["view"].get("icon", static.url_for(filename="favicon.svg"))
 
     output = INDEX_TEMPLATE.format(name=name, icon=icon, js=js, state=state)
     return web.Response(text=output, content_type="text/html")
