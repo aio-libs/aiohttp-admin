@@ -10,12 +10,11 @@ from datetime import datetime
 from enum import Enum
 
 from aiohttp import ChainMapProxy, web
+from aiohttp_security import AbstractAuthorizationPolicy
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, mapped_column
 
 import aiohttp_admin
-from aiohttp_security import AbstractAuthorizationPolicy
-
 from _models import Base, Simple, SimpleParent
 from aiohttp_admin import Permissions, UserDetails, has_permission
 from aiohttp_admin.backends.sqlalchemy import SAResource
