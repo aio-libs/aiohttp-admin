@@ -101,7 +101,7 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
 
 
 async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
-                                      login: _Login) -> None:
+                                       login: _Login) -> None:
     class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
         async def authorized_userid(self, identity: str) -> Optional[str]:
             return identity if identity == "admin" else None
@@ -119,8 +119,8 @@ async def test_list_without_permission(create_admin_client: _CreateClient,  # ty
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 403
-        # TODO
-        # expected = "User does not have 'admin.dummy.view' permission"
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy.view' permission"
         # assert await resp.text() == expected
 
 
