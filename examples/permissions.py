@@ -15,9 +15,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 import aiohttp_admin
 from _models import Base, Simple, SimpleParent
+from aiohttp_security import AbstractAuthorizationPolicy
+
 from aiohttp_admin import Permissions, UserDetails, has_permission
 from aiohttp_admin.backends.sqlalchemy import SAResource
-from aiohttp_security import AbstractAuthorizationPolicy
 
 
 class User(Base):
@@ -68,11 +69,15 @@ async def create_app() -> web.Application:
         # Users with various permissions.
         sess.add(User(username="admin", permissions=json.dumps(tuple(Permissions))))
         sess.add(User(username="view", permissions=json.dumps((Permissions.view,))))
-        sess.add(User(username="add", permissions=json.dumps((Permissions.view, Permissions.add,))))
-        sess.add(User(username="edit", permissions=json.dumps((Permissions.view, Permissions.edit))))
-        sess.add(User(username="delete", permissions=json.dumps((Permissions.view, Permissions.delete))))
+        sess.add(User(username="add", permissions=json.dumps(
+            (Permissions.view, Permissions.add,))))
+        sess.add(User(username="edit", permissions=json.dumps(
+            (Permissions.view, Permissions.edit))))
+        sess.add(User(username="delete", permissions=json.dumps(
+            (Permissions.view, Permissions.delete))))
         sess.add(User(username="simple", permissions=json.dumps(("admin.simple.*",))))
-        sess.add(User(username="mixed", permissions=json.dumps(("admin.simple.view", "admin.simple.edit", "admin.parent.view"))))
+        sess.add(User(username="mixed", permissions=json.dumps(
+            ("admin.simple.view", "admin.simple.edit", "admin.parent.view"))))
     async with session.begin() as sess:
         sess.add(Simple(num=5, value="first"))
         p = Simple(num=82, optional_num=12, value="with child")
