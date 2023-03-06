@@ -9,7 +9,6 @@ import json
 from datetime import datetime
 from enum import Enum
 
-import sqlalchemy as sa
 from aiohttp import ChainMapProxy, web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, mapped_column
