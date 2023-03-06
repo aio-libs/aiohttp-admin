@@ -107,8 +107,7 @@ class SAResource(AbstractAdminResource):
 
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
-            # https://github.com/sqlalchemy/sqlalchemy/issues/9376
-            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type] # noqa: B950
+            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:
@@ -118,7 +117,7 @@ class SAResource(AbstractAdminResource):
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c["id"] == params["id"])
-            stmt = stmt.values(params["data"]).returning(*self._table.c)  # type: ignore[arg-type]
+            stmt = stmt.values(params["data"]).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
             except sa.exc.CompileError as e:
