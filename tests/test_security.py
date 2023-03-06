@@ -4,7 +4,7 @@ from typing import Awaitable, Callable, Optional, Union
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 
-from aiohttp_admin import Permissions
+from aiohttp_admin import Permissions, has_permission
 
 _CreateClient = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
@@ -100,7 +100,7 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
         }]
 
 
-async def test_list_without_permisson(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                       login: _Login) -> None:
     class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
         async def authorized_userid(self, identity: str) -> Optional[str]:
@@ -108,7 +108,8 @@ async def test_list_without_permisson(create_admin_client: _CreateClient,  # typ
 
         async def permits(self, identity: Optional[str], permission: Union[str, Enum],
                           context: object = None) -> bool:
-            return identity == "admin" and permission in {Permissions.edit, Permissions.delete}
+            return identity == "admin" and has_permission(
+                permission, {Permissions.edit, Permissions.delete})
 
     admin_client = await create_admin_client(AuthPolicy())
 
@@ -119,5 +120,45 @@ async def test_list_without_permisson(create_admin_client: _CreateClient,  # typ
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 403
         # TODO
-        # expected = "User does not have '{}' permission".format(Permissions.view)
+        # expected = "User does not have 'admin.dummy.view' permission"
         # assert await resp.text() == expected
+
+
+async def test_get_resource_with_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                            login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(permission, {"admin.dummy.view"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1}}
+
+
+async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                     login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(permission, {"admin.dummy.*"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1}}
