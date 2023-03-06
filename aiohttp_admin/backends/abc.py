@@ -25,13 +25,6 @@ class Encoder(json.JSONEncoder):
 json_response = partial(web.json_response, dumps=partial(json.dumps, cls=Encoder))
 
 
-class Permissions(str, Enum):
-    view = "admin.view"
-    edit = "admin.edit"
-    add = "admin.add"
-    delete = "admin.delete"
-
-
 class FieldState(TypedDict):
     type: str
     props: dict[str, Union[int, str]]
@@ -126,49 +119,49 @@ class AbstractAdminResource(ABC):
     # https://marmelab.com/react-admin/DataProviderWriting.html
 
     async def _get_list(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.view)
+        await check_permission(request, "admin.{}.view".format(self.name))
         query = parse_obj_as(GetListParams, request.query)
 
         results, total = await self.get_list(query)
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.view)
+        await check_permission(request, "admin.{}.view".format(self.name))
         query = parse_obj_as(GetOneParams, request.query)
 
         result = await self.get_one(query)
         return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.view)
+        await check_permission(request, "admin.{}.view".format(self.name))
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.add)
+        await check_permission(request, "admin.{}.add".format(self.name))
         query = parse_obj_as(CreateParams, request.query)
 
         result = await self.create(query)
         return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.edit)
+        await check_permission(request, "admin.{}.edit".format(self.name))
         query = parse_obj_as(UpdateParams, request.query)
 
         result = await self.update(query)
         return json_response({"data": result})
 
     async def _delete(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.delete)
+        await check_permission(request, "admin.{}.delete".format(self.name))
         query = parse_obj_as(DeleteParams, request.query)
 
         result = await self.delete(query)
         return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, Permissions.delete)
+        await check_permission(request, "admin.{}.delete".format(self.name))
         query = parse_obj_as(DeleteManyParams, request.query)
 
         ids = await self.delete_many(query)

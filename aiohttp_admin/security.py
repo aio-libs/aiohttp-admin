@@ -1,4 +1,6 @@
 import json
+from collections.abc import Container
+from enum import Enum
 from typing import Optional
 
 from aiohttp import web
@@ -7,6 +9,28 @@ from cryptography.fernet import Fernet, InvalidToken
 from pydantic import Json, ValidationError, parse_obj_as
 
 from .types import IdentityDict, Schema, UserDetails
+
+
+class Permissions(str, Enum):
+    view = "admin.view"
+    edit = "admin.edit"
+    add = "admin.add"
+    delete = "admin.delete"
+
+
+def has_permission(p: str | Enum, permissions: Container[str]) -> bool:
+    # TODO(PY311): StrEnum
+    *parts, ptype = p.split(".")  # type: ignore[union-attr]
+
+    for i in range(1, len(parts)+1):
+        perm = ".".join((*parts[:i], ptype))
+        if perm in permissions:
+            return True
+
+        wildcard = ".".join((*parts[:i], "*"))
+        if wildcard in permissions:
+            return True
+    return False
 
 
 class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]
@@ -71,7 +95,9 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
                 raise ValueError("Callback should not return a dict with 'auth' key.")
 
         auth = self._fernet.encrypt(identity.encode("utf-8")).decode("utf-8")
-        identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": ()}
+        identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": {}}
         # https://github.com/python/mypy/issues/6462
         identity_dict.update(user_details)  # type: ignore[typeddict-item]
+        # Convert to mapping so JS can test for permissions easier (JS has no set type).
+        identity_dict["permissions"] = dict.fromkeys(identity_dict["permissions"])
         return identity_dict

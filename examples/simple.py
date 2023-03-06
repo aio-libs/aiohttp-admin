@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import aiohttp_admin
 from _auth_helpers import DummyAuthPolicy, check_credentials, identity_callback
-from _models import Base, SimpleChild, SimpleParent
+from _models import Base, Simple, SimpleParent
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
@@ -22,11 +22,11 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        sess.add(SimpleParent(num=5, value="first"))
-        p = SimpleParent(num=82, optional_num=12, value="with child")
+        sess.add(Simple(num=5, value="first"))
+        p = Simple(num=82, optional_num=12, value="with child")
         sess.add(p)
     async with session.begin() as sess:
-        sess.add(SimpleChild(id=p.id, date=datetime(2023, 2, 13, 19, 4)))
+        sess.add(SimpleParent(id=p.id, date=datetime(2023, 2, 13, 19, 4)))
 
     app = web.Application()
 
@@ -38,8 +38,8 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, SimpleParent)},
-            {"model": SAResource(engine, SimpleChild)}
+            {"model": SAResource(engine, Simple)},
+            {"model": SAResource(engine, SimpleParent)}
         )
     }
     aiohttp_admin.setup(app, schema, DummyAuthPolicy())

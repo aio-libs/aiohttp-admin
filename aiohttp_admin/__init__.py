@@ -9,12 +9,11 @@ from aiohttp_security import AbstractAuthorizationPolicy
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from pydantic import ValidationError, parse_obj_as
 
-from .backends.abc import Permissions
 from .routes import setup_resources, setup_routes
-from .security import TokenIdentityPolicy
+from .security import Permissions, TokenIdentityPolicy, has_permission
 from .types import Schema, UserDetails
 
-__all__ = ("Permissions", "Schema", "UserDetails", "setup")
+__all__ = ("Permissions", "Schema", "UserDetails", "has_permission", "setup")
 __version__ = "0.1.0a0"
 
 
