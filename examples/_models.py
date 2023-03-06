@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
     """Base model."""
 
 
-class SimpleParent(Base):
+class Simple(Base):
     __tablename__ = "simple"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -25,13 +25,13 @@ class SimpleParent(Base):
     optional_num: Mapped[float | None]
     value: Mapped[str]
 
-    parent = relationship("SimpleChild", cascade="save-update, merge, delete, delete-orphan")
+    parent = relationship("SimpleParent", cascade="save-update, merge, delete, delete-orphan")
 
 
-class SimpleChild(Base):
+class SimpleParent(Base):
     __tablename__ = "parent"
 
-    id: Mapped[int] = mapped_column(sa.ForeignKey(SimpleParent.id, ondelete="CASCADE"),
+    id: Mapped[int] = mapped_column(sa.ForeignKey(Simple.id, ondelete="CASCADE"),
                                     primary_key=True)
     date: Mapped[datetime]
     currency: Mapped[Currency] = mapped_column(default="USD")

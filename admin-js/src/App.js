@@ -23,7 +23,7 @@ function apiRequest(url, options) {
     return fetch(url, Object.assign({"headers": headers}, options)).then((resp) => {
         if (resp.status < 200 || resp.status >= 300) {
             return resp.text().then(text => {
-                throw new HttpError(resp.statusText, resp.status, text);
+                throw new HttpError(text, resp.status, text);
             });
         }
         return resp;
@@ -109,11 +109,11 @@ function createInputs(resource, create=false) {
     return components;
 }
 
-const AiohttpList = (resource) => (
+const AiohttpList = (resource, name, permissions) => (
     <List filters={createInputs(resource)}>
         <Datagrid rowClick="show">
             {createFields(resource, true)}
-            <EditButton />
+            {hasPermission(`${name}.edit`, permissions) && <EditButton />}
         </Datagrid>
     </List>
 );
@@ -142,15 +142,31 @@ const AiohttpCreate = (resource) => (
     </Create>
 );
 
-function createResources(resources) {
+function hasPermission(p, permissions) {
+    const parts = ["admin", ...p.split(".")];
+    const type = parts.pop();
+
+    for (let i=1; i < parts.length+1; ++i) {
+        let perm = [...parts.slice(0, i), type].join(".");
+        if (permissions[perm] !== undefined)
+            return true;
+
+        let wildcard = [...parts.slice(0, i), "*"].join(".");
+        if (permissions[wildcard] !== undefined)
+            return true;
+    }
+    return false;
+}
+
+function createResources(resources, permissions) {
     let components = [];
     for (const [name, r] of Object.entries(resources)) {
         components.push(<Resource
             name={name}
-            create={AiohttpCreate(r)}
-            edit={AiohttpEdit(r)}
-            list={AiohttpList(r)}
-            show={AiohttpShow(r)}
+            create={hasPermission(`${name}.add`, permissions) ? AiohttpCreate(r) : null}
+            edit={hasPermission(`${name}.edit`, permissions) ? AiohttpEdit(r) : null}
+            list={hasPermission(`${name}.view`, permissions) ? AiohttpList(r, name, permissions) : null}
+            show={hasPermission(`${name}.view`, permissions) ? AiohttpShow(r) : null}
             options={{ label: r["label"] }}
             recordRepresentation={r["repr"]}
         />);
@@ -160,7 +176,7 @@ function createResources(resources) {
 
 const App = () => (
     <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]} disableTelemetry requireAuth>
-        {createResources(STATE["resources"])}
+        {permissions => createResources(STATE["resources"], permissions)}
     </Admin>
 );
 

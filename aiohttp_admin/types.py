@@ -13,7 +13,7 @@ class _IdentityDict(TypedDict, total=False):
 class IdentityDict(_IdentityDict):
     auth: str
     fullName: str
-    permissions: Sequence[str]
+    permissions: dict[str, None]
 
 
 class UserDetails(TypedDict, total=False):
