@@ -1,7 +1,7 @@
 import json
 from collections.abc import Container
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from aiohttp import web
 from aiohttp_security import SessionIdentityPolicy
@@ -18,7 +18,7 @@ class Permissions(str, Enum):
     delete = "admin.delete"
 
 
-def has_permission(p: str | Enum, permissions: Container[str]) -> bool:
+def has_permission(p: Union[str, Enum], permissions: Container[str]) -> bool:
     # TODO(PY311): StrEnum
     *parts, ptype = p.split(".")  # type: ignore[union-attr]
 
