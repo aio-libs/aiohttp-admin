@@ -45,7 +45,7 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props: dict[str, Union[int, str]] = {"reference": key.column.table.name}
+                props: dict[str, object] = {"reference": key.column.table.name}
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
@@ -58,6 +58,7 @@ class SAResource(AbstractAdminResource):
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
             mapper = sa.inspect(model_or_table)
+            assert mapper is not None
             for name, relationship in mapper.relationships.items():
                 if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")

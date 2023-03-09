@@ -27,7 +27,7 @@ json_response = partial(web.json_response, dumps=partial(json.dumps, cls=Encoder
 
 class FieldState(TypedDict):
     type: str
-    props: dict[str, Union[int, str]]
+    props: dict[str, object]
 
 
 class InputState(FieldState):
