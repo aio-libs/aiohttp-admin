@@ -5,13 +5,14 @@ import {
     DateField, DateInput,
     NumberField, NumberInput,
     ReferenceField, ReferenceInput,
+    ReferenceManyField,
     TextField, TextInput
 } from "react-admin";
 
 const _body = document.querySelector("body");
 const STATE = JSON.parse(_body.dataset.state);
 // Create a mapping of components, so we can reference them by name later.
-const COMPONENTS = {BooleanField, DateField, NumberField, ReferenceField, TextField,
+const COMPONENTS = {BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
                     BooleanInput, DateInput, NumberInput, ReferenceInput, TextInput};
 
 /** Make an authenticated API request and return the response object. */
@@ -51,6 +52,10 @@ const dataProvider = {
     deleteMany: (resource, params) => dataRequest(resource, "delete_many", params),
     getList: (resource, params) => dataRequest(resource, "get_list", params),
     getMany: (resource, params) => dataRequest(resource, "get_many", params),
+    getManyReference: (resource, params) => {
+        params["filter"][params["target"]] = params["id"];
+        return dataRequest(resource, "get_list", params);
+    },
     getOne: (resource, params) => dataRequest(resource, "get_one", params),
     update: (resource, params) => dataRequest(resource, "update", params),
 }
@@ -91,7 +96,15 @@ function createFields(resource, display_only=false) {
         const C = COMPONENTS[state["type"]];
         if (C === undefined)
             throw Error(`Unknown component '${state["type"]}'`);
-        components.push(<C source={field} {...state["props"]} />);
+
+        if (state["props"]["children"]) {
+            let child_fields = createFields({"fields": state["props"]["children"],
+                                             "display": Object.keys(state["props"]["children"])});
+            delete state["props"]["children"];
+            components.push(<C source={field} {...state["props"]}><Datagrid>{child_fields}</Datagrid></C>);
+        } else {
+            components.push(<C source={field} {...state["props"]} />);
+        }
     }
     return components;
 }

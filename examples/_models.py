@@ -25,7 +25,7 @@ class Simple(Base):
     optional_num: Mapped[float | None]
     value: Mapped[str]
 
-    parent = relationship("SimpleParent", cascade="save-update, merge, delete, delete-orphan")
+    parent: Mapped["SimpleParent"] = relationship(cascade="save-update, merge, delete, delete-orphan")
 
 
 class SimpleParent(Base):
@@ -35,3 +35,20 @@ class SimpleParent(Base):
                                     primary_key=True)
     date: Mapped[datetime]
     currency: Mapped[Currency] = mapped_column(default="USD")
+
+
+class Author(Base):
+    __tablename__ = "author"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    books: Mapped[list["Book"]] = relationship()
+
+
+class Book(Base):
+    __tablename__ = "book"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str]
+    author_id: Mapped[int | None] = mapped_column(sa.ForeignKey(Author.id))
+
+    #author: Mapped[Author] = relationship(back_populates="books")
