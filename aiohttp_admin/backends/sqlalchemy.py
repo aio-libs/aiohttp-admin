@@ -58,7 +58,7 @@ class SAResource(AbstractAdminResource):
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
             mapper = sa.inspect(model_or_table)
-            assert mapper is not None
+            assert mapper is not None  # noqa: S101
             for name, relationship in mapper.relationships.items():
                 if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")

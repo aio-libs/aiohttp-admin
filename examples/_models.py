@@ -25,7 +25,8 @@ class Simple(Base):
     optional_num: Mapped[float | None]
     value: Mapped[str]
 
-    parent: Mapped["SimpleParent"] = relationship(cascade="save-update, merge, delete, delete-orphan")
+    parent: Mapped["SimpleParent"] = relationship(
+        cascade="save-update, merge, delete, delete-orphan")
 
 
 class SimpleParent(Base):
