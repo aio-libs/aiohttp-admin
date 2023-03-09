@@ -51,4 +51,4 @@ class Book(Base):
     title: Mapped[str]
     author_id: Mapped[int | None] = mapped_column(sa.ForeignKey(Author.id))
 
-    #author: Mapped[Author] = relationship(back_populates="books")
+    # author: Mapped[Author] = relationship(back_populates="books")

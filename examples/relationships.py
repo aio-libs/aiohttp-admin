@@ -3,8 +3,6 @@
 When running this file, admin will be accessible at /admin.
 """
 
-from datetime import datetime
-
 from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
