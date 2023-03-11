@@ -52,6 +52,8 @@ class _Resource(TypedDict, total=False):
     display: Sequence[str]
     # Display label in admin.
     label: str
+    # URL path to custom icon.
+    icon: str
     # name of the field that should be used for repr
     # (e.g. when displaying a foreign key reference).
     repr: str
@@ -76,6 +78,7 @@ class _ResourceState(TypedDict):
     fields: dict[str, FieldState]
     inputs: dict[str, InputState]
     repr: str
+    icon: Optional[str]
     urls: dict[str, tuple[str, str]]  # (method, url)
 
 

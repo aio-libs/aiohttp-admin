@@ -171,6 +171,12 @@ function hasPermission(p, permissions) {
     return false;
 }
 
+const AiohttpIcon = (path) => {
+    return (
+        <img src={path} alt="" class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-vubbuv" aria-hidden="true" />
+    )
+};
+
 function createResources(resources, permissions) {
     let components = [];
     for (const [name, r] of Object.entries(resources)) {
@@ -182,6 +188,7 @@ function createResources(resources, permissions) {
             show={hasPermission(`${name}.view`, permissions) ? AiohttpShow(r) : null}
             options={{ label: r["label"] }}
             recordRepresentation={r["repr"]}
+            icon={r["icon"] ? () => AiohttpIcon(r["icon"]) : null}
         />);
     }
     return components;
