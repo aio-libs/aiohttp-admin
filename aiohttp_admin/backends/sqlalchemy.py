@@ -45,7 +45,7 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props: dict[str, Union[int, str]] = {"reference": key.column.table.name}
+                props: dict[str, object] = {"reference": key.column.table.name}
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
@@ -54,6 +54,26 @@ class SAResource(AbstractAdminResource):
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
                 show = c is not table.autoincrement_column
                 self.inputs[c.name] = {"type": inp, "props": props, "show_create": show}
+
+        if not isinstance(model_or_table, sa.Table):
+            # Append fields to represent ORM relationships.
+            mapper = sa.inspect(model_or_table)
+            assert mapper is not None  # noqa: S101
+            for name, relationship in mapper.relationships.items():
+                if len(relationship.local_remote_pairs) > 1:
+                    raise NotImplementedError("Composite foreign keys not supported yet.")
+                pair = relationship.local_remote_pairs[0]
+                children = {}
+                for c in relationship.target.c.values():
+                    if c is pair[1]:  # Skip the foreign key
+                        continue
+                    field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
+                    children[c.name] = {"type": field, "props": {}}
+
+                props = {"reference": relationship.entity.persist_selectable.name,
+                         "label": name.title(), "children": children,
+                         "source": pair[0].name, "target": pair[1].name}
+                self.fields[name] = {"type": "ReferenceManyField", "props": props}
 
         self._db = db
         self._table = table
