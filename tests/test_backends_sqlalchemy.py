@@ -68,7 +68,7 @@ def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     class TestMany(base):  # type: ignore[misc,valid-type]
         __tablename__ = "many"
         id: Mapped[int] = mapped_column(primary_key=True)
-        ones: Mapped[list["TestOne"]] = relationship()
+        ones: Mapped[list["TestOne"]] = relationship()  # noqa: F821
 
     class TestOne(base):  # type: ignore[misc,valid-type]
         __tablename__ = "one"
