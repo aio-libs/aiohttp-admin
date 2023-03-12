@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 from typing import Awaitable, Callable, Optional, Union
 
@@ -197,4 +198,194 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
         assert resp.status == 403
         # TODO(aiohttp-security05)
         # expected = "403: User does not have 'admin.dummy2.create' permission"
-        # assert await resp.text() == expected
+
+
+async def test_list_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                    login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.view"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    h = await login(admin_client)
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 1}], "total": 1}
+
+
+async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                   login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.view"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1}}
+
+
+async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                        login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.view"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"ids": "[1]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 1}]}
+
+
+async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                      login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.add"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "ABC"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy2.msg.create' permission"
+
+    async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "msg": None}}
+
+
+async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                   login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.*"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "ABC"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy2.msg.create' permission"
+
+    async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2}}
+
+
+async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                      login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.edit"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 1, "data": json.dumps({"id": 222, "msg": "ABC"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 222, "msg": "Test"}}
+
+
+async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                   login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.*"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 1, "data": json.dumps({"id": 222, "msg": "ABC"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 222}}
+
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 1)
+        assert r is None
+        r = await sess.get(admin_client.app["model2"], 222)
+        assert r.msg == "Test"
+
+
+async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                   login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy2.msg.view"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_delete"].url_for()
+    h = await login(admin_client)
+    p = {"id": 1, "previousData": "{}"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1}}

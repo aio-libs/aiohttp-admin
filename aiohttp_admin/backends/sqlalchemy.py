@@ -130,8 +130,8 @@ class SAResource(AbstractAdminResource):
             stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
-            except sa.exc.IntegrityError:
-                raise web.HTTPBadRequest(reason="Element already exists.")
+            except sa.exc.IntegrityError as e:
+                raise web.HTTPBadRequest(reason=str(e))
             return row.one()._asdict()
 
     async def update(self, params: UpdateParams) -> Record:

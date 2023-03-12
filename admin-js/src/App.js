@@ -88,10 +88,11 @@ const authProvider = {
 };
 
 
-function createFields(resource, display_only=false) {
+function createFields(resource, name, permissions, display_only=false) {
     let components = [];
     for (const [field, state] of Object.entries(resource["fields"])) {
-        if (display_only && !resource["display"].includes(field))
+        if (display_only && !resource["display"].includes(field)
+            || !hasPermission(`${name}.${field}.view`, permissions))
             continue;
         const C = COMPONENTS[state["type"]];
         if (C === undefined)
@@ -99,7 +100,8 @@ function createFields(resource, display_only=false) {
 
         if (state["props"]["children"]) {
             let child_fields = createFields({"fields": state["props"]["children"],
-                                             "display": Object.keys(state["props"]["children"])});
+                                             "display": Object.keys(state["props"]["children"])},
+                                            name, permissions);
             delete state["props"]["children"];
             components.push(<C source={field} {...state["props"]}><Datagrid>{child_fields}</Datagrid></C>);
         } else {
@@ -109,10 +111,11 @@ function createFields(resource, display_only=false) {
     return components;
 }
 
-function createInputs(resource, create=false) {
+function createInputs(resource, name, perm_type, permissions, create=false) {
     let components = [];
     for (const [field, state] of Object.entries(resource["inputs"])) {
-        if (create && !state["show_create"])
+        if (create && !state["show_create"] || !hasPermission(`${name}.${field}.${perm_type}`,
+                                                              permissions))
             continue;
         const C = COMPONENTS[state["type"]];
         if (C === undefined)
@@ -123,34 +126,34 @@ function createInputs(resource, create=false) {
 }
 
 const AiohttpList = (resource, name, permissions) => (
-    <List filters={createInputs(resource)}>
+    <List filters={createInputs(resource, name, "view", permissions)}>
         <Datagrid rowClick="show">
-            {createFields(resource, true)}
+            {createFields(resource, name, permissions, true)}
             {hasPermission(`${name}.edit`, permissions) && <EditButton />}
         </Datagrid>
     </List>
 );
 
-const AiohttpShow = (resource) => (
+const AiohttpShow = (resource, name, permissions) => (
     <Show>
         <SimpleShowLayout>
-            {createFields(resource)}
+            {createFields(resource, name, permissions)}
         </SimpleShowLayout>
     </Show>
 );
 
-const AiohttpEdit = (resource) => (
+const AiohttpEdit = (resource, name, permissions) => (
     <Edit>
         <SimpleForm>
-            {createInputs(resource)}
+            {createInputs(resource, name, "edit", permissions)}
         </SimpleForm>
     </Edit>
 );
 
-const AiohttpCreate = (resource) => (
+const AiohttpCreate = (resource, name, permissions) => (
     <Create>
         <SimpleForm>
-            {createInputs(resource, true)}
+            {createInputs(resource, name, "add", permissions, true)}
         </SimpleForm>
     </Create>
 );
@@ -194,10 +197,10 @@ function createResources(resources, permissions) {
     for (const [name, r] of Object.entries(resources)) {
         components.push(<Resource
             name={name}
-            create={hasPermission(`${name}.add`, permissions) ? AiohttpCreate(r) : null}
-            edit={hasPermission(`${name}.edit`, permissions) ? AiohttpEdit(r) : null}
+            create={hasPermission(`${name}.add`, permissions) ? AiohttpCreate(r, name, permissions) : null}
+            edit={hasPermission(`${name}.edit`, permissions) ? AiohttpEdit(r, name, permissions) : null}
             list={hasPermission(`${name}.view`, permissions) ? AiohttpList(r, name, permissions) : null}
-            show={hasPermission(`${name}.view`, permissions) ? AiohttpShow(r) : null}
+            show={hasPermission(`${name}.view`, permissions) ? AiohttpShow(r, name, permissions) : null}
             options={{ label: r["label"] }}
             recordRepresentation={r["repr"]}
             icon={r["icon"] ? () => AiohttpIcon(r["icon"]) : null}
