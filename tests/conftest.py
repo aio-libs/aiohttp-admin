@@ -38,6 +38,12 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
 
             id: Mapped[int] = mapped_column(primary_key=True)
 
+        class Dummy2Model(base):  # type: ignore[misc,valid-type]
+            __tablename__ = "dummy2"
+
+            id: Mapped[int] = mapped_column(primary_key=True)
+            msg: Mapped[str]
+
         app = web.Application()
         app["model"] = DummyModel
         engine = create_async_engine("sqlite+aiosqlite:///:memory:")
@@ -46,6 +52,7 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
             await conn.run_sync(base.metadata.create_all)
         async with app["db"].begin() as sess:
             sess.add(DummyModel())
+            sess.add(Dummy2Model(msg="Test"))
 
         schema: aiohttp_admin.Schema = {
             "security": {
@@ -55,6 +62,7 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
             },
             "resources": (
                 {"model": SAResource(engine, DummyModel)},
+                {"model": SAResource(engine, Dummy2Model)}
             )
         }
         app["admin"] = aiohttp_admin.setup(app, schema, auth_policy)

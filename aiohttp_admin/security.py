@@ -22,6 +22,17 @@ def has_permission(p: Union[str, Enum], permissions: Container[str]) -> bool:
     # TODO(PY311): StrEnum
     *parts, ptype = p.split(".")  # type: ignore[union-attr]
 
+    # Negative permissions.
+    for i in range(1, len(parts)+1):
+        perm = ".".join((*parts[:i], ptype))
+        if "~" + perm in permissions:
+            return False
+
+        wildcard = ".".join((*parts[:i], "*"))
+        if "~" + wildcard in permissions:
+            return False
+
+    # Positive permissions.
     for i in range(1, len(parts)+1):
         perm = ".".join((*parts[:i], ptype))
         if perm in permissions:
