@@ -1,4 +1,4 @@
-from typing import Awaitable, Callable, Type
+from typing import Awaitable, Callable, Optional, Type
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
@@ -42,10 +42,11 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
             __tablename__ = "dummy2"
 
             id: Mapped[int] = mapped_column(primary_key=True)
-            msg: Mapped[str]
+            msg: Mapped[Optional[str]]
 
         app = web.Application()
         app["model"] = DummyModel
+        app["model2"] = Dummy2Model
         engine = create_async_engine("sqlite+aiosqlite:///:memory:")
         app["db"] = async_sessionmaker(engine, expire_on_commit=False)
         async with engine.begin() as conn:

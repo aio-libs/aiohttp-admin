@@ -6,7 +6,7 @@ from functools import cached_property, partial
 from typing import Any, Literal, TypedDict, Union
 
 from aiohttp import web
-from aiohttp_security import check_permission
+from aiohttp_security import check_permission, permits
 from pydantic import Json, parse_obj_as
 
 Record = dict[str, object]
@@ -88,6 +88,12 @@ class AbstractAdminResource(ABC):
     inputs: dict[str, InputState]
     repr_field: str
 
+    async def filter_by_permissions(self, request: web.Request, perm_type: str,
+                                    record: Record) -> Record:
+        """Return a filtered record containing permissible fields only."""
+        return {k: v for k, v in record.items()
+                if await permits(request, f"admin.{self.name}.{k}.{perm_type}")}
+
     @abstractmethod
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
         """Return list of records and total count available (when not paginating)."""
@@ -123,6 +129,7 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetListParams, request.query)
 
         results, total = await self.get_list(query)
+        results = [await self.filter_by_permissions(request, "view", r) for r in results]
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
@@ -130,6 +137,7 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetOneParams, request.query)
 
         result = await self.get_one(query)
+        result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
@@ -137,20 +145,27 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
+        results = [await self.filter_by_permissions(request, "view", r) for r in results]
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.add")
         query = parse_obj_as(CreateParams, request.query)
+        for k in query["data"]:
+            await check_permission(request, f"admin.{self.name}.{k}.add")
 
         result = await self.create(query)
+        result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit")
         query = parse_obj_as(UpdateParams, request.query)
+        # Filter because react-admin still sends fields without an input component.
+        query["data"] = await self.filter_by_permissions(request, "edit", query["data"])
 
         result = await self.update(query)
+        result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _delete(self, request: web.Request) -> web.Response:
@@ -158,6 +173,7 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(DeleteParams, request.query)
 
         result = await self.delete(query)
+        result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:

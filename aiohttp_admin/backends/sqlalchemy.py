@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any, Iterator, Type, Union
 
 import sqlalchemy as sa
@@ -10,6 +11,8 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
     GetManyParams, GetOneParams, Record, UpdateParams)
+
+logger = logging.getLogger(__name__)
 
 FIELD_TYPES = {
     sa.Integer: ("NumberField", "NumberInput"),
@@ -113,6 +116,7 @@ class SAResource(AbstractAdminResource):
             try:
                 return result.one()._asdict()
             except sa.exc.NoResultFound:
+                logger.warning("No result found (%s)", params["id"], exc_info=True)
                 raise web.HTTPNotFound()
 
     async def get_many(self, params: GetManyParams) -> list[Record]:
@@ -131,7 +135,8 @@ class SAResource(AbstractAdminResource):
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:
-                raise web.HTTPBadRequest(reason="Element already exists.")
+                logger.warning("IntegrityError (%s)", params["data"], exc_info=True)
+                raise web.HTTPBadRequest(reason="Integrity error (element already exists?)")
             return row.one()._asdict()
 
     async def update(self, params: UpdateParams) -> Record:
@@ -141,10 +146,12 @@ class SAResource(AbstractAdminResource):
             try:
                 row = await conn.execute(stmt)
             except sa.exc.CompileError as e:
+                logger.warning("CompileError (%s)", params["id"], exc_info=True)
                 raise web.HTTPBadRequest(reason=str(e))
             try:
                 return row.one()._asdict()
             except sa.exc.NoResultFound:
+                logger.warning("No result found (%s)", params["id"], exc_info=True)
                 raise web.HTTPNotFound()
 
     async def delete(self, params: DeleteParams) -> Record:
@@ -154,6 +161,7 @@ class SAResource(AbstractAdminResource):
             try:
                 return row.one()._asdict()
             except sa.exc.NoResultFound:
+                logger.warning("No result found (%s)", params["id"], exc_info=True)
                 raise web.HTTPNotFound()
 
     async def delete_many(self, params: DeleteManyParams) -> list[Union[str, int]]:
