@@ -91,7 +91,7 @@ const authProvider = {
 function createFields(resource, name, permissions, display_only=false) {
     let components = [];
     for (const [field, state] of Object.entries(resource["fields"])) {
-        if (display_only && !resource["display"].includes(field)
+        if ((display_only && !resource["display"].includes(field))
             || !hasPermission(`${name}.${field}.view`, permissions))
             continue;
         const C = COMPONENTS[state["type"]];
@@ -114,8 +114,8 @@ function createFields(resource, name, permissions, display_only=false) {
 function createInputs(resource, name, perm_type, permissions, create=false) {
     let components = [];
     for (const [field, state] of Object.entries(resource["inputs"])) {
-        if (create && !state["show_create"] || !hasPermission(`${name}.${field}.${perm_type}`,
-                                                              permissions))
+        if ((create && !state["show_create"])
+            || !hasPermission(`${name}.${field}.${perm_type}`, permissions))
             continue;
         const C = COMPONENTS[state["type"]];
         if (C === undefined)
