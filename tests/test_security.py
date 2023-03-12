@@ -183,6 +183,7 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+
     url = admin_client.app["admin"].router["dummy_get_one"].url_for()
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
