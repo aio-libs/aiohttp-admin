@@ -173,7 +173,7 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
         async def permits(self, identity: Optional[str], permission: Union[str, Enum],
                           context: object = None) -> bool:
             return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy.*", "~admin.dummy2.create"})
+                permission, {"admin.*", "~admin.dummy.*", "~admin.dummy2.add"})
 
     admin_client = await create_admin_client(AuthPolicy())
 
