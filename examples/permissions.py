@@ -77,6 +77,8 @@ async def create_app() -> web.Application:
         sess.add(User(username="simple", permissions=json.dumps(("admin.simple.*",))))
         sess.add(User(username="mixed", permissions=json.dumps(
             ("admin.simple.view", "admin.simple.edit", "admin.parent.view"))))
+        sess.add(User(username="negated", permissions=json.dumps(
+            ("admin.*", "~admin.parent.*", "~admin.simple.edit"))))
     async with session.begin() as sess:
         sess.add(Simple(num=5, value="first"))
         p = Simple(num=82, optional_num=12, value="with child")

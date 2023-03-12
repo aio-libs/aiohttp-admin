@@ -159,6 +159,18 @@ function hasPermission(p, permissions) {
     const parts = ["admin", ...p.split(".")];
     const type = parts.pop();
 
+    // Negative permissions.
+    for (let i=1; i < parts.length+1; ++i) {
+        let perm = [...parts.slice(0, i), type].join(".");
+        if (permissions["~" + perm] !== undefined)
+            return false;
+
+        let wildcard = [...parts.slice(0, i), "*"].join(".");
+        if (permissions["~" + wildcard] !== undefined)
+            return false;
+    }
+
+    // Positive permissions.
     for (let i=1; i < parts.length+1; ++i) {
         let perm = [...parts.slice(0, i), type].join(".");
         if (permissions[perm] !== undefined)
@@ -174,7 +186,7 @@ function hasPermission(p, permissions) {
 const AiohttpIcon = (path) => {
     return (
         <img src={path} alt="" class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-vubbuv" aria-hidden="true" />
-    )
+    );
 };
 
 function createResources(resources, permissions) {

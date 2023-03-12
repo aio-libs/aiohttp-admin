@@ -162,3 +162,39 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 1}}
+
+
+async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                     login: _Login) -> None:
+    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                          context: object = None) -> bool:
+            return identity == "admin" and has_permission(
+                permission, {"admin.*", "~admin.dummy.*", "~admin.dummy2.add"})
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 403
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy.view' permission"
+        # assert await resp.text() == expected
+
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    p = {"data": '{"msg": "Foo"}'}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy2.create' permission"
+        # assert await resp.text() == expected
