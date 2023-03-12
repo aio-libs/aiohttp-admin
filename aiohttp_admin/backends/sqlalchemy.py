@@ -134,7 +134,7 @@ class SAResource(AbstractAdminResource):
             stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
-            except sa.exc.IntegrityError as e:
+            except sa.exc.IntegrityError:
                 logger.warning("IntegrityError (%s)", params["data"], exc_info=True)
                 raise web.HTTPBadRequest(reason="Integrity error (element already exists?)")
             return row.one()._asdict()
