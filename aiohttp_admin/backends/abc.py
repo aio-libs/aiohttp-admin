@@ -88,7 +88,9 @@ class AbstractAdminResource(ABC):
     inputs: dict[str, InputState]
     repr_field: str
 
-    async def filter_by_permissions(self, request: web.Request, perm_type: str, record: Record) -> Record:
+    async def filter_by_permissions(self, request: web.Request, perm_type: str,
+                                    record: Record) -> Record:
+        """Return a filtered record containing permissible fields only."""
         return {k: v for k, v in record.items()
                 if await permits(request, f"admin.{self.name}.{k}.{perm_type}")}
 
