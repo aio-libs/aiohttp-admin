@@ -92,7 +92,7 @@ class AbstractAdminResource(ABC):
                                     record: Record) -> Record:
         """Return a filtered record containing permissible fields only."""
         return {k: v for k, v in record.items()
-                if await permits(request, f"admin.{self.name}.{k}.{perm_type}")}
+                if await permits(request, f"admin.{self.name}.{k}.{perm_type}", context=request)}
 
     @abstractmethod
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
@@ -125,7 +125,7 @@ class AbstractAdminResource(ABC):
     # https://marmelab.com/react-admin/DataProviderWriting.html
 
     async def _get_list(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view")
+        await check_permission(request, f"admin.{self.name}.view", context=request)
         query = parse_obj_as(GetListParams, request.query)
 
         results, total = await self.get_list(query)
@@ -133,7 +133,7 @@ class AbstractAdminResource(ABC):
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view")
+        await check_permission(request, f"admin.{self.name}.view", context=request)
         query = parse_obj_as(GetOneParams, request.query)
 
         result = await self.get_one(query)
@@ -141,7 +141,7 @@ class AbstractAdminResource(ABC):
         return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view")
+        await check_permission(request, f"admin.{self.name}.view", context=request)
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
@@ -149,17 +149,17 @@ class AbstractAdminResource(ABC):
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.add")
+        await check_permission(request, f"admin.{self.name}.add", context=request)
         query = parse_obj_as(CreateParams, request.query)
         for k in query["data"]:
-            await check_permission(request, f"admin.{self.name}.{k}.add")
+            await check_permission(request, f"admin.{self.name}.{k}.add", context=request)
 
         result = await self.create(query)
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.edit")
+        await check_permission(request, f"admin.{self.name}.edit", context=request)
         query = parse_obj_as(UpdateParams, request.query)
         # Filter because react-admin still sends fields without an input component.
         query["data"] = await self.filter_by_permissions(request, "edit", query["data"])
@@ -169,7 +169,7 @@ class AbstractAdminResource(ABC):
         return json_response({"data": result})
 
     async def _delete(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.delete")
+        await check_permission(request, f"admin.{self.name}.delete", context=request)
         query = parse_obj_as(DeleteParams, request.query)
 
         result = await self.delete(query)
@@ -177,7 +177,7 @@ class AbstractAdminResource(ABC):
         return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.delete")
+        await check_permission(request, f"admin.{self.name}.delete", context=request)
         query = parse_obj_as(DeleteManyParams, request.query)
 
         ids = await self.delete_many(query)

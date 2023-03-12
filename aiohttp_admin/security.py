@@ -1,10 +1,12 @@
 import json
+from abc import ABC, abstractmethod
 from collections.abc import Container
 from enum import Enum
+from functools import lru_cache
 from typing import Optional, Union
 
 from aiohttp import web
-from aiohttp_security import SessionIdentityPolicy
+from aiohttp_security import AbstractAuthorizationPolicy, SessionIdentityPolicy
 from cryptography.fernet import Fernet, InvalidToken
 from pydantic import Json, ValidationError, parse_obj_as
 
@@ -42,6 +44,21 @@ def has_permission(p: Union[str, Enum], permissions: Container[str]) -> bool:
         if wildcard in permissions:
             return True
     return False
+
+
+class AdminAuthorizationPolicy(AbstractAuthorizationPolicy, ABC):  # type: ignore[misc,no-any-unimported]
+    def __init__(self):
+        super().__init__()
+        self.get_permissions = lru_cache(16)(self.get_permissions)
+
+    @abstractmethod
+    async def get_permissions(self, identity: Optional[str], request: web.Request) -> Container[str]:
+        ...
+
+    async def permits(self, identity: Optional[str], permission: Union[str, Enum],
+                      context: object = None) -> bool:
+        assert isinstance(context, web.Request)
+        return has_permission(permission, await self.get_permissions(identity, context))
 
 
 class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]

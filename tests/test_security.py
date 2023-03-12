@@ -1,11 +1,13 @@
 import json
 from enum import Enum
 from typing import Awaitable, Callable, Optional, Union
+from unittest import mock
 
+from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 
-from aiohttp_admin import Permissions, has_permission
+from aiohttp_admin import AdminAuthorizationPolicy, Permissions, has_permission
 
 _CreateClient = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
@@ -389,3 +391,27 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 1}}
+
+
+async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                  login: _Login) -> None:
+    get_permissions = mock.AsyncMock(spec_set=(), return_value={"admin.*"})
+
+    class AuthPolicy(AdminAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+        async def authorized_userid(self, identity: str) -> Optional[str]:
+            return identity if identity == "admin" else None
+
+        async def get_permissions(self, identity: Optional[str], request: web.Request) -> set[str]:
+            return await get_permissions()
+
+    admin_client = await create_admin_client(AuthPolicy())
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    h = await login(admin_client)
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+    get_permissions.assert_called_once()

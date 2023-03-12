@@ -10,7 +10,7 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from pydantic import ValidationError, parse_obj_as
 
 from .routes import setup_resources, setup_routes
-from .security import Permissions, TokenIdentityPolicy, has_permission
+from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy, has_permission
 from .types import Schema, UserDetails
 
 __all__ = ("Permissions", "Schema", "UserDetails", "has_permission", "setup")
