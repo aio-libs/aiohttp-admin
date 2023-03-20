@@ -8,4 +8,4 @@ pydantic==1.10.6
 pytest==7.2.2
 pytest-aiohttp==1.0.4
 pytest-cov==4.0.0
-sqlalchemy==2.0.6
+sqlalchemy==2.0.7
