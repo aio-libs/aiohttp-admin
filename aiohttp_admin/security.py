@@ -66,7 +66,7 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
         return identity
 
     async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                      context: tuple[web.Request, Optional[Mapping[str, object]]] = None) -> bool:
+                      context: tuple[web.Request, Optional[Mapping[str, object]]]) -> bool:
         if identity is None:
             return False
 
@@ -75,7 +75,7 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
         except (TypeError, ValueError):
             raise TypeError("Context must be `(request, record)` or `(request, None)`")
 
-        permissions: Collection[str] = request.get("aiohttpadmin_permissions")
+        permissions: Optional[Collection[str]] = request.get("aiohttpadmin_permissions")
         if permissions is None:
             if self._identity_callback is None:
                 permissions = tuple(Permissions)
