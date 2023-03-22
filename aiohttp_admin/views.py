@@ -50,7 +50,7 @@ async def token(request: web.Request) -> web.Response:
     data = parse_obj_as(Json[_Login], await request.read())
 
     check_credentials = request.app["check_credentials"]
-    if not await check_credentials(request.config_dict, data["username"], data["password"]):
+    if not await check_credentials(data["username"], data["password"]):
         raise web.HTTPUnauthorized(text="Wrong username or password")
 
     response = web.Response()
