@@ -1,9 +1,6 @@
 from collections.abc import Collection
 from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict
 
-from aiohttp import ChainMapProxy
-from aiohttp import web
-
 
 class FieldState(TypedDict):
     type: str
@@ -34,7 +31,7 @@ class UserDetails(TypedDict, total=False):
 
 
 class __SecuritySchema(TypedDict, total=False):
-    # Callback that receives identity and should return user details which the admin can use.
+    # Callback that receives identity and should return user details for the admin to use.
     identity_callback: Callable[[str], Awaitable[UserDetails]]
     # max_age value for cookies/tokens, defaults to None.
     max_age: Optional[int]

@@ -1,5 +1,4 @@
 import json
-from abc import ABC, abstractmethod
 from collections.abc import Collection
 from enum import Enum
 from typing import Mapping, Optional, Sequence, Union

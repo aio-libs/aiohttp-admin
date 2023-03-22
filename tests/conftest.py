@@ -1,10 +1,9 @@
-from typing import Awaitable, Callable, Optional, Sequence, Type
+from typing import Awaitable, Callable, Optional, Type
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient
-from aiohttp_security import AbstractAuthorizationPolicy
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 

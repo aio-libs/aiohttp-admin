@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from functools import cached_property, partial
-from typing import Any, Literal, Optional, Sequence, TypedDict, Union
+from typing import Any, Literal, Optional, TypedDict, Union
 
 from aiohttp import web
 from aiohttp_security import authorized_userid, check_permission, permits
@@ -178,8 +178,9 @@ class AbstractAdminResource(ABC):
         if not await permits(request, f"admin.{self.name}.edit", context=original):
             raise web.HTTPForbidden()
 
-        # Filter rather than forbid because react-admin still sends fields without an input component.
-        # The query may not be the complete dict though, so we must pass original for testing.
+        # Filter rather than forbid because react-admin still sends fields without an
+        # input component. The query may not be the complete dict though, so we must
+        # pass original for testing.
         query["data"] = await self.filter_by_permissions(request, "edit", query["data"], original)
         # Check new values are allowed by permission filters.
         if not await permits(request, f"admin.{self.name}.edit", context=query["data"]):

@@ -1,6 +1,5 @@
 import json
-from enum import Enum
-from typing import Awaitable, Callable, Optional, Union
+from typing import Awaitable, Callable, Optional
 
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
@@ -367,7 +366,7 @@ async def test_permission_filter_list(create_admin_client: _CreateClient,  # typ
 
 
 async def test_permission_filter_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
-                                      login: _Login) -> None:
+                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
 
@@ -401,7 +400,7 @@ async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # 
 
 
 async def test_permission_filter_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
-                                         login: _Login) -> None:
+                                          login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
 
@@ -473,7 +472,7 @@ async def test_permission_filter_create(create_admin_client: _CreateClient,  # t
 
 
 async def test_permission_filter_create2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
-                                        login: _Login) -> None:
+                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.add|msg="Test"')}
 
