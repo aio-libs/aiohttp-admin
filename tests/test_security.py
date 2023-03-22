@@ -1,5 +1,6 @@
 import json
 from typing import Awaitable, Callable, Optional
+from unittest import mock
 
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
@@ -331,6 +332,25 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 1}}
+
+
+async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                  login: _Login) -> None:
+    identity_callback = mock.AsyncMock(spec_set=(), return_value={"permissions": {"admin.*"}})
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    h = await login(admin_client)
+    identity_callback.assert_called_once()
+    identity_callback.reset_mock()
+
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+    identity_callback.assert_called_once()
 
 
 async def test_permission_filter_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950

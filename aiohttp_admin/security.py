@@ -66,15 +66,25 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
         return identity
 
     async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                      context: Optional[Mapping[str, object]] = None) -> bool:
+                      context: tuple[web.Request, Optional[Mapping[str, object]]]) -> bool:
         if identity is None:
             return False
-        if self._identity_callback is None:
-            permissions: Collection[str] = tuple(Permissions)
-        else:
-            user = await self._identity_callback(identity)
-            permissions = user["permissions"]
-        return has_permission(permission, permissions_as_dict(permissions), context)
+
+        try:
+            request, record = context
+        except (TypeError, ValueError):
+            raise TypeError("Context must be `(request, record)` or `(request, None)`")
+
+        permissions: Optional[Collection[str]] = request.get("aiohttpadmin_permissions")
+        if permissions is None:
+            if self._identity_callback is None:
+                permissions = tuple(Permissions)
+            else:
+                user = await self._identity_callback(identity)
+                permissions = user["permissions"]
+            # Cache permissions per request to avoid potentially dozens of DB calls.
+            request["aiohttpadmin_permissions"] = permissions
+        return has_permission(permission, permissions_as_dict(permissions), record)
 
 
 class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]
