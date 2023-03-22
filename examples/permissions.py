@@ -8,6 +8,7 @@ login will work with any password.
 import json
 from datetime import datetime
 from enum import Enum
+from functools import partial
 
 from aiohttp import ChainMapProxy, web
 from aiohttp_security import AbstractAuthorizationPolicy
@@ -16,7 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 import aiohttp_admin
 from _models import Base, Simple, SimpleParent
-from aiohttp_admin import Permissions, UserDetails, has_permission
+from aiohttp_admin import Permissions, UserDetails
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
@@ -27,32 +28,15 @@ class User(Base):
     permissions: Mapped[str]
 
 
-class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-    def __init__(self, app: web.Application):
-        super().__init__()
-        self.app = app
-
-    async def authorized_userid(self, identity: str) -> str | None:
-        async with self.app["db"]() as sess:
-            user = await sess.get(User, identity)
-            return None if user is None else user.username
-
-    async def permits(self, identity: str | None, permission: str | Enum,
-                      context: object = None) -> bool:
-        async with self.app["db"]() as sess:
-            user = await sess.get(User, identity)
-            return has_permission(permission, json.loads(user.permissions))
-
-
-async def check_credentials(app: ChainMapProxy, username: str, password: str) -> bool:
+async def check_credentials(app: web.Application, username: str, password: str) -> bool:
     """Allow login to any user account regardless of password."""
     async with app["db"]() as sess:
         user = await sess.get(User, username.lower())
         return user is not None
 
 
-async def identity_callback(request: web.Request, identity: str) -> UserDetails:
-    async with request.config_dict["db"]() as sess:
+async def identity_callback(app: web.Application, identity: str) -> UserDetails:
+    async with app["db"]() as sess:
         user = await sess.get(User, identity)
         return {"permissions": json.loads(user.permissions), "fullName": user.username.title()}
 
@@ -83,10 +67,26 @@ async def create_app() -> web.Application:
             ("admin.*", "~admin.simple.optional_num.*"))))
         sess.add(User(username="field_edit", permissions=json.dumps(
             ("admin.*", "~admin.simple.optional_num.edit"))))
+        sess.add(User(username="filter", permissions=json.dumps(
+            ("admin.*", "admin.simple.*|num=5"))))
+        sess.add(User(username="filter_edit", permissions=json.dumps(
+            ("admin.*", "admin.simple.edit|num=5"))))
+        sess.add(User(username="filter_add", permissions=json.dumps(
+            ("admin.*", "admin.simple.add|num=5"))))
+        sess.add(User(username="filter_delete", permissions=json.dumps(
+            ("admin.*", "admin.simple.delete|num=5"))))
+        sess.add(User(username="filter_field", permissions=json.dumps(
+            ("admin.*", "admin.simple.optional_num.*|num=5"))))
+        sess.add(User(username="filter_field_edit", permissions=json.dumps(
+            ("admin.*", "admin.simple.optional_num.edit|num=5"))))
     async with session.begin() as sess:
         sess.add(Simple(num=5, value="first"))
         p = Simple(num=82, optional_num=12, value="with child")
         sess.add(p)
+        sess.add(Simple(num=5, value="second"))
+        sess.add(Simple(num=5, value="3"))
+        sess.add(Simple(num=5, optional_num=42, value="4"))
+        sess.add(Simple(num=5, value="5"))
     async with session.begin() as sess:
         sess.add(SimpleParent(id=p.id, date=datetime(2023, 2, 13, 19, 4)))
 
@@ -96,8 +96,8 @@ async def create_app() -> web.Application:
     # This is the setup required for aiohttp-admin.
     schema: aiohttp_admin.Schema = {
         "security": {
-            "check_credentials": check_credentials,
-            "identity_callback": identity_callback,
+            "check_credentials": partial(check_credentials, app),
+            "identity_callback": partial(identity_callback, app),
             "secure": False
         },
         "resources": (
@@ -105,7 +105,7 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, SimpleParent)}
         )
     }
-    aiohttp_admin.setup(app, schema, AuthPolicy(app))
+    aiohttp_admin.setup(app, schema)
 
     return app
 

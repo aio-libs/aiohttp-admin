@@ -9,9 +9,12 @@ from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import aiohttp_admin
-from _auth_helpers import DummyAuthPolicy, check_credentials, identity_callback
 from _models import Base, Simple, SimpleParent
 from aiohttp_admin.backends.sqlalchemy import SAResource
+
+
+async def check_credentials(username: str, password: str) -> bool:
+    return username == "admin" and password == "admin"
 
 
 async def create_app() -> web.Application:
@@ -34,7 +37,6 @@ async def create_app() -> web.Application:
     schema: aiohttp_admin.Schema = {
         "security": {
             "check_credentials": check_credentials,
-            "identity_callback": identity_callback,
             "secure": False
         },
         "resources": (
@@ -42,7 +44,7 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, SimpleParent)}
         )
     }
-    aiohttp_admin.setup(app, schema, DummyAuthPolicy())
+    aiohttp_admin.setup(app, schema)
 
     return app
 
