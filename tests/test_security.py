@@ -362,7 +362,9 @@ async def test_permission_filter_list(create_admin_client: _CreateClient,  # typ
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 4, "msg": "Foo"}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 3}
+        assert await resp.json() == {
+            "data": [{"id": 4, "msg": "Foo"}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}],
+            "total": 3}
 
 
 async def test_permission_filter_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -379,7 +381,8 @@ async def test_permission_filter_list2(create_admin_client: _CreateClient,  # ty
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 2}
+        assert await resp.json() == {
+            "data": [{"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 2}
 
 
 async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -626,7 +629,8 @@ async def test_permission_filter_field_list(create_admin_client: _CreateClient, 
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 3}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 3}
+        assert await resp.json() == {
+            "data": [{"id": 3}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 3}
 
 
 async def test_permission_filter_field_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -643,7 +647,8 @@ async def test_permission_filter_field_list2(create_admin_client: _CreateClient,
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 3, "msg": "Other"}, {"id": 2}, {"id": 1, "msg": "Test"}], "total": 3}
+        assert await resp.json() == {
+            "data": [{"id": 3, "msg": "Other"}, {"id": 2}, {"id": 1, "msg": "Test"}], "total": 3}
 
 
 async def test_permission_filter_field_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950

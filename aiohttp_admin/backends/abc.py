@@ -86,7 +86,8 @@ class AbstractAdminResource(ABC):
                                     record: Record, original: Optional[Record] = None) -> Record:
         """Return a filtered record containing permissible fields only."""
         return {k: v for k, v in record.items()
-                if await permits(request, f"admin.{self.name}.{k}.{perm_type}", context=original or record)}
+                if await permits(request, f"admin.{self.name}.{k}.{perm_type}",
+                                 context=original or record)}
 
     @abstractmethod
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
@@ -134,7 +135,8 @@ class AbstractAdminResource(ABC):
 
         results, total = await self.get_list(query)
         results = [await self.filter_by_permissions(request, "view", r) for r in results]
-        results = [r for r in results if await permits(request, f"admin.{self.name}.view", context=r)]
+        results = [r for r in results if await permits(request, f"admin.{self.name}.view",
+                                                       context=r)]
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
@@ -161,7 +163,8 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(CreateParams, request.query)
         for k, v in query["data"].items():
             if v is not None:
-                await check_permission(request, f"admin.{self.name}.{k}.add", context=query["data"])
+                await check_permission(request, f"admin.{self.name}.{k}.add",
+                                       context=query["data"])
         if not await permits(request, f"admin.{self.name}.add", context=query["data"]):
             raise web.HTTPForbidden()
 
@@ -210,7 +213,8 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(DeleteManyParams, request.query)
 
         originals = await self.get_many(query)
-        allowed = await asyncio.gather(*(permits(request, f"admin.{self.name}.delete", context=r) for r in originals))
+        allowed = await asyncio.gather(*(permits(request, f"admin.{self.name}.delete",
+                                                 context=r) for r in originals))
         if not all(allowed):
             raise web.HTTPForbidden()
 
