@@ -338,12 +338,14 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
 async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                   login: _Login) -> None:
     identity_callback = mock.AsyncMock(spec_set=(), return_value={"permissions": {"admin.*"}})
-
     admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
     h = await login(admin_client)
+    identity_callback.assert_called_once()
+    identity_callback.reset_mock()
+
     p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:

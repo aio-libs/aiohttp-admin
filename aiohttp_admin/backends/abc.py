@@ -124,14 +124,12 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetListParams, request.query)
 
         # Add filters from advanced permissions.
-        if request.app["identity_callback"]:
-            identity = await authorized_userid(request)
-            user_details = await request.app["identity_callback"](identity)
-            permissions = permissions_as_dict(user_details["permissions"])
-            filters = permissions.get(f"admin.{self.name}.view",
-                                      permissions.get(f"admin.{self.name}.*", {}))
-            for k, v in filters.items():
-                query["filter"][k] = v
+        # The permissions will be cached on the request from a previous permissions check.
+        permissions = permissions_as_dict(request["aiohttpadmin_permissions"])
+        filters = permissions.get(f"admin.{self.name}.view",
+                                  permissions.get(f"admin.{self.name}.*", {}))
+        for k, v in filters.items():
+            query["filter"][k] = v
 
         results, total = await self.get_list(query)
         results = [await self.filter_by_permissions(request, "view", r) for r in results]
