@@ -1,13 +1,12 @@
 import json
-from enum import Enum
-from typing import Awaitable, Callable, Optional, Union
+from typing import Awaitable, Callable, Optional
 from unittest import mock
 
 from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 
-from aiohttp_admin import AdminAuthorizationPolicy, Permissions, has_permission
+from aiohttp_admin import Permissions, UserDetails
 
 _CreateClient = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
@@ -105,20 +104,16 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
 
 async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                        login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {Permissions.edit, Permissions.delete}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {Permissions.edit, Permissions.delete})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy_get_list"].url_for()
-    p = {"page": 1, "pagination": 10}
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     h = await login(admin_client)
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 403
@@ -129,15 +124,11 @@ async def test_list_without_permission(create_admin_client: _CreateClient,  # ty
 
 async def test_get_resource_with_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                             login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.dummy.view"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(permission, {"admin.dummy.view"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy_get_one"].url_for()
@@ -149,15 +140,11 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient, 
 
 async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                      login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.dummy.*"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(permission, {"admin.dummy.*"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy_get_one"].url_for()
@@ -169,16 +156,11 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
 
 async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                      login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy.*", "~admin.dummy2.add"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy.*", "~admin.dummy2.add"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy_get_one"].url_for()
@@ -204,16 +186,11 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
 
 async def test_list_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                     login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.view"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
@@ -222,21 +199,16 @@ async def test_list_resource_finegrained_permission(create_admin_client: _Create
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 1}], "total": 1}
+        assert await resp.json() == {"data": [{"id": 3}, {"id": 2}, {"id": 1}], "total": 3}
 
 
 async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.view"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
@@ -248,16 +220,11 @@ async def test_get_resource_finegrained_permission(create_admin_client: _CreateC
 
 async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                         login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.view"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
@@ -269,16 +236,11 @@ async def test_get_many_resource_finegrained_permission(create_admin_client: _Cr
 
 async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                       login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.add"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.add"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_create"].url_for()
@@ -291,21 +253,16 @@ async def test_create_resource_finegrained_permission(create_admin_client: _Crea
 
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "msg": None}}
+        assert await resp.json() == {"data": {"id": 4, "msg": None}}
 
 
 async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.*"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.*"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_create"].url_for()
@@ -318,21 +275,16 @@ async def test_create_resource_filtered_permission(create_admin_client: _CreateC
 
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2}}
+        assert await resp.json() == {"data": {"id": 4}}
 
 
 async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                       login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.edit"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.edit"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update"].url_for()
@@ -345,16 +297,11 @@ async def test_update_resource_finegrained_permission(create_admin_client: _Crea
 
 async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.*"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.*"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update"].url_for()
@@ -373,16 +320,11 @@ async def test_update_resource_filtered_permission(create_admin_client: _CreateC
 
 async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
-    class AuthPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
-        async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                          context: object = None) -> bool:
-            return identity == "admin" and has_permission(
-                permission, {"admin.*", "~admin.dummy2.msg.view"})
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_delete"].url_for()
@@ -395,16 +337,9 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
 
 async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                   login: _Login) -> None:
-    get_permissions = mock.AsyncMock(spec_set=(), return_value={"admin.*"})
+    identity_callback = mock.AsyncMock(spec_set=(), return_value={"permissions": {"admin.*"}})
 
-    class AuthPolicy(AdminAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
-        async def authorized_userid(self, identity: str) -> Optional[str]:
-            return identity if identity == "admin" else None
-
-        async def get_permissions(self, identity: Optional[str], request: web.Request) -> set[str]:
-            return await get_permissions()
-
-    admin_client = await create_admin_client(AuthPolicy())
+    admin_client = await create_admin_client(identity_callback)
 
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
@@ -414,4 +349,476 @@ async def test_permissions_cached(create_admin_client: _CreateClient,  # type: i
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
 
-    get_permissions.assert_called_once()
+    identity_callback.assert_called_once()
+
+
+async def test_permission_filter_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                      login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"|msg="Foo"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    async with admin_client.app["db"].begin() as sess:
+        sess.add(admin_client.app["model2"](msg="Foo"))
+
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    h = await login(admin_client)
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": [{"id": 4, "msg": "Foo"}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}],
+            "total": 3}
+
+
+async def test_permission_filter_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                       login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    h = await login(admin_client)
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": [{"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 2}
+
+
+async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                         login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "msg": "Test"}}
+    async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
+        assert resp.status == 403
+
+
+async def test_permission_filter_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                          login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "msg": "Test"}}
+    async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
+        assert resp.status == 403
+
+
+async def test_permission_filter_get_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                          login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}]}
+    async with admin_client.get(url, params={"ids": "[3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": []}
+
+
+async def test_permission_filter_get_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                           login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}]}
+    async with admin_client.get(url, params={"ids": "[3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": []}
+
+
+async def test_permission_filter_create(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                        login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "Test"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 4, "msg": "Test"}}
+    p = {"data": json.dumps({"msg": "Foo"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+
+
+async def test_permission_filter_create2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                         login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.add|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "Test"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 4, "msg": "Test"}}
+    p = {"data": json.dumps({"msg": "Foo"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+
+
+async def test_permission_filter_update(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                        login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "data": json.dumps({"msg": "Test"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "data": json.dumps({"msg": "Foo"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "data": json.dumps({"msg": "Test"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_update2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                         login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.edit|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "data": json.dumps({"msg": "Test"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "data": json.dumps({"msg": "Foo"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "data": json.dumps({"msg": "Test"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_delete(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                        login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_delete"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "previousData": "{}"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "previousData": "{}"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_delete2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                         login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.delete|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_delete"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "previousData": "{}"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"id": 1, "previousData": "{}"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_delete_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                             login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_delete_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[2, 3]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[3]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [1, 2]}
+
+
+async def test_permission_filter_delete_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                              login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.delete|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_delete_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[2, 3]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[3]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]"}
+    async with admin_client.delete(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [1, 2]}
+
+
+async def test_permission_filter_field_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                            login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    h = await login(admin_client)
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": [{"id": 3}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 3}
+
+
+async def test_permission_filter_field_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                             login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=3")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_list"].url_for()
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
+    h = await login(admin_client)
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": [{"id": 3, "msg": "Other"}, {"id": 2}, {"id": 1, "msg": "Test"}], "total": 3}
+
+
+async def test_permission_filter_field_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                               login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+    async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 3}}
+
+
+async def test_permission_filter_field_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+    async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 3}}
+
+
+async def test_permission_filter_field_get_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}, {"id": 3}]}
+
+
+async def test_permission_filter_field_get_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                                 login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
+    h = await login(admin_client)
+    async with admin_client.get(url, params={"ids": "[1, 3]"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [{"id": 1, "msg": "Test"}, {"id": 3}]}
+
+
+async def test_permission_filter_field_create(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                              login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "Spam"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 4}}
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 4)
+        assert r.msg is None
+
+
+async def test_permission_filter_field_create2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                               login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.add|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_create"].url_for()
+    h = await login(admin_client)
+    p = {"data": json.dumps({"msg": "Spam"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 4, "msg": None}}
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 4)
+        assert r.msg is None
+
+
+async def test_permission_filter_field_update(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                              login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 400
+        assert await resp.text() == "400: No allowed fields to change."
+    p = {"id": 1, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "msg": "Spam"}}
+    p = {"id": 2, "data": json.dumps({"id": 5}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 5}}
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 2)
+        assert r is None
+        r = await sess.get(admin_client.app["model2"], 5)
+        assert r.msg == "Test"
+
+
+async def test_permission_filter_field_update2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+                                               login: _Login) -> None:
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.edit|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update"].url_for()
+    h = await login(admin_client)
+    p = {"id": 3, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 400
+        assert await resp.text() == "400: No allowed fields to change."
+    p = {"id": 1, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "msg": "Spam"}}
+    p = {"id": 2, "data": json.dumps({"id": 5}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 5, "msg": "Test"}}
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 2)
+        assert r is None
+        r = await sess.get(admin_client.app["model2"], 5)
+        assert r.msg == "Test"

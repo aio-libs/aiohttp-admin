@@ -1,9 +1,7 @@
 import json
-from abc import ABC, abstractmethod
-from collections.abc import Container
+from collections.abc import Collection
 from enum import Enum
-from functools import lru_cache
-from typing import Optional, Union
+from typing import Mapping, Optional, Sequence, Union
 
 from aiohttp import web
 from aiohttp_security import AbstractAuthorizationPolicy, SessionIdentityPolicy
@@ -20,45 +18,69 @@ class Permissions(str, Enum):
     delete = "admin.delete"
 
 
-def has_permission(p: Union[str, Enum], permissions: Container[str]) -> bool:
+def has_permission(p: Union[str, Enum], permissions: Mapping[str, Mapping[str, Sequence[object]]],
+                   context: Optional[Mapping[str, object]]) -> bool:
     # TODO(PY311): StrEnum
     *parts, ptype = p.split(".")  # type: ignore[union-attr]
 
     # Negative permissions.
-    for i in range(1, len(parts)+1):
-        perm = ".".join((*parts[:i], ptype))
-        if "~" + perm in permissions:
-            return False
-
-        wildcard = ".".join((*parts[:i], "*"))
-        if "~" + wildcard in permissions:
-            return False
+    for i in range(len(parts), 0, -1):
+        for t in (ptype, "*"):
+            perm = ".".join((*parts[:i], t))
+            if "~" + perm in permissions:
+                return False
 
     # Positive permissions.
-    for i in range(1, len(parts)+1):
-        perm = ".".join((*parts[:i], ptype))
-        if perm in permissions:
-            return True
+    for i in range(len(parts), 0, -1):
+        for t in (ptype, "*"):
+            perm = ".".join((*parts[:i], t))
+            if perm in permissions:
+                if not context:
+                    return True
 
-        wildcard = ".".join((*parts[:i], "*"))
-        if wildcard in permissions:
-            return True
+                filters = permissions[perm]
+                for attr, vals in filters.items():
+                    if context.get(attr) not in vals:
+                        return False
+                return True
     return False
 
 
-class AdminAuthorizationPolicy(AbstractAuthorizationPolicy, ABC):  # type: ignore[misc,no-any-unimported]
-    def __init__(self):
-        super().__init__()
-        self.get_permissions = lru_cache(16)(self.get_permissions)
+def permissions_as_dict(permissions: Collection[str]) -> dict[str, dict[str, list[object]]]:
+    p_dict: dict[str, dict[str, list[object]]] = {}
+    for p in permissions:
+        perm, *filters = p.split("|")
+        p_dict[perm] = {}
+        for f in filters:
+            k, v = f.split("=", maxsplit=1)
+            p_dict[perm].setdefault(k, []).append(json.loads(v))
+    return p_dict
 
-    @abstractmethod
-    async def get_permissions(self, identity: Optional[str], request: web.Request) -> Container[str]:
-        ...
+
+class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+    def __init__(self, schema: Schema):
+        super().__init__()
+        self._identity_callback = schema["security"].get("identity_callback")
+
+    async def authorized_userid(self, identity: str) -> str:
+        return identity
 
     async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                      context: object = None) -> bool:
-        assert isinstance(context, web.Request)
-        return has_permission(permission, await self.get_permissions(identity, context))
+                      context: tuple[web.Request, Optional[Mapping[str, object]]] = None) -> bool:
+        if identity is None:
+            return False
+
+        try:
+            request, record = context
+        except (TypeError, ValueError):
+            raise TypeError("Context must be `(request, record)` or `(request, None)`")
+
+        if self._identity_callback is None:
+            permissions: Collection[str] = tuple(Permissions)
+        else:
+            user = await self._identity_callback(identity)
+            permissions = user["permissions"]
+        return has_permission(permission, permissions_as_dict(permissions), record)
 
 
 class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]
@@ -116,9 +138,9 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         All details (except auth) can be specified using the identity callback.
         """
         if self._identity_callback is None:
-            user_details: UserDetails = {}
+            user_details: UserDetails = {"permissions": tuple(Permissions)}
         else:
-            user_details = await self._identity_callback(request, identity)
+            user_details = await self._identity_callback(identity)
             if "auth" in user_details:
                 raise ValueError("Callback should not return a dict with 'auth' key.")
 
@@ -126,6 +148,6 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": {}}
         # https://github.com/python/mypy/issues/6462
         identity_dict.update(user_details)  # type: ignore[typeddict-item]
-        # Convert to mapping so JS can test for permissions easier (JS has no set type).
-        identity_dict["permissions"] = dict.fromkeys(identity_dict["permissions"])
+        identity_dict["permissions"] = permissions_as_dict(user_details["permissions"])
+
         return identity_dict

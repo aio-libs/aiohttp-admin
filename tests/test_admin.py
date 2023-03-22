@@ -1,18 +1,17 @@
 from aiohttp import web
 
 import aiohttp_admin
-from _auth import DummyAuthPolicy, check_credentials, identity_callback
+from _auth import check_credentials
 
 
 def test_path() -> None:
     app = web.Application()
-    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials,
-                                                 "identity_callback": identity_callback},
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ()}
-    admin = aiohttp_admin.setup(app, schema, DummyAuthPolicy())
+    admin = aiohttp_admin.setup(app, schema)
 
     assert str(admin.router["index"].url_for()) == "/admin"
 
-    admin = aiohttp_admin.setup(app, schema, DummyAuthPolicy(), path="/another/admin")
+    admin = aiohttp_admin.setup(app, schema, path="/another/admin")
 
     assert str(admin.router["index"].url_for()) == "/another/admin"

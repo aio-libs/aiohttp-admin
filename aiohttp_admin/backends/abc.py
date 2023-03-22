@@ -1,13 +1,17 @@
+import asyncio
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from functools import cached_property, partial
-from typing import Any, Literal, TypedDict, Union
+from typing import Any, Literal, Optional, TypedDict, Union
 
 from aiohttp import web
-from aiohttp_security import check_permission, permits
+from aiohttp_security import authorized_userid, check_permission, permits
 from pydantic import Json, parse_obj_as
+
+from ..security import permissions_as_dict
+from ..types import FieldState, InputState
 
 Record = dict[str, object]
 
@@ -23,16 +27,6 @@ class Encoder(json.JSONEncoder):
 
 
 json_response = partial(web.json_response, dumps=partial(json.dumps, cls=Encoder))
-
-
-class FieldState(TypedDict):
-    type: str
-    props: dict[str, object]
-
-
-class InputState(FieldState):
-    # Whether to show this input in the create form.
-    show_create: bool
 
 
 class _Pagination(TypedDict):
@@ -89,10 +83,11 @@ class AbstractAdminResource(ABC):
     repr_field: str
 
     async def filter_by_permissions(self, request: web.Request, perm_type: str,
-                                    record: Record) -> Record:
+                                    record: Record, original: Optional[Record] = None) -> Record:
         """Return a filtered record containing permissible fields only."""
         return {k: v for k, v in record.items()
-                if await permits(request, f"admin.{self.name}.{k}.{perm_type}", context=request)}
+                if await permits(request, f"admin.{self.name}.{k}.{perm_type}",
+                                 context=(request, original or record))}
 
     @abstractmethod
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
@@ -125,60 +120,101 @@ class AbstractAdminResource(ABC):
     # https://marmelab.com/react-admin/DataProviderWriting.html
 
     async def _get_list(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view", context=request)
+        await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = parse_obj_as(GetListParams, request.query)
+
+        # Add filters from advanced permissions.
+        if request.app["identity_callback"]:
+            identity = await authorized_userid(request)
+            user_details = await request.app["identity_callback"](identity)
+            permissions = permissions_as_dict(user_details["permissions"])
+            filters = permissions.get(f"admin.{self.name}.view",
+                                      permissions.get(f"admin.{self.name}.*", {}))
+            for k, v in filters.items():
+                query["filter"][k] = v
 
         results, total = await self.get_list(query)
         results = [await self.filter_by_permissions(request, "view", r) for r in results]
+        results = [r for r in results if await permits(request, f"admin.{self.name}.view",
+                                                       context=(request, r))]
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view", context=request)
+        await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = parse_obj_as(GetOneParams, request.query)
 
         result = await self.get_one(query)
+        if not await permits(request, f"admin.{self.name}.view", context=(request, result)):
+            raise web.HTTPForbidden()
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.view", context=request)
+        await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
-        results = [await self.filter_by_permissions(request, "view", r) for r in results]
+        results = [await self.filter_by_permissions(request, "view", r) for r in results
+                   if await permits(request, f"admin.{self.name}.view", context=(request, r))]
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.add", context=request)
         query = parse_obj_as(CreateParams, request.query)
-        for k in query["data"]:
-            await check_permission(request, f"admin.{self.name}.{k}.add", context=request)
+        await check_permission(request, f"admin.{self.name}.add", context=(request, query["data"]))
+        for k, v in query["data"].items():
+            if v is not None:
+                await check_permission(request, f"admin.{self.name}.{k}.add",
+                                       context=(request, query["data"]))
 
         result = await self.create(query)
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.edit", context=request)
+        await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
         query = parse_obj_as(UpdateParams, request.query)
-        # Filter because react-admin still sends fields without an input component.
-        query["data"] = await self.filter_by_permissions(request, "edit", query["data"])
+
+        # Check original record is allowed by permission filters.
+        original = await self.get_one({"id": query["id"]})
+        if not await permits(request, f"admin.{self.name}.edit", context=(request, original)):
+            raise web.HTTPForbidden()
+
+        # Filter rather than forbid because react-admin still sends fields without an
+        # input component. The query may not be the complete dict though, so we must
+        # pass original for testing.
+        query["data"] = await self.filter_by_permissions(request, "edit", query["data"], original)
+        # Check new values are allowed by permission filters.
+        if not await permits(request, f"admin.{self.name}.edit", context=(request, query["data"])):
+            raise web.HTTPForbidden()
+
+        if not query["data"]:
+            raise web.HTTPBadRequest(reason="No allowed fields to change.")
 
         result = await self.update(query)
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _delete(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.delete", context=request)
+        await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
         query = parse_obj_as(DeleteParams, request.query)
+
+        original = await self.get_one({"id": query["id"]})
+        if not await permits(request, f"admin.{self.name}.delete", context=(request, original)):
+            raise web.HTTPForbidden()
 
         result = await self.delete(query)
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.delete", context=request)
+        await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
         query = parse_obj_as(DeleteManyParams, request.query)
+
+        originals = await self.get_many(query)
+        allowed = await asyncio.gather(*(permits(request, f"admin.{self.name}.delete",
+                                                 context=(request, r)) for r in originals))
+        if not all(allowed):
+            raise web.HTTPForbidden()
 
         ids = await self.delete_many(query)
         return json_response({"data": ids})

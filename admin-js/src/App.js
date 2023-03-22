@@ -6,8 +6,11 @@ import {
     NumberField, NumberInput,
     ReferenceField, ReferenceInput,
     ReferenceManyField,
-    TextField, TextInput
+    SelectInput,
+    TextField, TextInput,
+    WithRecord, required
 } from "react-admin";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const _body = document.querySelector("body");
 const STATE = JSON.parse(_body.dataset.state);
@@ -94,33 +97,64 @@ function createFields(resource, name, permissions, display_only=false) {
         if ((display_only && !resource["display"].includes(field))
             || !hasPermission(`${name}.${field}.view`, permissions))
             continue;
+
         const C = COMPONENTS[state["type"]];
         if (C === undefined)
             throw Error(`Unknown component '${state["type"]}'`);
 
+        let c;
         if (state["props"]["children"]) {
             let child_fields = createFields({"fields": state["props"]["children"],
                                              "display": Object.keys(state["props"]["children"])},
                                             name, permissions);
             delete state["props"]["children"];
-            components.push(<C source={field} {...state["props"]}><Datagrid>{child_fields}</Datagrid></C>);
+            c = <C source={field} {...state["props"]}><Datagrid>{child_fields}</Datagrid></C>;
         } else {
-            components.push(<C source={field} {...state["props"]} />);
+            c = <C source={field} {...state["props"]} />;
         }
+        // Show icon if user doesn't have permission to view this field (based on filters).
+        components.push(<WithRecord label={state["props"]["label"] || field} render={
+            (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
+        } />);
     }
     return components;
 }
 
-function createInputs(resource, name, perm_type, permissions, create=false) {
+function createInputs(resource, name, perm_type, permissions) {
     let components = [];
+    const resource_filters = getFilters(name, perm_type, permissions);
     for (const [field, state] of Object.entries(resource["inputs"])) {
-        if ((create && !state["show_create"])
+        if ((perm_type === "add" && !state["show_create"])
             || !hasPermission(`${name}.${field}.${perm_type}`, permissions))
             continue;
-        const C = COMPONENTS[state["type"]];
-        if (C === undefined)
-            throw Error(`Unknown component '${state["type"]}'`);
-        components.push(<C source={field} {...state["props"]} />);
+
+        const fvalues = resource_filters[field];
+        if (fvalues !== undefined) {
+            // If there are filters for the resource-level permission which depend on
+            // this field, then restrict the input options to the allowed values.
+            const disabled = fvalues.length <= 1;
+            const nullable = fvalues.indexOf(null);
+            if (nullable > -1)
+                fvalues.splice(nullable, 1);
+            let choices = [];
+            for (let v of fvalues)
+                choices.push({"id": v, "name": v});
+            components.push(
+                <SelectInput source={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
+                    validate={nullable < 0 && required()} disabled={disabled} />);
+        } else {
+            const C = COMPONENTS[state["type"]];
+            if (C === undefined)
+                throw Error(`Unknown component '${state["type"]}'`);
+            const c = <C source={field} {...state["props"]} />;
+            if (perm_type === "edit")
+                // Don't render if filters disallow editing this field.
+                components.push(<WithRecord render={
+                    (record) => hasPermission(`${name}.${field}.${perm_type}`, permissions, record) && c
+                } />);
+            else
+                components.push(c);
+        }
     }
     return components;
 }
@@ -129,7 +163,7 @@ const AiohttpList = (resource, name, permissions) => (
     <List filters={createInputs(resource, name, "view", permissions)}>
         <Datagrid rowClick="show">
             {createFields(resource, name, permissions, true)}
-            {hasPermission(`${name}.edit`, permissions) && <EditButton />}
+            <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
         </Datagrid>
     </List>
 );
@@ -153,35 +187,54 @@ const AiohttpEdit = (resource, name, permissions) => (
 const AiohttpCreate = (resource, name, permissions) => (
     <Create>
         <SimpleForm>
-            {createInputs(resource, name, "add", permissions, true)}
+            {createInputs(resource, name, "add", permissions)}
         </SimpleForm>
     </Create>
 );
 
-function hasPermission(p, permissions) {
+/** Return any filters for a given permission. */
+function getFilters(name, perm_type, permissions) {
+    let filters = permissions[`admin.${name}.${perm_type}`];
+    if (filters !== undefined)
+        return filters;
+    filters = permissions[`admin.${name}.*`];
+    return filters || {};
+}
+
+/** Return true if a user has the given permission.
+
+A record can be passed as the context parameter in order to check permission filters
+against the current record.
+*/
+function hasPermission(p, permissions, context=null) {
     const parts = ["admin", ...p.split(".")];
     const type = parts.pop();
 
     // Negative permissions.
-    for (let i=1; i < parts.length+1; ++i) {
-        let perm = [...parts.slice(0, i), type].join(".");
-        if (permissions["~" + perm] !== undefined)
-            return false;
-
-        let wildcard = [...parts.slice(0, i), "*"].join(".");
-        if (permissions["~" + wildcard] !== undefined)
-            return false;
+    for (let i=parts.length; i > 0; --i) {
+        for (let t of [type, "*"]) {
+            let perm = [...parts.slice(0, i), t].join(".");
+            if (permissions["~" + perm] !== undefined)
+                return false;
+        }
     }
 
     // Positive permissions.
-    for (let i=1; i < parts.length+1; ++i) {
-        let perm = [...parts.slice(0, i), type].join(".");
-        if (permissions[perm] !== undefined)
-            return true;
+    for (let i=parts.length; i > 0; --i) {
+        for (let t of [type, "*"]) {
+            let perm = [...parts.slice(0, i), t].join(".");
+            if (permissions[perm] !== undefined) {
+                if (!context)
+                    return true;
 
-        let wildcard = [...parts.slice(0, i), "*"].join(".");
-        if (permissions[wildcard] !== undefined)
-            return true;
+                let filters = permissions[perm];
+                for (let attr of Object.keys(filters)) {
+                    if (!filters[attr].includes(context[attr]))
+                        return false;
+                }
+                return true;
+            }
+        }
     }
     return false;
 }

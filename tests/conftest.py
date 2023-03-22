@@ -4,15 +4,14 @@ from unittest.mock import AsyncMock, create_autospec
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient
-from aiohttp_security import AbstractAuthorizationPolicy
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from _auth import DummyAuthPolicy, check_credentials, identity_callback
+from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
-_CreateAdmin = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
+_IdentityCallback = Callable[[str], Awaitable[aiohttp_admin.UserDetails]]
 
 
 @pytest.fixture
@@ -29,10 +28,10 @@ def mock_engine() -> AsyncMock:
 
 
 @pytest.fixture
-def create_admin_client(  # type: ignore[misc,no-any-unimported]
+def create_admin_client(
     base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]]
-) -> Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]:
-    async def admin_client(auth_policy: AbstractAuthorizationPolicy) -> TestClient:  # type: ignore[no-any-unimported] # noqa: B950
+) -> Callable[[Optional[_IdentityCallback]], Awaitable[TestClient]]:
+    async def admin_client(identity_callback: Optional[_IdentityCallback] = None) -> TestClient:
         class DummyModel(base):  # type: ignore[misc,valid-type]
             __tablename__ = "dummy"
 
@@ -54,11 +53,12 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
         async with app["db"].begin() as sess:
             sess.add(DummyModel())
             sess.add(Dummy2Model(msg="Test"))
+            sess.add(Dummy2Model(msg="Test"))
+            sess.add(Dummy2Model(msg="Other"))
 
         schema: aiohttp_admin.Schema = {
             "security": {
                 "check_credentials": check_credentials,
-                "identity_callback": identity_callback,
                 "secure": False
             },
             "resources": (
@@ -66,7 +66,9 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
                 {"model": SAResource(engine, Dummy2Model)}
             )
         }
-        app["admin"] = aiohttp_admin.setup(app, schema, auth_policy)
+        if identity_callback:
+            schema["security"]["identity_callback"] = identity_callback
+        app["admin"] = aiohttp_admin.setup(app, schema)
 
         return await aiohttp_client(app)
 
@@ -74,8 +76,8 @@ def create_admin_client(  # type: ignore[misc,no-any-unimported]
 
 
 @pytest.fixture
-async def admin_client(create_admin_client: _CreateAdmin) -> TestClient:  # type: ignore[misc,no-any-unimported] # noqa: B950
-    return await create_admin_client(DummyAuthPolicy())
+async def admin_client(create_admin_client: Callable[[], Awaitable[TestClient]]) -> TestClient:
+    return await create_admin_client()
 
 
 @pytest.fixture

@@ -5,15 +5,14 @@ import aiohttp_security
 import aiohttp_session
 from aiohttp import web
 from aiohttp.typedefs import Handler
-from aiohttp_security import AbstractAuthorizationPolicy
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from pydantic import ValidationError, parse_obj_as
 
 from .routes import setup_resources, setup_routes
-from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy, has_permission
+from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy
 from .types import Schema, UserDetails
 
-__all__ = ("Permissions", "Schema", "UserDetails", "has_permission", "setup")
+__all__ = ("Permissions", "Schema", "UserDetails", "setup")
 __version__ = "0.1.0a0"
 
 
@@ -25,8 +24,8 @@ async def pydantic_middleware(request: web.Request, handler: Handler) -> web.Str
         raise web.HTTPBadRequest(text=e.json(), content_type="application/json")
 
 
-def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizationPolicy,  # type: ignore[no-any-unimported] # noqa: B950
-          *, path: str = "/admin", secret: Optional[bytes] = None) -> web.Application:
+def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
+          secret: Optional[bytes] = None) -> web.Application:
     """Initialize the admin.
 
     Args:
@@ -75,6 +74,7 @@ def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizati
     admin.middlewares.append(pydantic_middleware)
     admin.on_startup.append(on_startup)
     admin["check_credentials"] = schema["security"]["check_credentials"]
+    admin["identity_callback"] = schema["security"].get("identity_callback")
     admin["state"] = {"view": schema.get("view", {})}
 
     max_age = schema["security"].get("max_age")
@@ -83,7 +83,7 @@ def setup(app: web.Application, schema: Schema, auth_policy: AbstractAuthorizati
         secret, max_age=max_age, httponly=True, samesite="Strict", secure=secure)
     identity_policy = TokenIdentityPolicy(storage._fernet, schema)
     aiohttp_session.setup(admin, storage)
-    aiohttp_security.setup(admin, identity_policy, auth_policy)
+    aiohttp_security.setup(admin, identity_policy, AdminAuthorizationPolicy(schema))
 
     setup_routes(admin)
     setup_resources(admin, schema)

@@ -1,9 +1,15 @@
+from collections.abc import Collection
 from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict
 
-from aiohttp import ChainMapProxy
-from aiohttp import web
 
-from .backends.abc import FieldState, InputState
+class FieldState(TypedDict):
+    type: str
+    props: dict[str, object]
+
+
+class InputState(FieldState):
+    # Whether to show this input in the create form.
+    show_create: bool
 
 
 class _IdentityDict(TypedDict, total=False):
@@ -13,7 +19,7 @@ class _IdentityDict(TypedDict, total=False):
 class IdentityDict(_IdentityDict):
     auth: str
     fullName: str
-    permissions: dict[str, None]
+    permissions: dict[str, dict[str, list[object]]]
 
 
 class UserDetails(TypedDict, total=False):
@@ -21,13 +27,12 @@ class UserDetails(TypedDict, total=False):
     fullName: str
     avatar: str
     # https://marmelab.com/react-admin/AuthProviderWriting.html#getpermissions
-    permissions: Sequence[str]
+    permissions: Collection[str]
 
 
 class __SecuritySchema(TypedDict, total=False):
-    # Callback that receives request and identity and should return user details
-    # which the admin can use.
-    identity_callback: Callable[[web.Request, str], Awaitable[UserDetails]]
+    # Callback that receives identity and should return user details for the admin to use.
+    identity_callback: Callable[[str], Awaitable[UserDetails]]
     # max_age value for cookies/tokens, defaults to None.
     max_age: Optional[int]
     # Secure flag for cookies, defaults to True.
@@ -37,7 +42,7 @@ class __SecuritySchema(TypedDict, total=False):
 class _SecuritySchema(__SecuritySchema):
     # Callback that receives request.config_dict, username and password and returns
     # True if authorised, False otherwise.
-    check_credentials: Callable[[ChainMapProxy, str, str], Awaitable[bool]]
+    check_credentials: Callable[[str, str], Awaitable[bool]]
 
 
 class _ViewSchema(TypedDict, total=False):
