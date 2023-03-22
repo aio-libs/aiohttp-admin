@@ -103,8 +103,7 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
 async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                        login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {Permissions.edit, Permissions.delete}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -124,8 +123,7 @@ async def test_list_without_permission(create_admin_client: _CreateClient,  # ty
 async def test_get_resource_with_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                             login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.dummy.view"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -141,8 +139,7 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient, 
 async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                      login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.dummy.*"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -158,8 +155,7 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
 async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                      login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy.*", "~admin.dummy2.add"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -189,8 +185,7 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
 async def test_list_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                     login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -208,8 +203,7 @@ async def test_list_resource_finegrained_permission(create_admin_client: _Create
 async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -225,8 +219,7 @@ async def test_get_resource_finegrained_permission(create_admin_client: _CreateC
 async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -242,8 +235,7 @@ async def test_get_many_resource_finegrained_permission(create_admin_client: _Cr
 async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.add"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -265,8 +257,7 @@ async def test_create_resource_finegrained_permission(create_admin_client: _Crea
 async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.*"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -288,8 +279,7 @@ async def test_create_resource_filtered_permission(create_admin_client: _CreateC
 async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.edit"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -306,8 +296,7 @@ async def test_update_resource_finegrained_permission(create_admin_client: _Crea
 async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.*"}}
 
     admin_client = await create_admin_client(identity_callback)
@@ -330,8 +319,7 @@ async def test_update_resource_filtered_permission(create_admin_client: _CreateC
 async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
-        if identity != "admin":
-            return {}
+        assert identity == "admin"
         return {"permissions": {"admin.*", "~admin.dummy2.msg.view"}}
 
     admin_client = await create_admin_client(identity_callback)

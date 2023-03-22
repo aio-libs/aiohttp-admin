@@ -159,14 +159,12 @@ class AbstractAdminResource(ABC):
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
-        await check_permission(request, f"admin.{self.name}.add")
         query = parse_obj_as(CreateParams, request.query)
+        await check_permission(request, f"admin.{self.name}.add", context=query["data"])
         for k, v in query["data"].items():
             if v is not None:
                 await check_permission(request, f"admin.{self.name}.{k}.add",
                                        context=query["data"])
-        if not await permits(request, f"admin.{self.name}.add", context=query["data"]):
-            raise web.HTTPForbidden()
 
         result = await self.create(query)
         result = await self.filter_by_permissions(request, "view", result)
