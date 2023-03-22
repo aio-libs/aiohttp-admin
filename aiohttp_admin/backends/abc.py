@@ -7,7 +7,7 @@ from functools import cached_property, partial
 from typing import Any, Literal, Optional, TypedDict, Union
 
 from aiohttp import web
-from aiohttp_security import authorized_userid, check_permission, permits
+from aiohttp_security import check_permission, permits
 from pydantic import Json, parse_obj_as
 
 from ..security import permissions_as_dict

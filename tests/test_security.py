@@ -2,7 +2,6 @@ import json
 from typing import Awaitable, Callable, Optional
 from unittest import mock
 
-from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 
