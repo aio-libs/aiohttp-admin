@@ -317,6 +317,24 @@ async def test_update_resource_filtered_permission(create_admin_client: _CreateC
         assert r.msg == "Test"
 
 
+async def test_update_many_resource_finegrained_permission(
+        create_admin_client: _CreateClient, login: _Login) -> None:  # type: ignore[no-any-unimported]
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        assert identity == "admin"
+        return {"permissions": {"admin.*", "~admin.dummy2.msg.edit"}}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[1]", "data": json.dumps({"msg": "ABC"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+        # TODO(aiohttp-security05)
+        # expected = "403: User does not have 'admin.dummy2.msg.edit' permission"
+
+
 async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
@@ -539,6 +557,48 @@ async def test_permission_filter_update2(create_admin_client: _CreateClient,  # 
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
     p = {"id": 1, "data": json.dumps({"msg": "Test"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_update_many(
+    create_admin_client: _CreateClient, login: _Login) -> None:  # type: ignore[no-any-unimported]
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[3]", "data": json.dumps({"msg": "Test"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1]", "data": json.dumps({"msg": "Foo"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Test"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+
+
+async def test_permission_filter_update_many2(
+    create_admin_client: _CreateClient, login: _Login) -> None:  # type: ignore[no-any-unimported]
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", 'admin.dummy2.edit|msg="Test"')}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[3]", "data": json.dumps({"msg": "Test"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1]", "data": json.dumps({"msg": "Foo"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Test"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
 
@@ -823,3 +883,41 @@ async def test_permission_filter_field_update2(create_admin_client: _CreateClien
         assert r is None
         r = await sess.get(admin_client.app["model2"], 5)
         assert r.msg == "Test"
+
+
+async def test_permission_filter_field_update_many(
+    create_admin_client: _CreateClient, login: _Login) -> None:  # type: ignore[no-any-unimported]
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[3]", "data": json.dumps({"msg": "Spam"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Spam"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [1, 2]}
+
+
+async def test_permission_filter_field_update_many2(
+    create_admin_client: _CreateClient, login: _Login) -> None:  # type: ignore[no-any-unimported]
+    async def identity_callback(identity: Optional[str]) -> UserDetails:
+        return {"permissions": ("admin.*", "admin.dummy2.msg.edit|id=1|id=2")}
+
+    admin_client = await create_admin_client(identity_callback)
+
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    h = await login(admin_client)
+    p = {"ids": "[3]", "data": json.dumps({"msg": "Spam"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 403
+    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Spam"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [1, 2]}

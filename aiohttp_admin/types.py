@@ -62,6 +62,10 @@ class _Resource(TypedDict, total=False):
     # name of the field that should be used for repr
     # (e.g. when displaying a foreign key reference).
     repr: str
+    # Bulk update actions (which appear when selecting rows in the list view).
+    # Format: {"Button Label": {"field_to_update": "value_to_set"}}
+    # e.g. {"Reset Views": {"views": 0}}
+    bulk_update: dict[str, dict[str, Any]]
 
 
 class Resource(_Resource):
@@ -85,6 +89,7 @@ class _ResourceState(TypedDict):
     repr: str
     icon: Optional[str]
     urls: dict[str, tuple[str, str]]  # (method, url)
+    bulk_update: dict[str, dict[str, Any]]
 
 
 class State(TypedDict):
