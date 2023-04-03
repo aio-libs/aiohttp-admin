@@ -111,7 +111,7 @@ class AbstractAdminResource(ABC):
         """Update the record and return the updated record."""
 
     @abstractmethod
-    async def update_many(self, params: UpdateManyParams) -> Record:
+    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:
         """Update multiple records and return the IDs of updated records."""
 
     @abstractmethod

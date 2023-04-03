@@ -164,10 +164,9 @@ class SAResource(AbstractAdminResource):
             except sa.exc.CompileError as e:
                 logger.warning("CompileError (%s)", params["ids"], exc_info=True)
                 raise web.HTTPBadRequest(reason=str(e))
-            ids = list(r)
-        if ids:
-            return ids
-        raise web.HTTPNotFound()
+            # The security check has already called get_many(), so we can be sure
+            # there will be results here.
+            return list(r)
 
     async def delete(self, params: DeleteParams) -> Record:
         async with self._db.begin() as conn:
