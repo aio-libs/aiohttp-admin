@@ -562,7 +562,8 @@ async def test_permission_filter_update2(create_admin_client: _CreateClient,  # 
 
 
 async def test_permission_filter_update_many(  # type: ignore[no-any-unimported]
-    create_admin_client: _CreateClient, login: _Login) -> None:
+    create_admin_client: _CreateClient, login: _Login
+) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
 
@@ -583,7 +584,8 @@ async def test_permission_filter_update_many(  # type: ignore[no-any-unimported]
 
 
 async def test_permission_filter_update_many2(  # type: ignore[no-any-unimported]
-    create_admin_client: _CreateClient, login: _Login) -> None:
+    create_admin_client: _CreateClient, login: _Login
+) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.edit|msg="Test"')}
 
@@ -886,7 +888,8 @@ async def test_permission_filter_field_update2(create_admin_client: _CreateClien
 
 
 async def test_permission_filter_field_update_many(  # type: ignore[no-any-unimported]
-    create_admin_client: _CreateClient, login: _Login) -> None:
+    create_admin_client: _CreateClient, login: _Login
+) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
 
@@ -905,7 +908,8 @@ async def test_permission_filter_field_update_many(  # type: ignore[no-any-unimp
 
 
 async def test_permission_filter_field_update_many2(  # type: ignore[no-any-unimported]
-    create_admin_client: _CreateClient, login: _Login) -> None:
+    create_admin_client: _CreateClient, login: _Login
+) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.edit|id=1|id=2")}
 
