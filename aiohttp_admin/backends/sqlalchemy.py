@@ -10,7 +10,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
-    GetManyParams, GetOneParams, Record, UpdateParams)
+    GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +154,19 @@ class SAResource(AbstractAdminResource):
             except sa.exc.NoResultFound:
                 logger.warning("No result found (%s)", params["id"], exc_info=True)
                 raise web.HTTPNotFound()
+
+    async def update_many(self, params: UpdateManyParams) -> list[Union[str, int]]:
+        async with self._db.begin() as conn:
+            stmt = sa.update(self._table).where(self._table.c["id"].in_(params["ids"]))
+            stmt = stmt.values(params["data"]).returning(self._table.c["id"])
+            try:
+                r = await conn.scalars(stmt)
+            except sa.exc.CompileError as e:
+                logger.warning("CompileError (%s)", params["ids"], exc_info=True)
+                raise web.HTTPBadRequest(reason=str(e))
+            # The security check has already called get_many(), so we can be sure
+            # there will be results here.
+            return list(r)
 
     async def delete(self, params: DeleteParams) -> Record:
         async with self._db.begin() as conn:

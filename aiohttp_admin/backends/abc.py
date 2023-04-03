@@ -67,6 +67,11 @@ class UpdateParams(_Params):
     previousData: Json[Record]
 
 
+class UpdateManyParams(_Params):
+    ids: Json[list[Union[int, str]]]
+    data: Json[Record]
+
+
 class DeleteParams(_Params):
     id: Union[int, str]
     previousData: Json[Record]
@@ -104,6 +109,10 @@ class AbstractAdminResource(ABC):
     @abstractmethod
     async def update(self, params: UpdateParams) -> Record:
         """Update the record and return the updated record."""
+
+    @abstractmethod
+    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:
+        """Update multiple records and return the IDs of updated records."""
 
     @abstractmethod
     async def create(self, params: CreateParams) -> Record:
@@ -192,6 +201,25 @@ class AbstractAdminResource(ABC):
         result = await self.filter_by_permissions(request, "view", result)
         return json_response({"data": result})
 
+    async def _update_many(self, request: web.Request) -> web.Response:
+        await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
+        query = parse_obj_as(UpdateManyParams, request.query)
+
+        # Check original records are allowed by permission filters.
+        originals = await self.get_many({"ids": query["ids"]})
+        allowed = (permits(request, f"admin.{self.name}.edit", context=(request, r))
+                   for r in originals)
+        allowed_f = (permits(request, f"admin.{self.name}.{k}.edit", context=(request, r))
+                     for r in originals for k in query["data"])
+        if not all(await asyncio.gather(*allowed, *allowed_f)):
+            raise web.HTTPForbidden()
+        # Check new values are allowed by permission filters.
+        if not await permits(request, f"admin.{self.name}.edit", context=(request, query["data"])):
+            raise web.HTTPForbidden()
+
+        ids = await self.update_many(query)
+        return json_response({"data": ids})
+
     async def _delete(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
         query = parse_obj_as(DeleteParams, request.query)
@@ -230,6 +258,7 @@ class AbstractAdminResource(ABC):
             web.get(url, self._get_many, name=self.name + "_get_many"),
             web.post(url, self._create, name=self.name + "_create"),
             web.put(url + "/update", self._update, name=self.name + "_update"),
+            web.put(url + "/update_many", self._update_many, name=self.name + "_update_many"),
             web.delete(url + "/one", self._delete, name=self.name + "_delete"),
             web.delete(url, self._delete_many, name=self.name + "_delete_many")
         )

@@ -186,6 +186,7 @@ async def test_update(admin_client: TestClient, login: _Login) -> None:
         r = await sess.get(admin_client.app["model"], 4)
         assert r.id == 4
 
+        assert await sess.get(admin_client.app["model"], 1) is None
         assert await sess.get(admin_client.app["model"], 2) is None
 
 
@@ -203,6 +204,41 @@ async def test_update_invalid_attributes(admin_client: TestClient, login: _Login
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy_update"].url_for()
     p = {"id": 1, "data": '{"id": 4, "foo": "invalid"}', "previousData": '{"id": 1}'}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 400
+        assert "foo" in await resp.text()
+
+
+async def test_update_many(admin_client: TestClient, login: _Login) -> None:
+    h = await login(admin_client)
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
+    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "ABC"})}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [1, 2]}
+
+    async with admin_client.app["db"]() as sess:
+        r = await sess.get(admin_client.app["model2"], 1)
+        assert r.msg == "ABC"
+        r = await sess.get(admin_client.app["model2"], 2)
+        assert r.msg == "ABC"
+
+
+async def test_update_many_deleted_entity(admin_client: TestClient, login: _Login) -> None:
+    h = await login(admin_client)
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy_update_many"].url_for()
+    p = {"ids": "[2]", "data": '{"id": 4}'}
+    async with admin_client.put(url, params=p, headers=h) as resp:
+        assert resp.status == 404
+
+
+async def test_update_many_invalid_attributes(admin_client: TestClient, login: _Login) -> None:
+    h = await login(admin_client)
+    assert admin_client.app
+    url = admin_client.app["admin"].router["dummy_update_many"].url_for()
+    p = {"ids": "[1]", "data": '{"foo": "invalid"}'}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 400
         assert "foo" in await resp.text()

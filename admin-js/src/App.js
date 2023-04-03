@@ -1,5 +1,6 @@
 import {
     Admin, Create, Datagrid, Edit, EditButton, List, HttpError, Resource, SimpleForm,
+    BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
     BooleanField, BooleanInput,
     DateField, DateInput,
@@ -61,6 +62,7 @@ const dataProvider = {
     },
     getOne: (resource, params) => dataRequest(resource, "get_one", params),
     update: (resource, params) => dataRequest(resource, "update", params),
+    updateMany: (resource, params) => dataRequest(resource, "update_many", params)
 }
 
 const authProvider = {
@@ -159,14 +161,40 @@ function createInputs(resource, name, perm_type, permissions) {
     return components;
 }
 
-const AiohttpList = (resource, name, permissions) => (
-    <List filters={createInputs(resource, name, "view", permissions)}>
-        <Datagrid rowClick="show">
-            {createFields(resource, name, permissions, true)}
-            <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
-        </Datagrid>
-    </List>
-);
+function createBulkUpdates(resource, name, permissions) {
+    let buttons = [];
+    for (const [label, data] of Object.entries(resource["bulk_update"])) {
+        let allowed = true;
+        for (const k of Object.keys(data)) {
+            if (!hasPermission(`${name}.${k}.edit`, permissions)) {
+                allowed = false;
+                break;
+            }
+        }
+        if (allowed)
+            buttons.push(<BulkUpdateButton label={label} data={data} />);
+    }
+    return buttons;
+}
+
+const AiohttpList = (resource, name, permissions) => {
+    const BulkActionButtons = () => (
+        <>
+            {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions)}
+            <BulkExportButton />
+            {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton />}
+        </>
+    );
+
+    return (
+        <List filters={createInputs(resource, name, "view", permissions)}>
+            <Datagrid rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                {createFields(resource, name, permissions, true)}
+                <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
+            </Datagrid>
+        </List>
+    );
+}
 
 const AiohttpShow = (resource, name, permissions) => (
     <Show>
