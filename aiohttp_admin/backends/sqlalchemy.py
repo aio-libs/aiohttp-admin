@@ -10,7 +10,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
-    GetManyParams, GetOneParams, Record, UpdateParams, UpdateManyParams)
+    GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
 
 logger = logging.getLogger(__name__)
 
