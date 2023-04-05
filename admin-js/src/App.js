@@ -2,16 +2,29 @@ import {
     Admin, Create, Datagrid, Edit, EditButton, List, HttpError, Resource, SimpleForm,
     BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
+    AutocompleteInput,
     BooleanField, BooleanInput,
     DateField, DateInput,
     NumberField, NumberInput,
-    ReferenceField, ReferenceInput,
+    ReferenceField, ReferenceInput as _ReferenceInput,
     ReferenceManyField,
     SelectInput,
     TextField, TextInput,
     WithRecord, required
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
+/** Reconfigure ReferenceInput to filter by the displayed repr field. */
+const ReferenceInput = (props) => {
+    const ref = props["reference"];
+    const repr = STATE["resources"][ref]["repr"];
+    return (
+        <_ReferenceInput {...props}>
+            <AutocompleteInput filterToQuery={s => ({[repr]: s})} />
+        </_ReferenceInput>
+    );
+};
+
 
 const _body = document.querySelector("body");
 const STATE = JSON.parse(_body.dataset.state);
