@@ -19,7 +19,7 @@ const ReferenceInput = (props) => {
     const ref = props["reference"];
     const repr = STATE["resources"][ref]["repr"];
     return (
-        <_ReferenceInput {...props}>
+        <_ReferenceInput sort={{"field": repr, "order": "ASC"}} {...props}>
             <AutocompleteInput filterToQuery={s => ({[repr]: s})} />
         </_ReferenceInput>
     );
