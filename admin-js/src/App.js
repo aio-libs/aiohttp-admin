@@ -226,8 +226,8 @@ const AiohttpEdit = (resource, name, permissions) => (
 );
 
 const AiohttpCreate = (resource, name, permissions) => (
-    <Create>
-        <SimpleForm>
+    <Create redirect="show">
+        <SimpleForm warnWhenUnsavedChanges>
             {createInputs(resource, name, "add", permissions)}
         </SimpleForm>
     </Create>
