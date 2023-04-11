@@ -1,6 +1,7 @@
 import {
     Admin, Create, Datagrid, DatagridConfigurable, Edit, EditButton, List, HttpError, Resource, SimpleForm,
     SelectColumnsButton, CreateButton, FilterButton, ExportButton, TopToolbar,
+    AppBar, InspectorButton, Layout, TitlePortal,
     BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
     AutocompleteInput,
@@ -312,8 +313,16 @@ function createResources(resources, permissions) {
     return components;
 }
 
+const AiohttpAppBar = () => (
+    <AppBar>
+        <TitlePortal />
+        <InspectorButton />
+    </AppBar>
+);
+
 const App = () => (
-    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]} disableTelemetry requireAuth>
+    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+           layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
         {permissions => createResources(STATE["resources"], permissions)}
     </Admin>
 );
