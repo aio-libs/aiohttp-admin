@@ -209,8 +209,7 @@ const AiohttpList = (resource, name, permissions) => {
 
     console.log(resource["list_omit"]);
     return (
-        <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}
-              sort={{"field": resource["pk"], "order": "ASC"}}>
+        <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}>
             <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
                 {createFields(resource, name, permissions)}
                 <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
