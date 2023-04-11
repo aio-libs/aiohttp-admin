@@ -53,8 +53,8 @@ class _ViewSchema(TypedDict, total=False):
 
 
 class _Resource(TypedDict, total=False):
-    # List of field names that should be shown in the list view.
-    display: Sequence[str]
+    # List of field names that should be not be shown in the list view by default.
+    list_omit: Sequence[str]
     # Display label in admin.
     label: str
     # URL path to custom icon.

@@ -1,5 +1,6 @@
 import {
-    Admin, Create, Datagrid, Edit, EditButton, List, HttpError, Resource, SimpleForm,
+    Admin, Create, Datagrid, DatagridConfigurable, Edit, EditButton, List, HttpError, Resource, SimpleForm,
+    SelectColumnsButton, CreateButton, FilterButton, ExportButton, TopToolbar,
     BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
     AutocompleteInput,
@@ -106,11 +107,10 @@ const authProvider = {
 };
 
 
-function createFields(resource, name, permissions, display_only=false) {
+function createFields(resource, name, permissions) {
     let components = [];
     for (const [field, state] of Object.entries(resource["fields"])) {
-        if ((display_only && !resource["display"].includes(field))
-            || !hasPermission(`${name}.${field}.view`, permissions))
+        if (!hasPermission(`${name}.${field}.view`, permissions))
             continue;
 
         const C = COMPONENTS[state["type"]];
@@ -191,6 +191,14 @@ function createBulkUpdates(resource, name, permissions) {
 }
 
 const AiohttpList = (resource, name, permissions) => {
+    const ListActions = () => (
+        <TopToolbar>
+            <SelectColumnsButton />
+            <FilterButton />
+            {hasPermission(`${name}.add`, permissions) && <CreateButton />}
+            <ExportButton />
+        </TopToolbar>
+    );
     const BulkActionButtons = () => (
         <>
             {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions)}
@@ -199,12 +207,14 @@ const AiohttpList = (resource, name, permissions) => {
         </>
     );
 
+    console.log(resource["list_omit"]);
     return (
-        <List filters={createInputs(resource, name, "view", permissions)}>
-            <Datagrid rowClick="show" bulkActionButtons={<BulkActionButtons />}>
-                {createFields(resource, name, permissions, true)}
+        <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}
+              sort={{"field": resource["pk"], "order": "ASC"}}>
+            <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                {createFields(resource, name, permissions)}
                 <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
-            </Datagrid>
+            </DatagridConfigurable>
         </List>
     );
 }
