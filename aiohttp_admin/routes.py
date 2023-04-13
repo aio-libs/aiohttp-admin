@@ -25,7 +25,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if not all(f in m.fields for f in display_fields):
                 raise ValueError(f"Display includes non-existent field {display_fields}")
 
-        repr_field = r.get("repr", m.repr_field)
+        repr_field = r.get("repr", m.primary_key)
 
         for k, v in m.inputs.items():
             if k in display_fields:

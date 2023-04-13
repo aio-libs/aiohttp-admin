@@ -82,13 +82,15 @@ class SAResource(AbstractAdminResource):
         self._db = db
         self._table = table
 
-        self._primary_key = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
-        if not self._primary_key:
+        pk = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
+        if not pk:
             raise ValueError("No primary key found.")
-        if len(self._primary_key) > 1:
+        if len(pk) > 1:
             # TODO: Test composite primary key
             raise NotImplementedError("Composite keys not supported yet.")
-        self.repr_field = self._primary_key[0]
+        self.primary_key = pk[0]
+
+        super().__init__()
 
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
         per_page = params["pagination"]["perPage"]
@@ -112,7 +114,7 @@ class SAResource(AbstractAdminResource):
 
     async def get_one(self, params: GetOneParams) -> Record:
         async with self._db.connect() as conn:
-            stmt = sa.select(self._table).where(self._table.c["id"] == params["id"])
+            stmt = sa.select(self._table).where(self._table.c[self.primary_key] == params["id"])
             result = await conn.execute(stmt)
             try:
                 return result.one()._asdict()
@@ -122,8 +124,7 @@ class SAResource(AbstractAdminResource):
 
     async def get_many(self, params: GetManyParams) -> list[Record]:
         async with self._db.connect() as conn:
-            # TODO: Handle primary key not called "id"
-            stmt = sa.select(self._table).where(self._table.c["id"].in_(params["ids"]))
+            stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
             result = await conn.execute(stmt)
             records = [r._asdict() for r in result]
         if records:
@@ -142,7 +143,7 @@ class SAResource(AbstractAdminResource):
 
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c["id"] == params["id"])
+            stmt = sa.update(self._table).where(self._table.c[self.primary_key] == params["id"])
             stmt = stmt.values(params["data"]).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
@@ -157,8 +158,8 @@ class SAResource(AbstractAdminResource):
 
     async def update_many(self, params: UpdateManyParams) -> list[Union[str, int]]:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c["id"].in_(params["ids"]))
-            stmt = stmt.values(params["data"]).returning(self._table.c["id"])
+            stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
+            stmt = stmt.values(params["data"]).returning(self._table.c[self.primary_key])
             try:
                 r = await conn.scalars(stmt)
             except sa.exc.CompileError as e:
@@ -170,7 +171,7 @@ class SAResource(AbstractAdminResource):
 
     async def delete(self, params: DeleteParams) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.delete(self._table).where(self._table.c["id"] == params["id"])
+            stmt = sa.delete(self._table).where(self._table.c[self.primary_key] == params["id"])
             row = await conn.execute(stmt.returning(*self._table.c))
             try:
                 return row.one()._asdict()
@@ -180,9 +181,8 @@ class SAResource(AbstractAdminResource):
 
     async def delete_many(self, params: DeleteManyParams) -> list[Union[str, int]]:
         async with self._db.begin() as conn:
-            # TODO: Handle primary key not called "id"
-            stmt = sa.delete(self._table).where(self._table.c["id"].in_(params["ids"]))
-            r = await conn.scalars(stmt.returning(self._table.c["id"]))
+            stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
+            r = await conn.scalars(stmt.returning(self._table.c[self.primary_key]))
             ids = list(r)
         if ids:
             return ids
