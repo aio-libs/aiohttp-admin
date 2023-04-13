@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 import aiohttp_admin
-from aiohttp_admin.backends.sqlalchemy import SAResource
 from _auth import check_credentials
+from aiohttp_admin.backends.sqlalchemy import SAResource
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 

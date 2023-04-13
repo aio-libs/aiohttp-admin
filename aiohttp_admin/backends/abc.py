@@ -90,7 +90,7 @@ class AbstractAdminResource(ABC):
 
     def __init__(self) -> None:
         if "id" in self.fields and self.primary_key != "id":
-            warnings.warn("A non-PK 'id' column is likely to break the admin.")
+            warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
 
     async def filter_by_permissions(self, request: web.Request, perm_type: str,
                                     record: Record, original: Optional[Record] = None) -> Record:
