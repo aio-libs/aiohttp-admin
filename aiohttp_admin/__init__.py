@@ -97,7 +97,8 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
             r"(?#Optional field name)(\.({f}))?"
             r"(?#Permission type)\.(view|edit|add|delete|\*)"
             r"(?#No filters if negated)(?(2)$|"
-            r'(?#Optional filters)\|({f})=(?#JSON number or str)(\".*?\"|\d+))*'.format(r=r, f="|".join(fields)))
+            r'(?#Optional filters)\|({f})=(?#JSON number or str)(\".*?\"|\d+))*'.format(
+                r=r, f="|".join(fields)))
     p_re = (r"(?#Global admin permission)~?admin\.(view|edit|add|delete|\*)"
             r"|"
             r"(?#Resource permission)(~)?admin\.({})").format("|".join(resource_matches))
