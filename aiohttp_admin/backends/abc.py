@@ -88,7 +88,7 @@ class AbstractAdminResource(ABC):
     inputs: dict[str, InputState]
     primary_key: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         if "id" in self.fields and self.primary_key != "id":
             warnings.warn("A non-PK 'id' column is likely to break the admin.")
 

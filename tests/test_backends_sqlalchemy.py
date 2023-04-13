@@ -187,7 +187,7 @@ async def test_nonid_pk_api(
         assert await resp.json() == {"data": {"id": 12, "num": 12, "other": "this"}}
 
     url = app["admin"].router["test_update"].url_for()
-    p = {"id": 5, "data": json.dumps({"id": 5, "other": "that"}), "previousData": "{}"}
-    async with admin_client.put(url, params=p, headers=h) as resp:
+    p1 = {"id": 5, "data": json.dumps({"id": 5, "other": "that"}), "previousData": "{}"}
+    async with admin_client.put(url, params=p1, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 5, "num": 5, "other": "that"}}
