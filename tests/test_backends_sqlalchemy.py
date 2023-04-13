@@ -7,7 +7,6 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from yarl import URL
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
@@ -126,8 +125,9 @@ async def test_id_nonpk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -
     with pytest.warns(UserWarning, match="A non-PK 'id' column is likely to break the admin."):
         SAResource(mock_engine, NotPK)
     # TODO: Support composite PK.
-    #with pytest.warns(UserWarning, match="'id' column in a composite PK is likely to break."):
-    #    SAResource(mock_engine, CompositePK)
+    # with pytest.warns(UserWarning, match="'id' column in a composite PK is likely to"
+    #                   + " break the admin"):
+    #     SAResource(mock_engine, CompositePK)
 
 
 async def test_nonid_pk_api(
