@@ -1,5 +1,6 @@
 import asyncio
 import json
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -86,6 +87,10 @@ class AbstractAdminResource(ABC):
     fields: dict[str, FieldState]
     inputs: dict[str, InputState]
     primary_key: str
+
+    def __init__(self):
+        if "id" in self.fields and self.primary_key != "id":
+            warnings.warn("A non-PK 'id' column is likely to break the admin.")
 
     async def filter_by_permissions(self, request: web.Request, perm_type: str,
                                     record: Record, original: Optional[Record] = None) -> Record:

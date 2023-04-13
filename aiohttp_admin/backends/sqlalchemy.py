@@ -90,6 +90,8 @@ class SAResource(AbstractAdminResource):
             raise NotImplementedError("Composite keys not supported yet.")
         self.primary_key = pk[0]
 
+        super().__init__()
+
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
         per_page = params["pagination"]["perPage"]
         offset = (params["pagination"]["page"] - 1) * per_page
