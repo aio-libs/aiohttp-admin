@@ -39,6 +39,7 @@ class Author(Base):
     __tablename__ = "author"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
     books: Mapped[list["Book"]] = relationship()
 
 
