@@ -1,3 +1,4 @@
+import re
 import secrets
 from typing import Optional
 
@@ -87,5 +88,21 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
 
     setup_routes(admin)
     setup_resources(admin, schema)
+
+    resource_patterns = []
+    for r, state in admin["state"]["resources"].items():
+        fields = state["fields"].keys()
+        resource_patterns.append(
+            r"(?#Resource name){r}"
+            r"(?#Optional field name)(\.({f}))?"
+            r"(?#Permission type)\.(view|edit|add|delete|\*)"
+            r"(?#No filters if negated)(?(2)$|"
+            r'(?#Optional filters)\|({f})=(?#JSON number or str)(\".*?\"|\d+))*'.format(
+                r=r, f="|".join(fields)))
+    p_re = (r"(?#Global admin permission)~?admin\.(view|edit|add|delete|\*)"
+            r"|"
+            r"(?#Resource permission)(~)?admin\.({})").format("|".join(resource_patterns))
+    admin["permission_re"] = re.compile(p_re)
+
     prefixed_subapp = app.add_subapp(path, admin)
     return admin
