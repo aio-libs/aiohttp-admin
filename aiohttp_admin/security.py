@@ -16,6 +16,7 @@ class Permissions(str, Enum):
     edit = "admin.edit"
     add = "admin.add"
     delete = "admin.delete"
+    all = "admin.*"
 
 
 def has_permission(p: Union[str, Enum], permissions: Mapping[str, Mapping[str, Sequence[object]]],
@@ -78,7 +79,7 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
         permissions: Optional[Collection[str]] = request.get("aiohttpadmin_permissions")
         if permissions is None:
             if self._identity_callback is None:
-                permissions = tuple(Permissions)
+                permissions = (Permissions.all,)
             else:
                 user = await self._identity_callback(identity)
                 permissions = user["permissions"]
@@ -142,7 +143,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         All details (except auth) can be specified using the identity callback.
         """
         if self._identity_callback is None:
-            user_details: UserDetails = {"permissions": tuple(Permissions)}
+            user_details: UserDetails = {"permissions": (Permissions.all,)}
         else:
             user_details = await self._identity_callback(identity)
             if "auth" in user_details:
