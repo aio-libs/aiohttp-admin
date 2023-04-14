@@ -77,7 +77,7 @@ async def create_app() -> web.Application:
 
     # Create users with various permissions.
     async with session.begin() as sess:
-        sess.add(User(username="admin", permissions=json.dumps(tuple(Permissions))))
+        sess.add(User(username="admin", permissions=json.dumps((Permissions.all,))))
         sess.add(User(username="view", permissions=json.dumps((Permissions.view,))))
         sess.add(User(username="add", permissions=json.dumps(
             (Permissions.view, Permissions.add,))))
