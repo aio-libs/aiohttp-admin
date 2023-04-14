@@ -89,10 +89,10 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     setup_routes(admin)
     setup_resources(admin, schema)
 
-    resource_matches = []
+    resource_patterns = []
     for r, state in admin["state"]["resources"].items():
         fields = state["fields"].keys()
-        resource_matches.append(
+        resource_patterns.append(
             r"(?#Resource name){r}"
             r"(?#Optional field name)(\.({f}))?"
             r"(?#Permission type)\.(view|edit|add|delete|\*)"
@@ -100,7 +100,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
             r'(?#Optional filters)\|({f})=(?#JSON number or str)(\".*?\"|\d+))*'.format(r=r, f="|".join(fields)))
     p_re = (r"(?#Global admin permission)~?admin\.(view|edit|add|delete|\*)"
             r"|"
-            r"(?#Resource permission)(~)?admin\.({})").format("|".join(resource_matches))
+            r"(?#Resource permission)(~)?admin\.({})").format("|".join(resource_patterns))
     admin["permission_re"] = re.compile(p_re)
 
     prefixed_subapp = app.add_subapp(path, admin)
