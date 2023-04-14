@@ -219,7 +219,7 @@ const AiohttpShow = (resource, name, permissions) => (
 
 const AiohttpEdit = (resource, name, permissions) => (
     <Edit>
-        <SimpleForm>
+        <SimpleForm warnWhenUnsavedChanges>
             {createInputs(resource, name, "edit", permissions)}
         </SimpleForm>
     </Edit>
