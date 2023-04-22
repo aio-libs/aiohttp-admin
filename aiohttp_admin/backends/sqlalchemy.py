@@ -1,7 +1,8 @@
 import asyncio
 import logging
 import operator
-from typing import Any, Iterator, Type, Union
+import sys
+from typing import Any, Callable, Coroutine, Iterator, Type, TypeVar, Union
 
 import sqlalchemy as sa
 from aiohttp import web
@@ -12,6 +13,14 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
     GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +33,21 @@ FIELD_TYPES = {
     sa.Boolean: ("BooleanField", "BooleanInput"),
     sa.String: ("TextField", "TextInput")
 }
+
+
+def handle_errors(f: Callable[_P, Coroutine[None, None, _T]]) -> Callable[_P, Coroutine[None, None, _T]]:
+    async def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
+        try:
+            return await f(*args, **kwargs)
+        except sa.exc.IntegrityError as e:
+            raise web.HTTPBadRequest(reason=e.args[0])
+        except sa.exc.NoResultFound:
+            logger.warning("No result found (%s)", args, exc_info=True)
+            raise web.HTTPNotFound()
+        except sa.exc.CompileError as e:
+            logger.warning("CompileError (%s)", args, exc_info=True)
+            raise web.HTTPBadRequest(reason=str(e))
+    return inner
 
 
 def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
@@ -95,6 +119,7 @@ class SAResource(AbstractAdminResource):
 
         super().__init__()
 
+    @handle_errors
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
         per_page = params["pagination"]["perPage"]
         offset = (params["pagination"]["page"] - 1) * per_page
@@ -115,16 +140,14 @@ class SAResource(AbstractAdminResource):
 
         return entities, count
 
+    @handle_errors
     async def get_one(self, params: GetOneParams) -> Record:
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(self._table.c[self.primary_key] == params["id"])
             result = await conn.execute(stmt)
-            try:
-                return result.one()._asdict()
-            except sa.exc.NoResultFound:
-                logger.warning("No result found (%s)", params["id"], exc_info=True)
-                raise web.HTTPNotFound()
+            return result.one()._asdict()
 
+    @handle_errors
     async def get_many(self, params: GetManyParams) -> list[Record]:
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
@@ -134,6 +157,7 @@ class SAResource(AbstractAdminResource):
             return records
         raise web.HTTPNotFound()
 
+    @handle_errors
     async def create(self, params: CreateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
@@ -144,44 +168,32 @@ class SAResource(AbstractAdminResource):
                 raise web.HTTPBadRequest(reason="Integrity error (element already exists?)")
             return row.one()._asdict()
 
+    @handle_errors
     async def update(self, params: UpdateParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c[self.primary_key] == params["id"])
             stmt = stmt.values(params["data"]).returning(*self._table.c)
-            try:
-                row = await conn.execute(stmt)
-            except sa.exc.CompileError as e:
-                logger.warning("CompileError (%s)", params["id"], exc_info=True)
-                raise web.HTTPBadRequest(reason=str(e))
-            try:
-                return row.one()._asdict()
-            except sa.exc.NoResultFound:
-                logger.warning("No result found (%s)", params["id"], exc_info=True)
-                raise web.HTTPNotFound()
+            row = await conn.execute(stmt)
+            return row.one()._asdict()
 
+    @handle_errors
     async def update_many(self, params: UpdateManyParams) -> list[Union[str, int]]:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
             stmt = stmt.values(params["data"]).returning(self._table.c[self.primary_key])
-            try:
-                r = await conn.scalars(stmt)
-            except sa.exc.CompileError as e:
-                logger.warning("CompileError (%s)", params["ids"], exc_info=True)
-                raise web.HTTPBadRequest(reason=str(e))
+            r = await conn.scalars(stmt)
             # The security check has already called get_many(), so we can be sure
             # there will be results here.
             return list(r)
 
+    @handle_errors
     async def delete(self, params: DeleteParams) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._table.c[self.primary_key] == params["id"])
             row = await conn.execute(stmt.returning(*self._table.c))
-            try:
-                return row.one()._asdict()
-            except sa.exc.NoResultFound:
-                logger.warning("No result found (%s)", params["id"], exc_info=True)
-                raise web.HTTPNotFound()
+            return row.one()._asdict()
 
+    @handle_errors
     async def delete_many(self, params: DeleteManyParams) -> list[Union[str, int]]:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
