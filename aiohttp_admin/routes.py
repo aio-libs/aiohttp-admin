@@ -36,7 +36,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         inputs = m.inputs.copy()  # Don't modify the resource.
         for name, validators in r.get("validators", {}).items():
             if not all(v[0] in _VALIDATORS for v in validators):
-                raise ValueError("First value in validators must be one of {}".format(_VALIDATORS))
+                raise ValueError(f"First value in validators must be one of {_VALIDATORS}")
             inputs[name] = inputs[name].copy()
             inputs[name]["validators"] = inputs[name]["validators"] + list(validators)
 
