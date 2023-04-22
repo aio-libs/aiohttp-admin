@@ -33,12 +33,14 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
 
+        inputs = m.inputs.copy()  # Don't modify the resource.
         for name, validators in r.get("validators", {}).items():
             if not all(v[0] in _VALIDATORS for v in validators):
                 raise ValueError("First value in validators must be one of {}".format(_VALIDATORS))
-            m.inputs[name]["validators"].extend(validators)
+            inputs[name] = inputs[name].copy()
+            inputs[name]["validators"] = inputs[name]["validators"] + list(validators)
 
-        state = {"fields": m.fields, "inputs": m.inputs, "list_omit": tuple(omit_fields),
+        state = {"fields": m.fields, "inputs": inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
                  "bulk_update": r.get("bulk_update", {})}
         admin["state"]["resources"][m.name] = state
