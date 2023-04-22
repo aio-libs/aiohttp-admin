@@ -111,11 +111,13 @@ def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine
         lt: Mapped[int] = mapped_column()
         lte: Mapped[Union[int, None]] = mapped_column()
         min_length: Mapped[str] = mapped_column()
+        min_length_gt: Mapped[str] = mapped_column()
         regex: Mapped[str] = mapped_column()
 
         __table_args__ = (sa.CheckConstraint(gt > 3), sa.CheckConstraint(gte >= 3),
                           sa.CheckConstraint(lt < 3), sa.CheckConstraint(lte <= 3),
                           sa.CheckConstraint(sa.func.char_length(min_length) >= 5),
+                          sa.CheckConstraint(sa.func.char_length(min_length_gt) > 5),
                           sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")))
 
     r = SAResource(mock_engine, TestCC)
@@ -132,6 +134,7 @@ def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine
     assert f["lt"]["validators"] == [("required",), ("maxValue", 2)]
     assert f["lte"]["validators"] == [("maxValue", 3)]
     assert f["min_length"]["validators"] == [("required",), ("minLength", 5)]
+    assert f["min_length_gt"]["validators"] == [("required",), ("minLength", 6)]
     assert f["regex"]["validators"] == [("required",), ("regex", "abc.*")]
 
 
