@@ -1,5 +1,5 @@
 import json
-from typing import Awaitable, Callable, Type
+from typing import Awaitable, Callable, Type, Union
 
 import pytest
 import sqlalchemy as sa
@@ -30,8 +30,10 @@ def test_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     }
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": {"type": "NumberInput", "show_create": False, "props": {}},
-        "num": {"type": "TextInput", "show_create": True, "props": {}}
+        "id": {"type": "NumberInput", "show_create": False, "props": {},
+               "validators": [("required",)]},
+        "num": {"type": "TextInput", "show_create": True, "props": {},
+                "validators": [("required",)]}
     }
 
 
@@ -49,8 +51,10 @@ def test_table(mock_engine: AsyncEngine) -> None:
     }
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": {"type": "NumberInput", "show_create": False, "props": {}},
-        "num": {"type": "TextInput", "show_create": True, "props": {}}
+        "id": {"type": "NumberInput", "show_create": False, "props": {},
+               "validators": [("required",)]},
+        "num": {"type": "TextInput", "show_create": True, "props": {},
+                "validators": [("maxLength", 30)]}
     }
 
 
@@ -69,7 +73,8 @@ def test_fk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.fields == {"id": {"type": "ReferenceField", "props": {"reference": "dummy"}}}
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": {
-        "type": "ReferenceInput", "show_create": True, "props": {"reference": "dummy"}}}
+        "type": "ReferenceInput", "show_create": True, "props": {"reference": "dummy"},
+        "validators": [("required",)]}}
 
 
 def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -92,6 +97,45 @@ def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert "ones" not in r.inputs
 
 
+def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestCC(base):
+        __tablename__  = "test"
+        pk: Mapped[int] = mapped_column(primary_key=True)
+        default: Mapped[int] = mapped_column(default=5)
+        server_default: Mapped[int] = mapped_column(server_default="4")
+        nullable: Mapped[Union[int, None]]
+        not_nullable: Mapped[int]
+        max_length: Mapped[str] = mapped_column(sa.String(16))
+        gt: Mapped[int] = mapped_column()
+        gte: Mapped[int] = mapped_column()
+        lt: Mapped[int] = mapped_column()
+        lte: Mapped[Union[int, None]] = mapped_column()
+        min_length: Mapped[str] = mapped_column()
+        regex: Mapped[str] = mapped_column()
+
+        __table_args__ = (sa.CheckConstraint(gt > 3), sa.CheckConstraint(gte >= 3),
+                          sa.CheckConstraint(lt < 3), sa.CheckConstraint(lte <= 3),
+                          sa.CheckConstraint(sa.func.char_length(min_length) >= 5),
+                          sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")))
+
+
+    r = SAResource(mock_engine, TestCC)
+
+    f = r.inputs
+    assert f["pk"]["validators"] == [("required",)]
+    assert f["default"]["validators"] == []
+    assert f["server_default"]["validators"] == []
+    assert f["nullable"]["validators"] == []
+    assert f["not_nullable"]["validators"] == [("required",)]
+    assert f["max_length"]["validators"] == [("required",), ("maxLength", 16)]
+    assert f["gt"]["validators"] == [("required",), ("minValue", 4)]
+    assert f["gte"]["validators"] == [("required",), ("minValue", 3)]
+    assert f["lt"]["validators"] == [("required",), ("maxValue", 2)]
+    assert f["lte"]["validators"] == [("maxValue", 3)]
+    assert f["min_length"]["validators"] == [("required",), ("minLength", 5)]
+    assert f["regex"]["validators"] == [("required",), ("regex", "abc.*")]
+
+
 async def test_nonid_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test"
@@ -106,8 +150,10 @@ async def test_nonid_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -
         "other": {"type": "TextField", "props": {}}
     }
     assert r.inputs == {
-        "num": {"type": "NumberInput", "show_create": False, "props": {}},
-        "other": {"type": "TextInput", "show_create": True, "props": {}}
+        "num": {"type": "NumberInput", "show_create": False, "props": {},
+                "validators": [("required",)]},
+        "other": {"type": "TextInput", "show_create": True, "props": {},
+                  "validators": [("required",)]}
     }
 
 

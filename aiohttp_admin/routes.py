@@ -7,6 +7,8 @@ from aiohttp import web
 from . import views
 from .types import Schema
 
+_VALIDATORS = ("email", "maxLength", "maxValue", "minLength", "minValue", "regex", "required")
+
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
     admin["resources"] = []
@@ -30,6 +32,11 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         for k, v in m.inputs.items():
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
+
+        for name, validators in r.get("validators", {}).items():
+            if not all(v[0] in _VALIDATORS for v in validators):
+                raise ValueError("First value in validators must be one of {}".format(_VALIDATORS))
+            m.inputs[name]["validators"].extend(validators)
 
         state = {"fields": m.fields, "inputs": m.inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),

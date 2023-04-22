@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict
+from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict, Union
 
 
 class FieldState(TypedDict):
@@ -10,6 +10,9 @@ class FieldState(TypedDict):
 class InputState(FieldState):
     # Whether to show this input in the create form.
     show_create: bool
+    # Validators to add to the input. Each validator is the name of the validator
+    # function, followed by arguments for that function. e.g. ("minValue", 5)
+    validators: Sequence[Sequence[Union[str, int]]]
 
 
 class _IdentityDict(TypedDict, total=False):
@@ -66,6 +69,8 @@ class _Resource(TypedDict, total=False):
     # Format: {"Button Label": {"field_to_update": "value_to_set"}}
     # e.g. {"Reset Views": {"views": 0}}
     bulk_update: dict[str, dict[str, Any]]
+    # Custom validators to add to inputs.
+    validators: dict[str, Sequence[Sequence[Union[str, int]]]]
 
 
 class Resource(_Resource):

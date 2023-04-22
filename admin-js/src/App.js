@@ -12,7 +12,8 @@ import {
     ReferenceManyField,
     SelectInput,
     TextField, TextInput,
-    WithRecord, required
+    WithRecord,
+    email, maxLength, maxValue, minLength, minValue, regex, required
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
@@ -33,6 +34,7 @@ const STATE = JSON.parse(_body.dataset.state);
 // Create a mapping of components, so we can reference them by name later.
 const COMPONENTS = {BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
                     BooleanInput, DateInput, NumberInput, ReferenceInput, TextInput};
+const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
@@ -162,7 +164,16 @@ function createInputs(resource, name, perm_type, permissions) {
             const C = COMPONENTS[state["type"]];
             if (C === undefined)
                 throw Error(`Unknown component '${state["type"]}'`);
-            const c = <C source={field} {...state["props"]} />;
+
+            let validators = [];
+            if (perm_type !== "view") {
+                for (let validator of state["validators"]) {
+                    if (validator[0] === "regex")
+                        validator[1] = new RegExp(validator[1]);
+                    validators.push(VALIDATORS[validator[0]](...validator.slice(1)))
+                }
+            }
+            const c = <C source={field} validate={validators} {...state["props"]} />;
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
                 components.push(<WithRecord source={field} render={

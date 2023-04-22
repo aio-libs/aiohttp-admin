@@ -19,6 +19,27 @@ def test_path() -> None:
     assert str(admin.router["index"].url_for()) == "/another/admin"
 
 
+def test_validators() -> None:
+    dummy = DummyResource(
+        "dummy", {"id": {"type": "NumberField", "props": {}}},
+        {"id": {"type": "NumberInput", "props": {}, "validators": [("required",)]}}, "id")
+    app = web.Application()
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ({"model": dummy,
+                                                   "validators": {"id": (("minValue", 3),)}},)}
+    admin = aiohttp_admin.setup(app, schema)
+    validators = admin["state"]["resources"]["dummy"]["inputs"]["id"]["validators"]
+    # TODO(Pydantic2): Should be int 3.
+    assert validators == [("required",), ("minValue", "3")]
+
+    # Invalid validator
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ({"model": dummy,
+                                                   "validators": {"id": (("bad", 3),)}},)}
+    with pytest.raises(ValueError, match="validators must be one of"):
+        aiohttp_admin.setup(app, schema)
+
+
 def test_re() -> None:
     test_re = DummyResource("testre", {"id": {"type": "NumberField", "props": {}},
                                        "value": {"type": "TextField", "props": {}}}, {}, "id")
