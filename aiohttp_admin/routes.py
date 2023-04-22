@@ -38,7 +38,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if not all(v[0] in _VALIDATORS for v in validators):
                 raise ValueError(f"First value in validators must be one of {_VALIDATORS}")
             inputs[name] = inputs[name].copy()
-            inputs[name]["validators"] = inputs[name]["validators"] + list(validators)
+            inputs[name]["validators"] = tuple(inputs[name]["validators"]) + tuple(validators)
 
         state = {"fields": m.fields, "inputs": inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
