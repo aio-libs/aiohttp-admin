@@ -31,7 +31,7 @@ def test_validators() -> None:
     admin = aiohttp_admin.setup(app, schema)
     validators = admin["state"]["resources"]["dummy"]["inputs"]["id"]["validators"]
     # TODO(Pydantic2): Should be int 3 in both lines.
-    assert validators == [("required",), ("minValue", "3")]
+    assert validators == (("required",), ("minValue", "3"))
     assert ("minValue", "3") not in dummy.inputs["id"]["validators"]
 
     # Invalid validator
