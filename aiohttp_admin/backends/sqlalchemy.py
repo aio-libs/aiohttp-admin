@@ -203,31 +203,30 @@ class SAResource(AbstractAdminResource):
             if not isinstance(constr, sa.CheckConstraint):
                 continue
             if isinstance(constr.sqltext, sa.BinaryExpression):
-                if constr.sqltext.left.expression is c:
-                    if not isinstance(constr.sqltext.right, sa.BindParameter):
+                left = constr.sqltext.left
+                right = constr.sqltext.right
+                op = constr.sqltext.operator
+                if left.expression is c:
+                    if not isinstance(right, sa.BindParameter) or right.value is None:
                         continue
-                    if constr.sqltext.right.value is None:
-                        continue
-                    if constr.sqltext.operator is operator.ge:
-                        validators.append(("minValue", constr.sqltext.right.value))
-                    elif constr.sqltext.operator is operator.gt:
-                        validators.append(("minValue", constr.sqltext.right.value + 1))
-                    elif constr.sqltext.operator is operator.le:
-                        validators.append(("maxValue", constr.sqltext.right.value))
-                    elif constr.sqltext.operator is operator.lt:
-                        validators.append(("maxValue", constr.sqltext.right.value - 1))
-                elif isinstance(constr.sqltext.left, sa.Function):
-                    if constr.sqltext.left.name == "char_length":
-                        if next(iter(constr.sqltext.left.clauses)) is not c:
+                    if op is operator.ge:
+                        validators.append(("minValue", right.value))
+                    elif op is operator.gt:
+                        validators.append(("minValue", right.value + 1))
+                    elif op is operator.le:
+                        validators.append(("maxValue", right.value))
+                    elif op is operator.lt:
+                        validators.append(("maxValue", right.value - 1))
+                elif isinstance(left, sa.Function):
+                    if left.name == "char_length":
+                        if next(iter(left.clauses)) is not c:
                             continue
-                        if not isinstance(constr.sqltext.right, sa.BindParameter):
+                        if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
-                        if constr.sqltext.right.value is None:
-                            continue
-                        if constr.sqltext.operator is operator.ge:
-                            validators.append(("minLength", constr.sqltext.right.value))
-                        elif constr.sqltext.operator is operator.gt:
-                            validators.append(("minLength", constr.sqltext.right.value + 1))
+                        if op is operator.ge:
+                            validators.append(("minLength", right.value))
+                        elif op is operator.gt:
+                            validators.append(("minLength", right.value + 1))
             elif isinstance(constr.sqltext, sa.Function):
                 if constr.sqltext.name in ("regexp", "regexp_like"):
                     clauses = tuple(constr.sqltext.clauses)
