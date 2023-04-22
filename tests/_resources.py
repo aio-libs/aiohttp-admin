@@ -2,7 +2,7 @@ from typing import Union
 
 from aiohttp_admin.backends.abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
-    GetManyParams, GetOneParams, UpdateManyParams, UpdateParams, Record)
+    GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
 from aiohttp_admin.types import FieldState, InputState
 
 
@@ -15,7 +15,7 @@ class DummyResource(AbstractAdminResource):
         self.primary_key = primary_key
         super().__init__()
 
-    async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:  # pragma: no cover
+    async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:  # pragma: no cover  # noqa: B950
         raise NotImplementedError()
 
     async def get_one(self, params: GetOneParams) -> Record:  # pragma: no cover
@@ -27,7 +27,7 @@ class DummyResource(AbstractAdminResource):
     async def update(self, params: UpdateParams) -> Record:  # pragma: no cover
         raise NotImplementedError()
 
-    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:  # pragma: no cover
+    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:  # pragma: no cover  # noqa: B950
         raise NotImplementedError()
 
     async def create(self, params: CreateParams) -> Record:  # pragma: no cover
@@ -36,5 +36,5 @@ class DummyResource(AbstractAdminResource):
     async def delete(self, params: DeleteParams) -> Record:  # pragma: no cover
         raise NotImplementedError()
 
-    async def delete_many(self, params: DeleteManyParams) -> list[Union[int, str]]:  # pragma: no cover
+    async def delete_many(self, params: DeleteManyParams) -> list[Union[int, str]]:  # pragma: no cover  # noqa: B950
         raise NotImplementedError()
