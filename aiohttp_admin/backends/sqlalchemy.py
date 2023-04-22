@@ -191,7 +191,9 @@ class SAResource(AbstractAdminResource):
             return ids
         raise web.HTTPNotFound()
 
-    def _get_validators(self, table: sa.Table, c: sa.Column[object]) -> list[tuple[Union[str, int], ...]]:
+    def _get_validators(
+        self, table: sa.Table, c: sa.Column[object]
+    ) -> list[tuple[Union[str, int], ...]]:
         validators: list[tuple[Union[str, int], ...]] = []
         if c.default is None and c.server_default is None and not c.nullable:
             validators.append(("required",))
