@@ -22,7 +22,8 @@ def test_path() -> None:
 def test_validators() -> None:
     dummy = DummyResource(
         "dummy", {"id": {"type": "NumberField", "props": {}}},
-        {"id": {"type": "NumberInput", "props": {}, "validators": [("required",)]}}, "id")
+        {"id": {"type": "NumberInput", "props": {}, "show_create": True,
+         "validators": (("required",),)}}, "id")
     app = web.Application()
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": dummy,
@@ -34,7 +35,7 @@ def test_validators() -> None:
     assert ("minValue", "3") not in dummy.inputs["id"]["validators"]
 
     # Invalid validator
-    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+    schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": dummy,
                                                    "validators": {"id": (("bad", 3),)}},)}
     with pytest.raises(ValueError, match="validators must be one of"):
@@ -79,8 +80,9 @@ def test_display() -> None:
     model = DummyResource(
         "test",
         {"id": {"type": "TextField", "props": {}}, "foo": {"type": "TextField", "props": {}}},
-        {"id": {"type": "TextInput", "props": {}, "show_create": False},
-         "foo": {"type": "TextInput", "props": {}, "show_create": True}},
+        {"id": {"type": "TextInput", "props": {}, "show_create": False,
+         "validators": (("required",),)},
+         "foo": {"type": "TextInput", "props": {}, "show_create": True, "validators": ()}},
         "id")
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": model, "display": ("foo",)},)}
