@@ -54,14 +54,21 @@ def test_re() -> None:
 
 def test_display() -> None:
     app = web.Application()
-    model = DummyResource("test", {"id": {"type": "TextField", "props": {}},
-                                   "foo": {"type": "TextField", "props": {}}}, {}, "id")
+    model = DummyResource(
+        "test",
+        {"id": {"type": "TextField", "props": {}}, "foo": {"type": "TextField", "props": {}}},
+        {"id": {"type": "TextInput", "props": {}, "show_create": False},
+         "foo": {"type": "TextInput", "props": {}, "show_create": True}},
+        "id")
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": model, "display": ("foo",)},)}
 
     admin = aiohttp_admin.setup(app, schema)
 
-    assert admin["state"]["resources"]["test"]["list_omit"] == ("id",)
+    test_state = admin["state"]["resources"]["test"]
+    assert test_state["list_omit"] == ("id",)
+    assert test_state["inputs"]["id"]["props"] == {}
+    assert test_state["inputs"]["foo"]["props"] == {"alwaysOn": "alwaysOn"}
 
 
 def test_display_invalid() -> None:

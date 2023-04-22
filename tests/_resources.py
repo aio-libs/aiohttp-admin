@@ -15,26 +15,26 @@ class DummyResource(AbstractAdminResource):
         self.primary_key = primary_key
         super().__init__()
 
-    async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:
-        return ([], 0)
+    async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def get_one(self, params: GetOneParams) -> Record:
-        return {}
+    async def get_one(self, params: GetOneParams) -> Record:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def get_many(self, params: GetManyParams) -> list[Record]:
-        return []
+    async def get_many(self, params: GetManyParams) -> list[Record]:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def update(self, params: UpdateParams) -> Record:
-        return {}
+    async def update(self, params: UpdateParams) -> Record:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:
-        return []
+    async def update_many(self, params: UpdateManyParams) -> list[Union[int, str]]:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def create(self, params: CreateParams) -> Record:
-        return {}
+    async def create(self, params: CreateParams) -> Record:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def delete(self, params: DeleteParams) -> Record:
-        return {}
+    async def delete(self, params: DeleteParams) -> Record:  # pragma: no cover
+        raise NotImplementedError()
 
-    async def delete_many(self, params: DeleteManyParams) -> list[Union[int, str]]:
-        return []
+    async def delete_many(self, params: DeleteManyParams) -> list[Union[int, str]]:  # pragma: no cover
+        raise NotImplementedError()
