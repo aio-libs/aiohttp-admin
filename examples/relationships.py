@@ -23,8 +23,8 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        sess.add(Author())
-        author1 = Author()
+        sess.add(Author(name="John Doe"))
+        author1 = Author(name="Jane Smith")
         sess.add(author1)
     async with session.begin() as sess:
         sess.add(Book(author_id=author1.id, title="Book 1"))
@@ -40,7 +40,7 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Author)},
+            {"model": SAResource(engine, Author), "repr": "name"},
             {"model": SAResource(engine, Book)}
         )
     }

@@ -1,7 +1,7 @@
 """Example to demonstrate usage of permissions.
 
 When running this file, admin will be accessible at /admin.
-Check below for valid usernames (and their respective permissions),
+Check near the bottom of the file for valid usernames (and their respective permissions),
 login will work with any password.
 """
 
@@ -47,37 +47,6 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        # Users with various permissions.
-        sess.add(User(username="admin", permissions=json.dumps(tuple(Permissions))))
-        sess.add(User(username="view", permissions=json.dumps((Permissions.view,))))
-        sess.add(User(username="add", permissions=json.dumps(
-            (Permissions.view, Permissions.add,))))
-        sess.add(User(username="edit", permissions=json.dumps(
-            (Permissions.view, Permissions.edit))))
-        sess.add(User(username="delete", permissions=json.dumps(
-            (Permissions.view, Permissions.delete))))
-        sess.add(User(username="simple", permissions=json.dumps(("admin.simple.*",))))
-        sess.add(User(username="mixed", permissions=json.dumps(
-            ("admin.simple.view", "admin.simple.edit", "admin.parent.view"))))
-        sess.add(User(username="negated", permissions=json.dumps(
-            ("admin.*", "~admin.parent.*", "~admin.simple.edit"))))
-        sess.add(User(username="field", permissions=json.dumps(
-            ("admin.*", "~admin.simple.optional_num.*"))))
-        sess.add(User(username="field_edit", permissions=json.dumps(
-            ("admin.*", "~admin.simple.optional_num.edit"))))
-        sess.add(User(username="filter", permissions=json.dumps(
-            ("admin.*", "admin.simple.*|num=5"))))
-        sess.add(User(username="filter_edit", permissions=json.dumps(
-            ("admin.*", "admin.simple.edit|num=5"))))
-        sess.add(User(username="filter_add", permissions=json.dumps(
-            ("admin.*", "admin.simple.add|num=5"))))
-        sess.add(User(username="filter_delete", permissions=json.dumps(
-            ("admin.*", "admin.simple.delete|num=5"))))
-        sess.add(User(username="filter_field", permissions=json.dumps(
-            ("admin.*", "admin.simple.optional_num.*|num=5"))))
-        sess.add(User(username="filter_field_edit", permissions=json.dumps(
-            ("admin.*", "admin.simple.optional_num.edit|num=5"))))
-    async with session.begin() as sess:
         sess.add(Simple(num=5, value="first"))
         p = Simple(num=82, optional_num=12, value="with child")
         sess.add(p)
@@ -104,7 +73,35 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, SimpleParent)}
         )
     }
-    aiohttp_admin.setup(app, schema)
+    admin = aiohttp_admin.setup(app, schema)
+
+    # Create users with various permissions.
+    async with session.begin() as sess:
+        sess.add(User(username="admin", permissions=json.dumps((Permissions.all,))))
+        sess.add(User(username="view", permissions=json.dumps((Permissions.view,))))
+        sess.add(User(username="add", permissions=json.dumps(
+            (Permissions.view, Permissions.add,))))
+        sess.add(User(username="edit", permissions=json.dumps(
+            (Permissions.view, Permissions.edit))))
+        sess.add(User(username="delete", permissions=json.dumps(
+            (Permissions.view, Permissions.delete))))
+        users = {
+            "simple": ("admin.simple.*",),
+            "mixed": ("admin.simple.view", "admin.simple.edit", "admin.parent.view"),
+            "negated": ("admin.*", "~admin.parent.*", "~admin.simple.edit"),
+            "field": ("admin.*", "~admin.simple.optional_num.*"),
+            "field_edit": ("admin.*", "~admin.simple.optional_num.edit"),
+            "filter": ("admin.*", "admin.simple.*|num=5"),
+            "filter_edit": ("admin.*", "admin.simple.edit|num=5"),
+            "filter_add": ("admin.*", "admin.simple.add|num=5"),
+            "filter_delete": ("admin.*", "admin.simple.delete|num=5"),
+            "filter_field": ("admin.*", "admin.simple.optional_num.*|num=5"),
+            "filter_field_edit": ("admin.*", "admin.simple.optional_num.edit|num=5")
+        }
+        for name, permissions in users.items():
+            if any(admin["permission_re"].fullmatch(p) is None for p in permissions):
+                raise ValueError("Not a valid permission.")
+            sess.add(User(username=name, permissions=json.dumps(permissions)))
 
     return app
 
