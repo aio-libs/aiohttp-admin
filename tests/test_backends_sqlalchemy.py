@@ -98,7 +98,7 @@ def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> 
 
 
 def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
-    class TestCC(base):
+    class TestCC(base):  # type: ignore[misc,valid-type]
         __tablename__  = "test"
         pk: Mapped[int] = mapped_column(primary_key=True)
         default: Mapped[int] = mapped_column(default=5)
