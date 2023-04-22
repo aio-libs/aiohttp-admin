@@ -35,7 +35,9 @@ FIELD_TYPES = {
 }
 
 
-def handle_errors(f: Callable[_P, Coroutine[None, None, _T]]) -> Callable[_P, Coroutine[None, None, _T]]:
+def handle_errors(
+    f: Callable[_P, Coroutine[None, None, _T]]
+) -> Callable[_P, Coroutine[None, None, _T]]:
     async def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
         try:
             return await f(*args, **kwargs)
