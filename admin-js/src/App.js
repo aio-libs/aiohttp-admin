@@ -129,7 +129,7 @@ function createFields(resource, name, permissions) {
             c = <C source={field} {...state["props"]} />;
         }
         // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord label={state["props"]["label"] || field} render={
+        components.push(<WithRecord source={field} label={state["props"]["label"] || field} render={
             (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
         } />);
     }
@@ -165,7 +165,7 @@ function createInputs(resource, name, perm_type, permissions) {
             const c = <C source={field} {...state["props"]} />;
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
-                components.push(<WithRecord render={
+                components.push(<WithRecord source={field} render={
                     (record) => hasPermission(`${name}.${field}.${perm_type}`, permissions, record) && c
                 } />);
             else
@@ -208,12 +208,11 @@ const AiohttpList = (resource, name, permissions) => {
         </>
     );
 
-    console.log(resource["list_omit"]);
     return (
         <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}>
             <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
                 {createFields(resource, name, permissions)}
-                <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
+                <WithRecord label="[Edit]" render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
             </DatagridConfigurable>
         </List>
     );

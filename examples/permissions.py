@@ -99,8 +99,8 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Simple),
-             "bulk_update": {"Set to 7": {"optional_num": 7}}, "list_omit": ("value", "num")},
+            {"model": SAResource(engine, Simple), "display": ("id", "num", "optional_num"),
+             "bulk_update": {"Set to 7": {"optional_num": 7}}},
             {"model": SAResource(engine, SimpleParent)}
         )
     }

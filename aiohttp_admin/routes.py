@@ -18,7 +18,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         admin.router.add_routes(m.routes)
 
         try:
-            omit_fields = r["list_omit"]
+            omit_fields = m.fields.keys() - r["display"]
         except KeyError:
             omit_fields = ()
         else:
@@ -31,7 +31,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
 
-        state = {"fields": m.fields, "inputs": m.inputs, "list_omit": omit_fields,
+        state = {"fields": m.fields, "inputs": m.inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
                  "bulk_update": r.get("bulk_update", {})}
         admin["state"]["resources"][m.name] = state
