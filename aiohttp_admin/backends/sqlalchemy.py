@@ -209,13 +209,13 @@ class SAResource(AbstractAdminResource):
                 if left.expression is c:
                     if not isinstance(right, sa.BindParameter) or right.value is None:
                         continue
-                    if op is operator.ge:
+                    if op is operator.ge:  # type: ignore[comparison-overlap]
                         validators.append(("minValue", right.value))
-                    elif op is operator.gt:
+                    elif op is operator.gt:  # type: ignore[comparison-overlap]
                         validators.append(("minValue", right.value + 1))
-                    elif op is operator.le:
+                    elif op is operator.le:  # type: ignore[comparison-overlap]
                         validators.append(("maxValue", right.value))
-                    elif op is operator.lt:
+                    elif op is operator.lt:  # type: ignore[comparison-overlap]
                         validators.append(("maxValue", right.value - 1))
                 elif isinstance(left, sa.Function):
                     if left.name == "char_length":
@@ -223,9 +223,9 @@ class SAResource(AbstractAdminResource):
                             continue
                         if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
-                        if op is operator.ge:
+                        if op is operator.ge:  # type: ignore[comparison-overlap]
                             validators.append(("minLength", right.value))
-                        elif op is operator.gt:
+                        elif op is operator.gt:  # type: ignore[comparison-overlap]
                             validators.append(("minLength", right.value + 1))
             elif isinstance(constr.sqltext, sa.Function):
                 if constr.sqltext.name in ("regexp", "regexp_like"):
