@@ -36,8 +36,7 @@ def test_validators() -> None:
 
     # Invalid validator
     schema = {"security": {"check_credentials": check_credentials},
-                                    "resources": ({"model": dummy,
-                                                   "validators": {"id": (("bad", 3),)}},)}
+              "resources": ({"model": dummy, "validators": {"id": (("bad", 3),)}},)}
     with pytest.raises(ValueError, match="validators must be one of"):
         aiohttp_admin.setup(app, schema)
 
