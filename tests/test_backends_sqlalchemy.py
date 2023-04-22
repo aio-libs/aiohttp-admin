@@ -99,7 +99,7 @@ def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> 
 
 def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestCC(base):  # type: ignore[misc,valid-type]
-        __tablename__  = "test"
+        __tablename__ = "test"
         pk: Mapped[int] = mapped_column(primary_key=True)
         default: Mapped[int] = mapped_column(default=5)
         server_default: Mapped[int] = mapped_column(server_default="4")
@@ -117,7 +117,6 @@ def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine
                           sa.CheckConstraint(lt < 3), sa.CheckConstraint(lte <= 3),
                           sa.CheckConstraint(sa.func.char_length(min_length) >= 5),
                           sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")))
-
 
     r = SAResource(mock_engine, TestCC)
 
