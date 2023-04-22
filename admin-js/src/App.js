@@ -1,5 +1,7 @@
 import {
-    Admin, Create, Datagrid, Edit, EditButton, List, HttpError, Resource, SimpleForm,
+    Admin, Create, Datagrid, DatagridConfigurable, Edit, EditButton, List, HttpError, Resource, SimpleForm,
+    SelectColumnsButton, CreateButton, FilterButton, ExportButton, TopToolbar,
+    AppBar, InspectorButton, Layout, TitlePortal,
     BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
     AutocompleteInput,
@@ -106,11 +108,10 @@ const authProvider = {
 };
 
 
-function createFields(resource, name, permissions, display_only=false) {
+function createFields(resource, name, permissions) {
     let components = [];
     for (const [field, state] of Object.entries(resource["fields"])) {
-        if ((display_only && !resource["display"].includes(field))
-            || !hasPermission(`${name}.${field}.view`, permissions))
+        if (!hasPermission(`${name}.${field}.view`, permissions))
             continue;
 
         const C = COMPONENTS[state["type"]];
@@ -128,7 +129,7 @@ function createFields(resource, name, permissions, display_only=false) {
             c = <C source={field} {...state["props"]} />;
         }
         // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord label={state["props"]["label"] || field} render={
+        components.push(<WithRecord source={field} label={state["props"]["label"] || field} render={
             (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
         } />);
     }
@@ -164,7 +165,7 @@ function createInputs(resource, name, perm_type, permissions) {
             const c = <C source={field} {...state["props"]} />;
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
-                components.push(<WithRecord render={
+                components.push(<WithRecord source={field} render={
                     (record) => hasPermission(`${name}.${field}.${perm_type}`, permissions, record) && c
                 } />);
             else
@@ -191,6 +192,14 @@ function createBulkUpdates(resource, name, permissions) {
 }
 
 const AiohttpList = (resource, name, permissions) => {
+    const ListActions = () => (
+        <TopToolbar>
+            <SelectColumnsButton />
+            <FilterButton />
+            {hasPermission(`${name}.add`, permissions) && <CreateButton />}
+            <ExportButton />
+        </TopToolbar>
+    );
     const BulkActionButtons = () => (
         <>
             {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions)}
@@ -200,11 +209,11 @@ const AiohttpList = (resource, name, permissions) => {
     );
 
     return (
-        <List filters={createInputs(resource, name, "view", permissions)}>
-            <Datagrid rowClick="show" bulkActionButtons={<BulkActionButtons />}>
-                {createFields(resource, name, permissions, true)}
-                <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
-            </Datagrid>
+        <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}>
+            <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                {createFields(resource, name, permissions)}
+                <WithRecord label="[Edit]" render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
+            </DatagridConfigurable>
         </List>
     );
 }
@@ -303,8 +312,16 @@ function createResources(resources, permissions) {
     return components;
 }
 
+const AiohttpAppBar = () => (
+    <AppBar>
+        <TitlePortal />
+        <InspectorButton />
+    </AppBar>
+);
+
 const App = () => (
-    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]} disableTelemetry requireAuth>
+    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+           layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
         {permissions => createResources(STATE["resources"], permissions)}
     </Admin>
 );

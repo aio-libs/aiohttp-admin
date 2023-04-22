@@ -18,20 +18,20 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         admin.router.add_routes(m.routes)
 
         try:
-            display_fields = r["display"]
+            omit_fields = m.fields.keys() - r["display"]
         except KeyError:
-            display_fields = list(m.fields.keys())
+            omit_fields = ()
         else:
-            if not all(f in m.fields for f in display_fields):
-                raise ValueError(f"Display includes non-existent field {display_fields}")
+            if not all(f in m.fields for f in r["display"]):
+                raise ValueError(f"Display includes non-existent field {r['display']}")
 
         repr_field = r.get("repr", m.primary_key)
 
         for k, v in m.inputs.items():
-            if k in display_fields:
+            if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
 
-        state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields,
+        state = {"fields": m.fields, "inputs": m.inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
                  "bulk_update": r.get("bulk_update", {})}
         admin["state"]["resources"][m.name] = state

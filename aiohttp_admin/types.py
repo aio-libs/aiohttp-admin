@@ -53,7 +53,7 @@ class _ViewSchema(TypedDict, total=False):
 
 
 class _Resource(TypedDict, total=False):
-    # List of field names that should be shown in the list view.
+    # List of field names that should be shown in the list view by default.
     display: Sequence[str]
     # Display label in admin.
     label: str

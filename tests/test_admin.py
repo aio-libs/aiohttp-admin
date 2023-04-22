@@ -1,10 +1,9 @@
+import pytest
 from aiohttp import web
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from _auth import check_credentials
-from aiohttp_admin.backends.sqlalchemy import SAResource
+from _resources import DummyResource
 
 
 def test_path() -> None:
@@ -20,15 +19,13 @@ def test_path() -> None:
     assert str(admin.router["index"].url_for()) == "/another/admin"
 
 
-def test_re(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
-    class TestRE(base):  # type: ignore[misc,valid-type]
-        __tablename__ = "testre"
-        id: Mapped[int] = mapped_column(primary_key=True)
-        value: Mapped[str]
+def test_re() -> None:
+    test_re = DummyResource("testre", {"id": {"type": "NumberField", "props": {}},
+                                       "value": {"type": "TextField", "props": {}}}, {}, "id")
 
     app = web.Application()
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
-                                    "resources": ({"model": SAResource(mock_engine, TestRE)},)}
+                                    "resources": ({"model": test_re},)}
     admin = aiohttp_admin.setup(app, schema)
     r = admin["permission_re"]
 
@@ -53,3 +50,33 @@ def test_re(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.fullmatch("admin.testre.value.*|value=unquoted") is None
     assert r.fullmatch("~admin.testre.edit|id=5") is None
     assert r.fullmatch('~admin.testre.value.delete|value="1"') is None
+
+
+def test_display() -> None:
+    app = web.Application()
+    model = DummyResource(
+        "test",
+        {"id": {"type": "TextField", "props": {}}, "foo": {"type": "TextField", "props": {}}},
+        {"id": {"type": "TextInput", "props": {}, "show_create": False},
+         "foo": {"type": "TextInput", "props": {}, "show_create": True}},
+        "id")
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ({"model": model, "display": ("foo",)},)}
+
+    admin = aiohttp_admin.setup(app, schema)
+
+    test_state = admin["state"]["resources"]["test"]
+    assert test_state["list_omit"] == ("id",)
+    assert test_state["inputs"]["id"]["props"] == {}
+    assert test_state["inputs"]["foo"]["props"] == {"alwaysOn": "alwaysOn"}
+
+
+def test_display_invalid() -> None:
+    app = web.Application()
+    model = DummyResource("test", {"id": {"type": "TextField", "props": {}},
+                                   "foo": {"type": "TextField", "props": {}}}, {}, "id")
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ({"model": model, "display": ("bar",)},)}
+
+    with pytest.raises(ValueError, match=r"Display includes non-existent field \('bar',\)"):
+        aiohttp_admin.setup(app, schema)
