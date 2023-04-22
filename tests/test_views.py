@@ -28,7 +28,7 @@ async def test_admin_view(admin_client: TestClient) -> None:
     state = json.loads(m.group(1))
 
     r = state["resources"]["dummy"]
-    assert r["display"] == ["id"]
+    assert r["list_omit"] == []
     assert r["fields"] == {"id": {"type": "NumberField", "props": {"alwaysOn": "alwaysOn"}}}
     assert r["inputs"] == {"id": {"type": "NumberInput", "props": {"alwaysOn": "alwaysOn"},
                                   "show_create": False}}
