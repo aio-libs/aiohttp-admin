@@ -72,4 +72,4 @@ def test_display_invalid() -> None:
                                     "resources": ({"model": model, "display": ("bar",)},)}
 
     with pytest.raises(ValueError, match=r"Display includes non-existent field \('bar',\)"):
-        admin = aiohttp_admin.setup(app, schema)
+        aiohttp_admin.setup(app, schema)
