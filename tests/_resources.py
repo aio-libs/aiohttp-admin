@@ -8,11 +8,11 @@ from aiohttp_admin.types import FieldState, InputState
 
 class DummyResource(AbstractAdminResource):
     def __init__(self, name: str, fields: dict[str, FieldState],
-                 inputs: dict[str, InputState], repr_field: str):
+                 inputs: dict[str, InputState], primary_key: str):
         self.name = name
         self.fields = fields
         self.inputs = inputs
-        self.repr_field = repr_field
+        self.primary_key = primary_key
         super().__init__()
 
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:

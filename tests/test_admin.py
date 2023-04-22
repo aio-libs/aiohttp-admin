@@ -1,12 +1,9 @@
 import pytest
 from aiohttp import web
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from _auth import check_credentials
 from _resources import DummyResource
-from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
 def test_path() -> None:
@@ -22,15 +19,13 @@ def test_path() -> None:
     assert str(admin.router["index"].url_for()) == "/another/admin"
 
 
-def test_re(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
-    class TestRE(base):  # type: ignore[misc,valid-type]
-        __tablename__ = "testre"
-        id: Mapped[int] = mapped_column(primary_key=True)
-        value: Mapped[str]
+def test_re() -> None:
+    test_re = DummyResource("testre", {"id": {"type": "NumberField", "props": {}},
+                                       "value": {"type": "TextField", "props": {}}}, {}, "id")
 
     app = web.Application()
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
-                                    "resources": ({"model": SAResource(mock_engine, TestRE)},)}
+                                    "resources": ({"model": test_re},)}
     admin = aiohttp_admin.setup(app, schema)
     r = admin["permission_re"]
 
