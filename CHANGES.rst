@@ -7,6 +7,8 @@ CHANGES
 0.1.0a1 (2023-04-23)
 ====================
 
+- Removed ``auth_policy`` parameter from ``setup()``, this is no longer needed.
+- Added a default ``identity_callback`` for simple applications, so it is no longer a required schema item.
 - Added ``Permissions.all`` enum value (which should replace ``tuple(Permissions)``).
 - Added validators to inputs (e.g. required, minValue etc. See examples/validators.py).
 - Added extensive permission controls (see examples/permissions.py).
@@ -20,6 +22,7 @@ CHANGES
 - Added default favicon.
 - Included JS map file.
 - Fixed autocomplete behaviour in reference inputs (e.g. for foreign keys).
+- Fixed handling of date/datetime inputs.
 
 0.1.0a0 (2023-02-27)
 ====================
