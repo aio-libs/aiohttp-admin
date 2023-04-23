@@ -1,4 +1,5 @@
 import json
+from datetime import date, datetime
 from typing import Awaitable, Callable, Type, Union
 
 import pytest
@@ -239,3 +240,48 @@ async def test_nonid_pk_api(
     async with admin_client.put(url, params=p1, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 5, "num": 5, "other": "that"}}
+
+
+async def test_datetime(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    login: _Login
+) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        date: Mapped[date]
+        time: Mapped[datetime]
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    db = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+    async with db.begin() as sess:
+        sess.add(TestModel(date=date(2023, 4, 23), time=datetime(2023, 1, 2, 3, 4)))
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, TestModel)},)
+    }
+    app["admin"] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    url = app["admin"].router["test_get_one"].url_for()
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "date": "2023-04-23",
+                                              "time": "2023-01-02 03:04:00"}}
+
+    url = app["admin"].router["test_create"].url_for()
+    p = {"data": json.dumps({"date": "2024-05-09", "time": "2020-11-12 03:04:05"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "date": "2024-05-09",
+                                              "time": "2020-11-12 03:04:05"}}

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import operator
 import sys
+from types import MappingProxyType
 from typing import Any, Callable, Coroutine, Iterator, Type, TypeVar, Union
 
 import sqlalchemy as sa
@@ -24,15 +25,15 @@ _T = TypeVar("_T")
 
 logger = logging.getLogger(__name__)
 
-FIELD_TYPES = {
+FIELD_TYPES = MappingProxyType({
     sa.Integer: ("NumberField", "NumberInput"),
     sa.Text: ("TextField", "TextInput"),
     sa.Float: ("NumberField", "NumberInput"),
     sa.Date: ("DateField", "DateInput"),
-    sa.DateTime: ("DateField", "DateInput"),
+    sa.DateTime: ("DateField", "DateTimeInput"),
     sa.Boolean: ("BooleanField", "BooleanInput"),
     sa.String: ("TextField", "TextInput")
-}
+})
 
 
 def handle_errors(
