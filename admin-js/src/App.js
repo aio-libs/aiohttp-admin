@@ -6,7 +6,7 @@ import {
     SimpleShowLayout, Show,
     AutocompleteInput,
     BooleanField, BooleanInput,
-    DateField, DateInput,
+    DateField, DateInput, DateTimeInput,
     NumberField, NumberInput,
     ReferenceField, ReferenceInput as _ReferenceInput,
     ReferenceManyField,
@@ -33,7 +33,7 @@ const _body = document.querySelector("body");
 const STATE = JSON.parse(_body.dataset.state);
 // Create a mapping of components, so we can reference them by name later.
 const COMPONENTS = {BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
-                    BooleanInput, DateInput, NumberInput, ReferenceInput, TextInput};
+                    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, TextInput};
 const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 
 /** Make an authenticated API request and return the response object. */
