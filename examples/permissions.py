@@ -16,7 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 import aiohttp_admin
 from _models import Base, Simple, SimpleParent
 from aiohttp_admin import Permissions, UserDetails
-from aiohttp_admin.backends.sqlalchemy import SAResource
+from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for as p
 
 
 class User(Base):
@@ -48,14 +48,14 @@ async def create_app() -> web.Application:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
         sess.add(Simple(num=5, value="first"))
-        p = Simple(num=82, optional_num=12, value="with child")
-        sess.add(p)
+        p_simple = Simple(num=82, optional_num=12, value="with child")
+        sess.add(p_simple)
         sess.add(Simple(num=5, value="second"))
         sess.add(Simple(num=5, value="3"))
         sess.add(Simple(num=5, optional_num=42, value="4"))
         sess.add(Simple(num=5, value="5"))
     async with session.begin() as sess:
-        sess.add(SimpleParent(id=p.id, date=datetime(2023, 2, 13, 19, 4)))
+        sess.add(SimpleParent(id=p_simple.id, date=datetime(2023, 2, 13, 19, 4)))
 
     app = web.Application()
     app["db"] = session
@@ -86,17 +86,17 @@ async def create_app() -> web.Application:
         sess.add(User(username="delete", permissions=json.dumps(
             (Permissions.view, Permissions.delete))))
         users = {
-            "simple": ("admin.simple.*",),
-            "mixed": ("admin.simple.view", "admin.simple.edit", "admin.parent.view"),
-            "negated": ("admin.*", "~admin.parent.*", "~admin.simple.edit"),
-            "field": ("admin.*", "~admin.simple.optional_num.*"),
-            "field_edit": ("admin.*", "~admin.simple.optional_num.edit"),
-            "filter": ("admin.*", "admin.simple.*|num=5"),
-            "filter_edit": ("admin.*", "admin.simple.edit|num=5"),
-            "filter_add": ("admin.*", "admin.simple.add|num=5"),
-            "filter_delete": ("admin.*", "admin.simple.delete|num=5"),
-            "filter_field": ("admin.*", "admin.simple.optional_num.*|num=5"),
-            "filter_field_edit": ("admin.*", "admin.simple.optional_num.edit|num=5")
+            "simple": (p(Simple),),
+            "mixed": (p(Simple, "view"), p(Simple, "edit"), p(SimpleParent, "view")),
+            "negated": (Permissions.all, p(SimpleParent, negated=True), p(Simple, "edit", negated=True)),
+            "field": (Permissions.all, p(Simple.optional_num, negated=True)),
+            "field_edit": (Permissions.all, p(Simple.optional_num, "edit", negated=True)),
+            "filter": (Permissions.all, p(Simple, filters={Simple.num: 5})),
+            "filter_edit": (Permissions.all, p(Simple, "edit", filters={Simple.num: 5})),
+            "filter_add": (Permissions.all, p(Simple, "add", filters={Simple.num: 5})),
+            "filter_delete": (Permissions.all, p(Simple, "delete", filters={Simple.num: 5})),
+            "filter_field": (Permissions.all, p(Simple.optional_num, filters={Simple.num: 5})),
+            "filter_field_edit": (Permissions.all, p(Simple.optional_num, "edit", filters={Simple.num: 5}))
         }
         for name, permissions in users.items():
             if any(admin["permission_re"].fullmatch(p) is None for p in permissions):

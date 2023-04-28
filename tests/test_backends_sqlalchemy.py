@@ -11,7 +11,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 import aiohttp_admin
 from _auth import check_credentials
-from aiohttp_admin.backends.sqlalchemy import SAResource
+from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 
@@ -285,3 +285,35 @@ async def test_datetime(
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 2, "date": "2024-05-09",
                                               "time": "2020-11-12 03:04:05"}}
+
+
+def test_permission_for(base: type[DeclarativeBase]) -> None:
+    class M(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        cat: Mapped[int]
+        val: Mapped[str]
+
+    t = M.__table__
+
+    assert permission_for(M) == "admin.test.*"
+    assert permission_for(M, "view") == "admin.test.view"
+    assert permission_for(M, "add", negated=True) == "~admin.test.add"
+    assert permission_for(M.cat, "edit") == "admin.test.cat.edit"
+    assert permission_for(t.c["val"], "*", negated=True) == "~admin.test.val.*"
+    assert permission_for(M, filters={M.cat: 5, M.val: "Foo"}) == 'admin.test.*|cat=5|val="Foo"'
+    assert permission_for(t, "delete", filters={t.c["val"]: "bar"}) == 'admin.test.delete|val="bar"'
+    assert permission_for(M.val, filters={M.id: (3, 4)}) == "admin.test.val.*|id=3|id=4"
+    assert permission_for(M.cat, "edit", filters={M.cat: [1, 5]}) == "admin.test.cat.edit|cat=1|cat=5"
+
+    with pytest.raises(ValueError, match="Can't use filters on negated"):
+        permission_for(M, filters={M.id: 1}, negated=True)
+    with pytest.raises(ValueError, match="foo"):
+        permission_for(M, "foo")  # type: ignore[arg-type]
+
+    class Wrong(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "wrong"
+        id: Mapped[int] = mapped_column(primary_key=True)
+
+    with pytest.raises(ValueError, match="not an attribute"):
+        permission_for(M, filters={Wrong.id: 1})
