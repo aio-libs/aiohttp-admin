@@ -1,7 +1,7 @@
 import json
-from collections.abc import Collection
+from collections.abc import Collection, Mapping, Sequence
 from enum import Enum
-from typing import Mapping, Optional, Sequence, Union
+from typing import Optional, Union
 
 from aiohttp import web
 from aiohttp_security import AbstractAuthorizationPolicy, SessionIdentityPolicy

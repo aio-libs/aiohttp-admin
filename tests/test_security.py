@@ -1,5 +1,6 @@
 import json
-from typing import Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
+from typing import Optional
 from unittest import mock
 
 from aiohttp.test_utils import TestClient

@@ -1,4 +1,5 @@
-from typing import Awaitable, Callable, Optional, Type
+from collections.abc import Awaitable, Callable
+from typing import Optional
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
@@ -15,7 +16,7 @@ _IdentityCallback = Callable[[str], Awaitable[aiohttp_admin.UserDetails]]
 
 
 @pytest.fixture
-def base() -> Type[DeclarativeBase]:
+def base() -> type[DeclarativeBase]:
     class Base(DeclarativeBase):
         """Base model."""
 

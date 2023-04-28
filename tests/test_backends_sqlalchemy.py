@@ -1,6 +1,7 @@
 import json
+from collections.abc import Awaitable, Callable
 from datetime import date, datetime
-from typing import Awaitable, Callable, Type, Union
+from typing import Union
 
 import pytest
 import sqlalchemy as sa
@@ -16,7 +17,7 @@ from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 
 
-def test_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "dummy"
         id: Mapped[int] = mapped_column(primary_key=True)
@@ -59,7 +60,7 @@ def test_table(mock_engine: AsyncEngine) -> None:
     }
 
 
-def test_fk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "dummy"
         id: Mapped[int] = mapped_column(primary_key=True)
@@ -78,7 +79,7 @@ def test_fk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
         "validators": [("required",)]}}
 
 
-def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestMany(base):  # type: ignore[misc,valid-type]
         __tablename__ = "many"
         id: Mapped[int] = mapped_column(primary_key=True)
@@ -98,7 +99,7 @@ def test_relationship(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert "ones" not in r.inputs
 
 
-def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestCC(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test"
         pk: Mapped[int] = mapped_column(primary_key=True)
@@ -139,7 +140,7 @@ def test_check_constraints(base: Type[DeclarativeBase], mock_engine: AsyncEngine
     assert f["regex"]["validators"] == [("required",), ("regex", "abc.*")]
 
 
-async def test_nonid_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test"
         num: Mapped[int] = mapped_column(primary_key=True)
@@ -160,7 +161,7 @@ async def test_nonid_pk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -
     }
 
 
-async def test_id_nonpk(base: Type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+async def test_id_nonpk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class NotPK(base):  # type: ignore[misc,valid-type]
         __tablename__ = "notpk"
         name: Mapped[str] = mapped_column(primary_key=True)

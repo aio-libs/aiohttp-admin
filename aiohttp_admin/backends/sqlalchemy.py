@@ -3,9 +3,9 @@ import json
 import logging
 import operator
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Coroutine, Iterator, Sequence
 from types import MappingProxyType
-from typing import Any, Callable, Coroutine, Iterator, Literal, Optional, TypeVar, Union
+from typing import Any, Literal, Optional, TypeVar, Union
 
 import sqlalchemy as sa
 from aiohttp import web
