@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 import sqlalchemy as sa
 from aiohttp.test_utils import TestClient
