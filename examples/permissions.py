@@ -88,7 +88,8 @@ async def create_app() -> web.Application:
         users = {
             "simple": (p(Simple),),
             "mixed": (p(Simple, "view"), p(Simple, "edit"), p(SimpleParent, "view")),
-            "negated": (Permissions.all, p(SimpleParent, negated=True), p(Simple, "edit", negated=True)),
+            "negated": (Permissions.all, p(SimpleParent, negated=True),
+                        p(Simple, "edit", negated=True)),
             "field": (Permissions.all, p(Simple.optional_num, negated=True)),
             "field_edit": (Permissions.all, p(Simple.optional_num, "edit", negated=True)),
             "filter": (Permissions.all, p(Simple, filters={Simple.num: 5})),
@@ -96,7 +97,8 @@ async def create_app() -> web.Application:
             "filter_add": (Permissions.all, p(Simple, "add", filters={Simple.num: 5})),
             "filter_delete": (Permissions.all, p(Simple, "delete", filters={Simple.num: 5})),
             "filter_field": (Permissions.all, p(Simple.optional_num, filters={Simple.num: 5})),
-            "filter_field_edit": (Permissions.all, p(Simple.optional_num, "edit", filters={Simple.num: 5}))
+            "filter_field_edit": (Permissions.all, p(Simple.optional_num, "edit",
+                                                     filters={Simple.num: 5}))
         }
         for name, permissions in users.items():
             if any(admin["permission_re"].fullmatch(p) is None for p in permissions):
