@@ -1,14 +1,16 @@
 import asyncio
+import json
 import logging
 import operator
 import sys
+from collections.abc import Sequence
 from types import MappingProxyType
-from typing import Any, Callable, Coroutine, Iterator, Type, TypeVar, Union
+from typing import Any, Callable, Coroutine, Iterator, Literal, Optional, TypeVar, Union
 
 import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, QueryableAttribute
 from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import (
@@ -22,6 +24,9 @@ else:
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
+_FValues = Union[bool, int, str]
+_Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
+                Union[_FValues, Sequence[_FValues]]]
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +58,58 @@ def handle_errors(
     return inner
 
 
+def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase],
+                                 sa.Column[object], QueryableAttribute[Any]],
+                   perm_type: Literal["view", "edit", "add", "delete", "*"] = "*",
+                   *, filters: Optional[_Filters] = None, negated: bool = False) -> str:
+    """Returns a permission string for the given sa_obj.
+
+    Args:
+        sa_obj: A SQLAlchemy object to grant permission to (table/model/column/attribute).
+        perm_type: The type of permission to grant acces to.
+        filters: Filters to restrict the permisson to (can't be used with negated).
+                 e.g. {User.type: "admin", User.active: True} only permits access if
+                      `User.type == "admin" and User.active`.
+                      {Post.type: ("news", "sports")} only permits access if
+                      `Post.type in ("news", "sports")`.
+        negated: True if result should restrict access from sa_obj.
+    """
+    if filters and negated:
+        raise ValueError("Can't use filters on negated permissions.")
+    if perm_type not in {"view", "edit", "add", "delete", "*"}:
+        raise ValueError(f"Invalid perm_type: '{perm_type}'")
+
+    field = None
+    if isinstance(sa_obj, sa.Table):
+        table = sa_obj
+    elif isinstance(sa_obj, (sa.Column, QueryableAttribute)):
+        table = sa_obj.table
+        field = sa_obj.name
+    else:
+        if not isinstance(sa_obj.__table__, sa.Table):
+            raise ValueError("Non-table mappings are not supported.")
+        table = sa_obj.__table__
+    p = "{}admin.{}".format("~" if negated else "", table.name)
+
+    if field:
+        p = f"{p}.{field}"
+
+    p = f"{p}.{perm_type}"
+
+    if filters:
+        for col, value in filters.items():
+            if col.table is not table:
+                raise ValueError("Filter key not an attribute/column of sa_obj.")
+            # Sequences should be treated as multiple filter values for that key.
+            if not isinstance(value, Sequence) or isinstance(value, str):
+                value = (value,)
+            for v in value:
+                v = json.dumps(v)
+                p += f"|{col.name}={v}"
+
+    return p
+
+
 def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
                    filters: dict[str, object]) -> Iterator[ExpressionElementRole[Any]]:
     return (columns[k].in_(v) if isinstance(v, list)
@@ -61,7 +118,7 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
 
 
 class SAResource(AbstractAdminResource):
-    def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, Type[DeclarativeBase]]):
+    def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, type[DeclarativeBase]]):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
         else:
