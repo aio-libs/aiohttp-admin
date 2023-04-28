@@ -25,7 +25,8 @@ else:
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
 _FValues = Union[bool, int, str]
-_Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]], Union[_FValues, Sequence[_FValues]]]
+_Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
+                Union[_FValues, Sequence[_FValues]]]
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,8 @@ def handle_errors(
     return inner
 
 
-def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase], sa.Column[object], QueryableAttribute[Any]],
+def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase],
+                                 sa.Column[object], QueryableAttribute[Any]],
                    perm_type: Literal["view", "edit", "add", "delete", "*"] = "*",
                    *, filters: Optional[_Filters] = None, negated: bool = False) -> str:
     """Returns a permission string for the given sa_obj.
