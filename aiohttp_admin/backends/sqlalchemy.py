@@ -63,7 +63,7 @@ def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase], sa.Column[obje
     """Returns a permission string for the given sa_obj.
 
     Args:
-        sa_obj: A SQLAlchemy object to grant permission for (table/model/column/attribute).
+        sa_obj: A SQLAlchemy object to grant permission to (table/model/column/attribute).
         perm_type: The type of permission to grant acces to.
         filters: Filters to restrict the permisson to (can't be used with negated).
                  e.g. {User.type: "admin", User.active: True} only permits access if
@@ -75,7 +75,7 @@ def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase], sa.Column[obje
     if filters and negated:
         raise ValueError("Can't use filters on negated permissions.")
     if perm_type not in {"view", "edit", "add", "delete", "*"}:
-        raise ValueError("Invalid perm_type: '{}'".format(perm_type))
+        raise ValueError(f"Invalid perm_type: '{perm_type}'")
 
     field = None
     if isinstance(sa_obj, sa.Table):
@@ -90,9 +90,9 @@ def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase], sa.Column[obje
     p = "{}admin.{}".format("~" if negated else "", table.name)
 
     if field:
-        p = "{}.{}".format(p, field)
+        p = f"{p}.{field}"
 
-    p = "{}.{}".format(p, perm_type)
+    p = f"{p}.{perm_type}"
 
     if filters:
         for col, value in filters.items():
@@ -102,7 +102,8 @@ def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase], sa.Column[obje
             if not isinstance(value, Sequence) or isinstance(value, str):
                 value = (value,)
             for v in value:
-                p += "|{}={}".format(col.name, json.dumps(v))
+                v = json.dumps(v)
+                p += f"|{col.name}={v}"
 
     return p
 
