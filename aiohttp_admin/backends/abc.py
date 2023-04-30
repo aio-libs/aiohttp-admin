@@ -258,6 +258,8 @@ class AbstractAdminResource(ABC):
 
         # Check original records are allowed by permission filters.
         originals = await self.get_many({"ids": query["ids"]})
+        if not originals:
+            raise web.HTTPNotFound()
         allowed = (permits(request, f"admin.{self.name}.edit", context=(request, r))
                    for r in originals)
         allowed_f = (permits(request, f"admin.{self.name}.{k}.edit", context=(request, r))
