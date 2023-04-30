@@ -16,9 +16,9 @@ import {
     BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
     ReferenceInput as _ReferenceInput,
     // Filters
-    email, maxLength, maxValue, minLength, minValue, regex, required
+    email, maxLength, maxValue, minLength, minValue, regex, required,
     // Misc
-    AutocompleteInput, HttpError, WithRecord,
+    AutocompleteInput, HttpError, WithRecord
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
