@@ -212,10 +212,7 @@ class SAResource(AbstractAdminResource):
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
             result = await conn.execute(stmt)
-            records = [r._asdict() for r in result]
-        if records:
-            return records
-        raise web.HTTPNotFound()
+            return [r._asdict() for r in result]
 
     @handle_errors
     async def create(self, params: CreateParams) -> Record:
@@ -241,10 +238,7 @@ class SAResource(AbstractAdminResource):
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
             stmt = stmt.values(params["data"]).returning(self._table.c[self.primary_key])
-            r = await conn.scalars(stmt)
-            # The security check has already called get_many(), so we can be sure
-            # there will be results here.
-            return list(r)
+            return list(await conn.scalars(stmt))
 
     @handle_errors
     async def delete(self, params: DeleteParams) -> Record:
@@ -258,10 +252,7 @@ class SAResource(AbstractAdminResource):
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
             r = await conn.scalars(stmt.returning(self._table.c[self.primary_key]))
-            ids = list(r)
-        if ids:
-            return ids
-        raise web.HTTPNotFound()
+            return list(r)
 
     def _get_validators(
         self, table: sa.Table, c: sa.Column[object]
