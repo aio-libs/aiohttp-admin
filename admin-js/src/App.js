@@ -1,20 +1,24 @@
 import {
-    Admin, Create, Datagrid, DatagridConfigurable, Edit, EditButton, List, HttpError, Resource, SimpleForm,
-    SelectColumnsButton, CreateButton, FilterButton, ExportButton, TopToolbar,
-    DeleteButton, SaveButton, Toolbar,
-    AppBar, InspectorButton, Layout, TitlePortal,
-    BulkDeleteButton, BulkExportButton, BulkUpdateButton,
+    // App
+    Admin, AppBar, InspectorButton, Layout, Resource, TitlePortal,
+    // Create/Edit
+    Create, DeleteButton, Edit, SaveButton, SimpleForm, Toolbar,
+    // List
+    Datagrid, DatagridConfigurable, EditButton, List,
+    // List actions
+    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CreateButton, ExportButton,
+    FilterButton, SelectColumnsButton, TopToolbar,
+    // Show
     SimpleShowLayout, Show,
-    AutocompleteInput,
-    BooleanField, BooleanInput,
-    DateField, DateInput, DateTimeInput,
-    NumberField, NumberInput,
-    ReferenceField, ReferenceInput as _ReferenceInput,
-    ReferenceManyField,
-    SelectInput,
-    TextField, TextInput,
-    WithRecord,
-    email, maxLength, maxValue, minLength, minValue, regex, required
+    // Fields
+    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
+    // Inputs
+    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
+    ReferenceInput as _ReferenceInput,
+    // Filters
+    email, maxLength, maxValue, minLength, minValue, regex, required,
+    // Misc
+    AutocompleteInput, HttpError, WithRecord
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
