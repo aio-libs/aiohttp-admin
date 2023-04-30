@@ -1,6 +1,7 @@
 import {
     Admin, Create, Datagrid, DatagridConfigurable, Edit, EditButton, List, HttpError, Resource, SimpleForm,
     SelectColumnsButton, CreateButton, FilterButton, ExportButton, TopToolbar,
+    DeleteButton, SaveButton, Toolbar,
     AppBar, InspectorButton, Layout, TitlePortal,
     BulkDeleteButton, BulkExportButton, BulkUpdateButton,
     SimpleShowLayout, Show,
@@ -237,17 +238,28 @@ const AiohttpShow = (resource, name, permissions) => (
     </Show>
 );
 
-const AiohttpEdit = (resource, name, permissions) => (
-    <Edit>
-        <SimpleForm>
-            {createInputs(resource, name, "edit", permissions)}
-        </SimpleForm>
-    </Edit>
-);
+const AiohttpEdit = (resource, name, permissions) => {
+    const AiohttpEditToolbar = props => (
+        <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between" }}>
+            <SaveButton />
+            <WithRecord render={
+                (record) => hasPermission(`${name}.delete`, permissions, record) && <DeleteButton />
+            } />
+        </Toolbar>
+    );
+
+    return(
+        <Edit mutationMode="pessimistic">
+            <SimpleForm toolbar={<AiohttpEditToolbar />} sanitizeEmptyValues>
+                {createInputs(resource, name, "edit", permissions)}
+            </SimpleForm>
+        </Edit>
+    );
+}
 
 const AiohttpCreate = (resource, name, permissions) => (
     <Create>
-        <SimpleForm>
+        <SimpleForm sanitizeEmptyValues>
             {createInputs(resource, name, "add", permissions)}
         </SimpleForm>
     </Create>
