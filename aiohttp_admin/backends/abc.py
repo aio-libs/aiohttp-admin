@@ -186,6 +186,9 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
+        if not results:
+            raise web.HTTPNotFound()
+
         results = [await self.filter_by_permissions(request, "view", r) for r in results
                    if await permits(request, f"admin.{self.name}.view", context=(request, r))]
         for r in results:
@@ -266,6 +269,7 @@ class AbstractAdminResource(ABC):
             raise web.HTTPForbidden()
 
         ids = await self.update_many(query)
+        # get_many() is called above, so we can be sure there will be results here.
         return json_response({"data": ids})
 
     async def _delete(self, request: web.Request) -> web.Response:
@@ -293,6 +297,8 @@ class AbstractAdminResource(ABC):
             raise web.HTTPForbidden()
 
         ids = await self.delete_many(query)
+        if not ids:
+            raise web.HTTPNotFound()
         return json_response({"data": ids})
 
     @cached_property
