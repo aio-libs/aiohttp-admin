@@ -4,12 +4,12 @@ import {
     // Create/Edit
     Create, DeleteButton, Edit, SaveButton, SimpleForm, Toolbar,
     // List
-    Datagrid, DatagridConfigurable, EditButton, List,
-    // List actions
-    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CreateButton, ExportButton,
-    FilterButton, SelectColumnsButton, TopToolbar,
+    Datagrid, DatagridConfigurable, List,
     // Show
     SimpleShowLayout, Show,
+    // Actions
+    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CreateButton, ExportButton,
+    FilterButton, SelectColumnsButton, TopToolbar,
     // Fields
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
     // Inputs
@@ -18,7 +18,7 @@ import {
     // Filters
     email, maxLength, maxValue, minLength, minValue, regex, required,
     // Misc
-    AutocompleteInput, HttpError, WithRecord
+    AutocompleteInput, EditButton, HttpError, WithRecord
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
@@ -234,13 +234,21 @@ const AiohttpList = (resource, name, permissions) => {
     );
 }
 
-const AiohttpShow = (resource, name, permissions) => (
-    <Show>
-        <SimpleShowLayout>
-            {createFields(resource, name, permissions)}
-        </SimpleShowLayout>
-    </Show>
-);
+const AiohttpShow = (resource, name, permissions) => {
+    const ShowActions = () => (
+        <TopToolbar>
+            <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
+        </TopToolbar>
+    );
+
+    return (
+        <Show actions={<ShowActions />}>
+            <SimpleShowLayout>
+                {createFields(resource, name, permissions)}
+            </SimpleShowLayout>
+        </Show>
+    );
+}
 
 const AiohttpEdit = (resource, name, permissions) => {
     const AiohttpEditToolbar = props => (
