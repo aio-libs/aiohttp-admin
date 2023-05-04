@@ -40,7 +40,7 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Author), "repr": "name"},
+            {"model": SAResource(engine, Author), "repr": Author.name.name},
             {"model": SAResource(engine, Book)}
         )
     }
