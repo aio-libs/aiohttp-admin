@@ -53,8 +53,8 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": ({"model": SAResource(engine, User),
-                       "validators": {"username": (("regex", r"^[A-Z][a-z]+$"),),
-                                      "email": (("email",),)}},)
+                       "validators": {User.username.name: (("regex", r"^[A-Z][a-z]+$"),),
+                                      User.email.name: (("email",),)}},)
     }
     aiohttp_admin.setup(app, schema)
 
