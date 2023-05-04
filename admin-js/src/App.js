@@ -136,7 +136,7 @@ function createFields(resource, name, permissions) {
             c = <C source={field} {...state["props"]} />;
         }
         // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord source={field} label={state["props"]["label"] || field} render={
+        components.push(<WithRecord source={field} label={state["props"]["label"]} render={
             (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
         } />);
     }
