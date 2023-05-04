@@ -139,7 +139,7 @@ class SAResource(AbstractAdminResource):
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
 
-            if c.default is not None:
+            if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
 
             self.fields[c.name] = {"type": field, "props": props}
