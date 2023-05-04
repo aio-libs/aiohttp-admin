@@ -110,8 +110,8 @@ def test_extra_props() -> None:
     model = DummyResource(
         "test",
         {"id": {"type": "TextField", "props": {"textAlign": "right", "placeholder": "foo"}}},
-        {"id": {"type": "TextInput", "props": {"resettable": False, "type": "text"}, "show_create": False,
-         "validators": ()}},
+        {"id": {"type": "TextInput", "props": {"resettable": False, "type": "text"},
+         "show_create": False, "validators": ()}},
         "id")
     schema: aiohttp_admin.Schema = {
         "security": {"check_credentials": check_credentials},
