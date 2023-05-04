@@ -138,6 +138,10 @@ class SAResource(AbstractAdminResource):
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
+
+            if isinstance(c.default, sa.ColumnDefault):
+                props["placeholder"] = c.default.arg
+
             self.fields[c.name] = {"type": field, "props": props}
             if c.computed is None:
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
