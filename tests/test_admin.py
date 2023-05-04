@@ -103,3 +103,28 @@ def test_display_invalid() -> None:
 
     with pytest.raises(ValueError, match=r"Display includes non-existent field \('bar',\)"):
         aiohttp_admin.setup(app, schema)
+
+
+def test_extra_props() -> None:
+    app = web.Application()
+    model = DummyResource(
+        "test",
+        {"id": {"type": "TextField", "props": {"textAlign": "right", "placeholder": "foo"}}},
+        {"id": {"type": "TextInput", "props": {"resettable": False, "type": "text"},
+         "show_create": False, "validators": ()}},
+        "id")
+    schema: aiohttp_admin.Schema = {
+        "security": {"check_credentials": check_credentials},
+        "resources": ({
+            "model": model,
+            "field_props": {"id": {"textAlign": "left", "label": "Spam"}},
+            "input_props": {"id": {"type": "email", "multiline": True}}
+        },)}
+
+    admin = aiohttp_admin.setup(app, schema)
+
+    test_state = admin["state"]["resources"]["test"]
+    assert test_state["fields"]["id"]["props"] == {"textAlign": "left", "placeholder": "foo",
+                                                   "label": "Spam"}
+    assert test_state["inputs"]["id"]["props"] == {"alwaysOn": "alwaysOn", "type": "email",
+                                                   "multiline": True, "resettable": False}

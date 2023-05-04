@@ -71,6 +71,10 @@ class _Resource(TypedDict, total=False):
     bulk_update: dict[str, dict[str, Any]]
     # Custom validators to add to inputs.
     validators: dict[str, Sequence[Sequence[Union[str, int]]]]
+    # Custom props to add to fields.
+    field_props: dict[str, dict[str, Any]]
+    # Custom props to add to inputs.
+    input_props: dict[str, dict[str, Any]]
 
 
 class Resource(_Resource):

@@ -1,5 +1,6 @@
 """Setup routes for admin app."""
 
+import copy
 from pathlib import Path
 
 from aiohttp import web
@@ -29,18 +30,26 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
 
         repr_field = r.get("repr", m.primary_key)
 
-        for k, v in m.inputs.items():
-            if k not in omit_fields:
-                v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
+        # Don't modify the resource.
+        fields = copy.deepcopy(m.fields)
+        inputs = copy.deepcopy(m.inputs)
 
-        inputs = m.inputs.copy()  # Don't modify the resource.
         for name, validators in r.get("validators", {}).items():
             if not all(v[0] in _VALIDATORS for v in validators):
                 raise ValueError(f"First value in validators must be one of {_VALIDATORS}")
             inputs[name] = inputs[name].copy()
             inputs[name]["validators"] = tuple(inputs[name]["validators"]) + tuple(validators)
 
-        state = {"fields": m.fields, "inputs": inputs, "list_omit": tuple(omit_fields),
+        input_props = r.get("input_props", {})
+        for k, v in inputs.items():
+            if k not in omit_fields:
+                v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
+            v["props"].update(input_props.get(k, {}))
+
+        for name, props in r.get("field_props", {}).items():
+            fields[name]["props"].update(props)
+
+        state = {"fields": fields, "inputs": inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
                  "bulk_update": r.get("bulk_update", {})}
         admin["state"]["resources"][m.name] = state
