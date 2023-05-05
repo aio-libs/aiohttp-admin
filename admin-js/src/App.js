@@ -262,7 +262,7 @@ const AiohttpEdit = (resource, name, permissions) => {
 
     return(
         <Edit mutationMode="pessimistic">
-            <SimpleForm toolbar={<AiohttpEditToolbar />} sanitizeEmptyValues>
+            <SimpleForm toolbar={<AiohttpEditToolbar />} sanitizeEmptyValues warnWhenUnsavedChanges>
                 {createInputs(resource, name, "edit", permissions)}
             </SimpleForm>
         </Edit>
@@ -270,8 +270,8 @@ const AiohttpEdit = (resource, name, permissions) => {
 }
 
 const AiohttpCreate = (resource, name, permissions) => (
-    <Create>
-        <SimpleForm sanitizeEmptyValues>
+    <Create redirect="show">
+        <SimpleForm sanitizeEmptyValues warnWhenUnsavedChanges>
             {createInputs(resource, name, "add", permissions)}
         </SimpleForm>
     </Create>
