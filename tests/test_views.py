@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 import sqlalchemy as sa
 from aiohttp.test_utils import TestClient
@@ -28,10 +28,10 @@ async def test_admin_view(admin_client: TestClient) -> None:
     state = json.loads(m.group(1))
 
     r = state["resources"]["dummy"]
-    assert r["display"] == ["id"]
-    assert r["fields"] == {"id": {"type": "NumberField", "props": {"alwaysOn": "alwaysOn"}}}
+    assert r["list_omit"] == []
+    assert r["fields"] == {"id": {"type": "NumberField", "props": {}}}
     assert r["inputs"] == {"id": {"type": "NumberInput", "props": {"alwaysOn": "alwaysOn"},
-                                  "show_create": False}}
+                                  "show_create": False, "validators": [["required"]]}}
     assert r["repr"] == "id"
     assert state["urls"] == {"token": "/admin/token", "logout": "/admin/logout"}
 

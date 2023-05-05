@@ -1,11 +1,14 @@
 """Setup routes for admin app."""
 
+import copy
 from pathlib import Path
 
 from aiohttp import web
 
 from . import views
 from .types import Schema
+
+_VALIDATORS = ("email", "maxLength", "maxValue", "minLength", "minValue", "regex", "required")
 
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
@@ -18,20 +21,35 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         admin.router.add_routes(m.routes)
 
         try:
-            display_fields = r["display"]
+            omit_fields = m.fields.keys() - r["display"]
         except KeyError:
-            display_fields = list(m.fields.keys())
+            omit_fields = ()
         else:
-            if not all(f in m.fields for f in display_fields):
-                raise ValueError(f"Display includes non-existent field {display_fields}")
+            if not all(f in m.fields for f in r["display"]):
+                raise ValueError(f"Display includes non-existent field {r['display']}")
 
-        repr_field = r.get("repr", m.repr_field)
+        repr_field = r.get("repr", m.primary_key)
 
-        for k, v in m.inputs.items():
-            if k in display_fields:
+        # Don't modify the resource.
+        fields = copy.deepcopy(m.fields)
+        inputs = copy.deepcopy(m.inputs)
+
+        for name, validators in r.get("validators", {}).items():
+            if not all(v[0] in _VALIDATORS for v in validators):
+                raise ValueError(f"First value in validators must be one of {_VALIDATORS}")
+            inputs[name] = inputs[name].copy()
+            inputs[name]["validators"] = tuple(inputs[name]["validators"]) + tuple(validators)
+
+        input_props = r.get("input_props", {})
+        for k, v in inputs.items():
+            if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
+            v["props"].update(input_props.get(k, {}))
 
-        state = {"fields": m.fields, "inputs": m.inputs, "display": display_fields,
+        for name, props in r.get("field_props", {}).items():
+            fields[name]["props"].update(props)
+
+        state = {"fields": fields, "inputs": inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
                  "bulk_update": r.get("bulk_update", {})}
         admin["state"]["resources"][m.name] = state

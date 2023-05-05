@@ -1,14 +1,32 @@
-"""Example that demonstrates use of various foreign key relationships.
+"""Minimal example with simple database models.
 
 When running this file, admin will be accessible at /admin.
 """
 
+import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from _models import Author, Base, Book
 from aiohttp_admin.backends.sqlalchemy import SAResource
+
+
+class Base(DeclarativeBase):
+    """Base model."""
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(sa.String(32))
+    email: Mapped[str | None]
+    note: Mapped[str | None]
+    votes: Mapped[int] = mapped_column()
+
+    __table_args__ = (sa.CheckConstraint(sa.func.char_length(username) >= 3),
+                      sa.CheckConstraint(votes >= 1), sa.CheckConstraint(votes < 5))
 
 
 async def check_credentials(username: str, password: str) -> bool:
@@ -23,13 +41,8 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        sess.add(Author(name="John Doe"))
-        author1 = Author(name="Jane Smith")
-        sess.add(author1)
-    async with session.begin() as sess:
-        sess.add(Book(author_id=author1.id, title="Book 1"))
-        sess.add(Book(author_id=author1.id, title="Book 2"))
-        sess.add(Book(author_id=author1.id, title="Another book"))
+        sess.add(User(username="Foo", votes=4))
+        sess.add(User(username="Spam", votes=1, note="Second user"))
 
     app = web.Application()
 
@@ -39,10 +52,9 @@ async def create_app() -> web.Application:
             "check_credentials": check_credentials,
             "secure": False
         },
-        "resources": (
-            {"model": SAResource(engine, Author), "repr": Author.name.name},
-            {"model": SAResource(engine, Book)}
-        )
+        "resources": ({"model": SAResource(engine, User),
+                       "validators": {User.username.name: (("regex", r"^[A-Z][a-z]+$"),),
+                                      User.email.name: (("email",),)}},)
     }
     aiohttp_admin.setup(app, schema)
 

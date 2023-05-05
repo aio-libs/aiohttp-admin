@@ -1,9 +1,11 @@
 import asyncio
 import json
+import warnings
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from functools import cached_property, partial
+from types import MappingProxyType
 from typing import Any, Literal, Optional, TypedDict, Union
 
 from aiohttp import web
@@ -15,10 +17,17 @@ from ..types import FieldState, InputState
 
 Record = dict[str, object]
 
+INPUT_TYPES = MappingProxyType({
+    "BooleanInput": bool,
+    "DateInput": date,
+    "DateTimeInput": datetime,
+    "NumberInput": float
+})
+
 
 class Encoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
-        if isinstance(o, datetime):
+        if isinstance(o, date):
             return str(o)
         if isinstance(o, Enum):
             return o.value
@@ -85,7 +94,15 @@ class AbstractAdminResource(ABC):
     name: str
     fields: dict[str, FieldState]
     inputs: dict[str, InputState]
-    repr_field: str
+    primary_key: str
+
+    def __init__(self) -> None:
+        if "id" in self.fields and self.primary_key != "id":
+            warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
+
+        d = {k: INPUT_TYPES.get(v["type"], str) for k, v in self.inputs.items()}
+        # For runtime type checking only.
+        self._record_type = TypedDict("RecordType", d, total=False)  # type: ignore[misc]
 
     async def filter_by_permissions(self, request: web.Request, perm_type: str,
                                     record: Record, original: Optional[Record] = None) -> Record:
@@ -132,6 +149,10 @@ class AbstractAdminResource(ABC):
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = parse_obj_as(GetListParams, request.query)
 
+        # When sort order refers to "id", this should be translated to primary key.
+        if query["sort"]["field"] == "id":
+            query["sort"]["field"] = self.primary_key
+
         # Add filters from advanced permissions.
         # The permissions will be cached on the request from a previous permissions check.
         permissions = permissions_as_dict(request["aiohttpadmin_permissions"])
@@ -144,6 +165,9 @@ class AbstractAdminResource(ABC):
         results = [await self.filter_by_permissions(request, "view", r) for r in results]
         results = [r for r in results if await permits(request, f"admin.{self.name}.view",
                                                        context=(request, r))]
+        # We need to set "id" for react-admin (in case there is no "id" primary key).
+        for r in results:
+            r["id"] = r[self.primary_key]
         return json_response({"data": results, "total": total})
 
     async def _get_one(self, request: web.Request) -> web.Response:
@@ -154,6 +178,7 @@ class AbstractAdminResource(ABC):
         if not await permits(request, f"admin.{self.name}.view", context=(request, result)):
             raise web.HTTPForbidden()
         result = await self.filter_by_permissions(request, "view", result)
+        result["id"] = result[self.primary_key]
         return json_response({"data": result})
 
     async def _get_many(self, request: web.Request) -> web.Response:
@@ -161,12 +186,22 @@ class AbstractAdminResource(ABC):
         query = parse_obj_as(GetManyParams, request.query)
 
         results = await self.get_many(query)
+        if not results:
+            raise web.HTTPNotFound()
+
         results = [await self.filter_by_permissions(request, "view", r) for r in results
                    if await permits(request, f"admin.{self.name}.view", context=(request, r))]
+        for r in results:
+            r["id"] = r[self.primary_key]
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
         query = parse_obj_as(CreateParams, request.query)
+        # TODO(Pydantic): Dissallow extra arguments
+        for k in query["data"]:
+            if k not in self.inputs and k != "id":
+                raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
+        query["data"] = parse_obj_as(self._record_type, query["data"])
         await check_permission(request, f"admin.{self.name}.add", context=(request, query["data"]))
         for k, v in query["data"].items():
             if v is not None:
@@ -175,11 +210,21 @@ class AbstractAdminResource(ABC):
 
         result = await self.create(query)
         result = await self.filter_by_permissions(request, "view", result)
+        result["id"] = result[self.primary_key]
         return json_response({"data": result})
 
     async def _update(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
         query = parse_obj_as(UpdateParams, request.query)
+        # TODO(Pydantic): Dissallow extra arguments
+        for k in query["data"]:
+            if k not in self.inputs and k != "id":
+                raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
+        query["data"] = parse_obj_as(self._record_type, query["data"])
+        query["previousData"] = parse_obj_as(self._record_type, query["previousData"])
+
+        if self.primary_key != "id":
+            query["data"].pop("id", None)
 
         # Check original record is allowed by permission filters.
         original = await self.get_one({"id": query["id"]})
@@ -199,14 +244,22 @@ class AbstractAdminResource(ABC):
 
         result = await self.update(query)
         result = await self.filter_by_permissions(request, "view", result)
+        result["id"] = result[self.primary_key]
         return json_response({"data": result})
 
     async def _update_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
         query = parse_obj_as(UpdateManyParams, request.query)
+        # TODO(Pydantic): Dissallow extra arguments
+        for k in query["data"]:
+            if k not in self.inputs and k != "id":
+                raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
+        query["data"] = parse_obj_as(self._record_type, query["data"])
 
         # Check original records are allowed by permission filters.
         originals = await self.get_many({"ids": query["ids"]})
+        if not originals:
+            raise web.HTTPNotFound()
         allowed = (permits(request, f"admin.{self.name}.edit", context=(request, r))
                    for r in originals)
         allowed_f = (permits(request, f"admin.{self.name}.{k}.edit", context=(request, r))
@@ -218,11 +271,13 @@ class AbstractAdminResource(ABC):
             raise web.HTTPForbidden()
 
         ids = await self.update_many(query)
+        # get_many() is called above, so we can be sure there will be results here.
         return json_response({"data": ids})
 
     async def _delete(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
         query = parse_obj_as(DeleteParams, request.query)
+        query["previousData"] = parse_obj_as(self._record_type, query["previousData"])
 
         original = await self.get_one({"id": query["id"]})
         if not await permits(request, f"admin.{self.name}.delete", context=(request, original)):
@@ -230,6 +285,7 @@ class AbstractAdminResource(ABC):
 
         result = await self.delete(query)
         result = await self.filter_by_permissions(request, "view", result)
+        result["id"] = result[self.primary_key]
         return json_response({"data": result})
 
     async def _delete_many(self, request: web.Request) -> web.Response:
@@ -243,6 +299,8 @@ class AbstractAdminResource(ABC):
             raise web.HTTPForbidden()
 
         ids = await self.delete_many(query)
+        if not ids:
+            raise web.HTTPNotFound()
         return json_response({"data": ids})
 
     @cached_property
