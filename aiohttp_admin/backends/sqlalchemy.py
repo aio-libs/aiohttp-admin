@@ -161,8 +161,7 @@ class SAResource(AbstractAdminResource):
                 local, remote = relationship.local_remote_pairs[0]
 
                 props = {"reference": relationship.entity.persist_selectable.name,
-                         "label": name.title(),
-                         "source": local.name, "target": remote.name}
+                         "label": name.title(), "source": local.name, "target": remote.name}
                 if local.foreign_keys:
                     t = "ReferenceField"
                 elif relationship.uselist:
