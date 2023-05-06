@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 import sqlalchemy as sa
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Currency(Enum):

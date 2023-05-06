@@ -162,8 +162,8 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, ManyToOneChild)},
             {"model": SAResource(engine, OneToOneParent), "repr": "name"},
             {"model": SAResource(engine, OneToOneChild)},
-            #{"model": SAResource(engine, ManyToManyParent)},
-            #{"model": SAResource(engine, ManyToManyChild)}
+            # {"model": SAResource(engine, ManyToManyParent)},
+            # {"model": SAResource(engine, ManyToManyChild)}
         )
     }
     aiohttp_admin.setup(app, schema)
