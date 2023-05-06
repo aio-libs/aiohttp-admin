@@ -1,14 +1,109 @@
 """Example that demonstrates use of various foreign key relationships.
 
+An example of each SQLAlchemy relationship is included.
+However, the many to many relationship requires the react-admin enterprise-edition
+(not currently supported by aiohttp-admin).
+https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html
+
 When running this file, admin will be accessible at /admin.
 """
 
+import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 import aiohttp_admin
-from _models import Author, Base, Book
 from aiohttp_admin.backends.sqlalchemy import SAResource
+
+
+class Base(DeclarativeBase):
+    """Base model."""
+
+
+class OneToManyParent(Base):
+    __tablename__ = "onetomany_parent"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    children: Mapped[list["OneToManyChild"]] = relationship(back_populates="parent")
+
+
+class OneToManyChild(Base):
+    __tablename__ = "onetomany_child"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    parent_id: Mapped[int] = mapped_column(sa.ForeignKey(OneToManyParent.id))
+    parent: Mapped[OneToManyParent] = relationship(back_populates="children")
+
+
+class ManyToOneParent(Base):
+    __tablename__ = "manytoone_parent"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    child_id: Mapped[int | None] = mapped_column(sa.ForeignKey("manytoone_child.id"))
+    child: Mapped["ManyToOneChild | None"] = relationship(back_populates="parents")
+
+
+class ManyToOneChild(Base):
+    __tablename__ = "manytoone_child"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    parents: Mapped[list[ManyToOneParent]] = relationship(back_populates="child")
+
+
+class OneToOneParent(Base):
+    __tablename__ = "onetoone_parent"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    child: Mapped["OneToOneChild"] = relationship(back_populates="parent")
+
+
+class OneToOneChild(Base):
+    __tablename__ = "onetoone_child"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    parent_id: Mapped[int] = mapped_column(sa.ForeignKey(OneToOneParent.id))
+    parent: Mapped[OneToOneParent] = relationship(back_populates="child")
+
+
+association_table = sa.Table(
+    "association_table",
+    Base.metadata,
+    sa.Column("left_id", sa.ForeignKey("manytomany_left.id"), primary_key=True),
+    sa.Column("right_id", sa.ForeignKey("manytomany_right.id"), primary_key=True),
+)
+
+
+class ManyToManyParent(Base):
+    __tablename__ = "manytomany_left"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    children: Mapped[list["ManyToManyChild"]] = relationship(secondary=association_table,
+                                                             back_populates="parents")
+
+
+class ManyToManyChild(Base):
+    __tablename__ = "manytomany_right"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    value: Mapped[int]
+    parents: Mapped[list[ManyToManyParent]] = relationship(secondary=association_table,
+                                                           back_populates="children")
 
 
 async def check_credentials(username: str, password: str) -> bool:
@@ -23,13 +118,34 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        sess.add(Author(name="John Doe"))
-        author1 = Author(name="Jane Smith")
-        sess.add(author1)
+        sess.add(OneToManyParent(name="Foo", value=1))
+        onetomany_1 = OneToManyParent(name="Bar", value=2)
+        sess.add(onetomany_1)
+        manytoone_1 = ManyToOneChild(name="Child Foo", value=4)
+        sess.add(manytoone_1)
+        onetoone_1 = OneToOneParent(name="Foo", value=3)
+        sess.add(onetoone_1)
+        onetoone_2 = OneToOneParent(name="Bar", value=5)
+        sess.add(onetoone_2)
+        manytomany_p1 = ManyToManyParent(name="Foo", value=2)
+        manytomany_p2 = ManyToManyParent(name="Bar", value=3)
+        manytomany_c1 = ManyToManyChild(name="Foo Child", value=5)
+        manytomany_c2 = ManyToManyChild(name="Bar Child", value=6)
+        manytomany_p1.children.append(manytomany_c1)
+        manytomany_p1.children.append(manytomany_c2)
+        manytomany_p2.children.append(manytomany_c1)
+        manytomany_p2.children.append(manytomany_c2)
+        sess.add(manytomany_p1)
+        sess.add(manytomany_p2)
+        sess.add(manytomany_c1)
+        sess.add(manytomany_c2)
     async with session.begin() as sess:
-        sess.add(Book(author_id=author1.id, title="Book 1"))
-        sess.add(Book(author_id=author1.id, title="Book 2"))
-        sess.add(Book(author_id=author1.id, title="Another book"))
+        sess.add(OneToManyChild(name="Child Foo", value=1, parent_id=onetomany_1.id))
+        sess.add(OneToManyChild(name="Child Bar", value=5, parent_id=onetomany_1.id))
+        sess.add(ManyToOneParent(name="Foo", value=5, child_id=manytoone_1.id))
+        sess.add(ManyToOneParent(name="Bar", value=3))
+        sess.add(OneToOneChild(name="Child Foo", value=0, parent_id=onetoone_2.id))
+        sess.add(OneToOneChild(name="Child Bar", value=2, parent_id=onetoone_1.id))
 
     app = web.Application()
 
@@ -40,8 +156,14 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Author), "repr": Author.name.name},
-            {"model": SAResource(engine, Book)}
+            {"model": SAResource(engine, OneToManyParent), "repr": "name"},
+            {"model": SAResource(engine, OneToManyChild)},
+            {"model": SAResource(engine, ManyToOneParent), "repr": "name"},
+            {"model": SAResource(engine, ManyToOneChild)},
+            {"model": SAResource(engine, OneToOneParent), "repr": "name"},
+            {"model": SAResource(engine, OneToOneChild)},
+            #{"model": SAResource(engine, ManyToManyParent)},
+            #{"model": SAResource(engine, ManyToManyChild)}
         )
     }
     aiohttp_admin.setup(app, schema)
