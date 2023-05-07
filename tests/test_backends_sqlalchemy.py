@@ -72,11 +72,12 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     r = SAResource(mock_engine, TestChildModel)
     assert r.name == "child"
     assert r.primary_key == "id"
-    assert r.fields == {"id": {"type": "ReferenceField", "props": {"reference": "dummy"}}}
+    assert r.fields == {"id": {"type": "ReferenceField", "props": {
+        "reference": "dummy", "source": "id", "target": "id"}}}
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": {
-        "type": "ReferenceInput", "show_create": True, "props": {"reference": "dummy"},
-        "validators": [("required",)]}}
+        "type": "ReferenceInput", "show_create": True, "validators": [("required",)],
+        "props": {"reference": "dummy", "source": "id", "target": "id"}}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -94,8 +95,10 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert r.name == "many"
     assert r.fields["ones"] == {
         "type": "ReferenceManyField",
-        "props": {"children": {"id": {"props": {}, "type": "NumberField"}},
-                  "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
+        "props": {
+            "children": {"_": {"type": "Datagrid", "props": {
+                "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
     assert "ones" not in r.inputs
 
 
