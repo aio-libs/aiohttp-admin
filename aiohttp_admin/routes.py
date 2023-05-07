@@ -29,6 +29,8 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
                 raise ValueError(f"Display includes non-existent field {r['display']}")
 
         repr_field = r.get("repr", m.primary_key)
+        if repr_field not in m.fields:
+            raise ValueError(f"repr not a valid field name: {repr_field}")
 
         # Don't modify the resource.
         fields = copy.deepcopy(m.fields)

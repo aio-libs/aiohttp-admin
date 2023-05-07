@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 import sqlalchemy as sa
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Currency(Enum):
@@ -33,21 +33,3 @@ class SimpleParent(Base):
                                     primary_key=True)
     date: Mapped[datetime]
     currency: Mapped[Currency] = mapped_column(default="USD")
-
-
-class Author(Base):
-    __tablename__ = "author"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    books: Mapped[list["Book"]] = relationship()
-
-
-class Book(Base):
-    __tablename__ = "book"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str]
-    author_id: Mapped[int | None] = mapped_column(sa.ForeignKey(Author.id))
-
-    # author: Mapped[Author] = relationship(back_populates="books")

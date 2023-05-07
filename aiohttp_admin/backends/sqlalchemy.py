@@ -134,7 +134,8 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props: dict[str, object] = {"reference": key.column.table.name}
+                props: dict[str, object] = {"reference": key.column.table.name,
+                                            "source": c.name, "target": key.column.name}
             else:
                 field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                 props = {}
@@ -157,18 +158,27 @@ class SAResource(AbstractAdminResource):
             for name, relationship in mapper.relationships.items():
                 if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")
-                pair = relationship.local_remote_pairs[0]
+                local, remote = relationship.local_remote_pairs[0]
+
+                props = {"reference": relationship.entity.persist_selectable.name,
+                         "label": name.title(), "source": local.name, "target": remote.name}
+                if local.foreign_keys:
+                    t = "ReferenceField"
+                elif relationship.uselist:
+                    t = "ReferenceManyField"
+                else:
+                    t = "ReferenceOneField"
+
                 children = {}
                 for c in relationship.target.c.values():
-                    if c is pair[1]:  # Skip the foreign key
+                    if c is remote:  # Skip the foreign key
                         continue
                     field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
                     children[c.name] = {"type": field, "props": {}}
+                container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
+                props["children"] = {"_": {"type": container, "props": {"children": children}}}
 
-                props = {"reference": relationship.entity.persist_selectable.name,
-                         "label": name.title(), "children": children,
-                         "source": pair[0].name, "target": pair[1].name}
-                self.fields[name] = {"type": "ReferenceManyField", "props": props}
+                self.fields[name] = {"type": t, "props": props}
 
         self._db = db
         self._table = table

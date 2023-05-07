@@ -11,7 +11,8 @@ import {
     BulkDeleteButton, BulkExportButton, BulkUpdateButton, CreateButton, ExportButton,
     FilterButton, SelectColumnsButton, TopToolbar,
     // Fields
-    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
+    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
+    ReferenceOneField, TextField,
     // Inputs
     BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
     ReferenceInput as _ReferenceInput,
@@ -33,12 +34,24 @@ const ReferenceInput = (props) => {
     );
 };
 
+/** Display a single record in a Datagrid-like view (e.g. for ReferenceField). */
+const DatagridSingle = (props) => (
+    <WithRecord {...props} render={
+        (record) => <Datagrid {...props} data={[record]} bulkActionButtons={false} hover={false} rowClick={false} setSort={false} />
+    } />
+);
+
 
 const _body = document.querySelector("body");
 const STATE = JSON.parse(_body.dataset.state);
 // Create a mapping of components, so we can reference them by name later.
-const COMPONENTS = {BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField, TextField,
-                    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, TextInput};
+const COMPONENTS = {
+    Datagrid, DatagridSingle,
+
+    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
+    ReferenceOneField, TextField,
+
+    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, TextInput};
 const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 
 /** Make an authenticated API request and return the response object. */
@@ -79,7 +92,8 @@ const dataProvider = {
     getList: (resource, params) => dataRequest(resource, "get_list", params),
     getMany: (resource, params) => dataRequest(resource, "get_many", params),
     getManyReference: (resource, params) => {
-        params["filter"][params["target"]] = params["id"];
+        // filter object is reused across requests, so clone it before modifying.
+        params["filter"] = {...params["filter"], [params["target"]]: params["id"]};
         return dataRequest(resource, "get_list", params);
     },
     getOne: (resource, params) => dataRequest(resource, "get_one", params),
@@ -131,14 +145,18 @@ function createFields(resource, name, permissions) {
                                              "display": Object.keys(state["props"]["children"])},
                                             name, permissions);
             delete state["props"]["children"];
-            c = <C source={field} {...state["props"]}><Datagrid>{child_fields}</Datagrid></C>;
+            c = <C source={field} {...state["props"]}>{child_fields}</C>;
         } else {
             c = <C source={field} {...state["props"]} />;
         }
-        // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord source={field} label={state["props"]["label"]} render={
-            (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
-        } />);
+        if (field === "_")
+            // Layout component, not related to a specific field.
+            components.push(c);
+        else
+            // Show icon if user doesn't have permission to view this field (based on filters).
+            components.push(<WithRecord source={field} label={state["props"]["label"]} render={
+                (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
+            } />);
     }
     return components;
 }

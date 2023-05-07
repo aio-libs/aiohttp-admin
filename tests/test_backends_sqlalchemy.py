@@ -72,31 +72,80 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     r = SAResource(mock_engine, TestChildModel)
     assert r.name == "child"
     assert r.primary_key == "id"
-    assert r.fields == {"id": {"type": "ReferenceField", "props": {"reference": "dummy"}}}
+    assert r.fields == {"id": {"type": "ReferenceField", "props": {
+        "reference": "dummy", "source": "id", "target": "id"}}}
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": {
-        "type": "ReferenceInput", "show_create": True, "props": {"reference": "dummy"},
-        "validators": [("required",)]}}
+        "type": "ReferenceInput", "show_create": True, "validators": [("required",)],
+        "props": {"reference": "dummy", "source": "id", "target": "id"}}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestMany(base):  # type: ignore[misc,valid-type]
         __tablename__ = "many"
         id: Mapped[int] = mapped_column(primary_key=True)
-        ones: Mapped[list["TestOne"]] = relationship()  # noqa: F821
+        foo: Mapped[int]
+        ones: Mapped[list["TestOne"]] = relationship(back_populates="many")  # noqa: F821
 
     class TestOne(base):  # type: ignore[misc,valid-type]
         __tablename__ = "one"
         id: Mapped[int] = mapped_column(primary_key=True)
         many_id: Mapped[int] = mapped_column(sa.ForeignKey(TestMany.id))
+        many: Mapped[TestMany] = relationship(back_populates="ones")
 
     r = SAResource(mock_engine, TestMany)
     assert r.name == "many"
     assert r.fields["ones"] == {
         "type": "ReferenceManyField",
-        "props": {"children": {"id": {"props": {}, "type": "NumberField"}},
-                  "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
+        "props": {
+            "children": {"_": {"type": "Datagrid", "props": {
+                "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
     assert "ones" not in r.inputs
+
+    r = SAResource(mock_engine, TestOne)
+    assert r.name == "one"
+    assert r.fields["many"] == {
+        "type": "ReferenceField",
+        "props": {
+            "children": {"_": {"type": "DatagridSingle", "props": {
+                "children": {"foo": {"type": "NumberField", "props": {}}}}}},
+            "label": "Many", "reference": "many", "source": "many_id", "target": "id"}}
+    assert "many" not in r.inputs
+
+
+def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestA(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test_a"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        str: Mapped[str]
+        other: Mapped["TestB"] = relationship(back_populates="linked")  # noqa: F821
+
+    class TestB(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test_b"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        a_id: Mapped[int] = mapped_column(sa.ForeignKey(TestA.id))
+        linked: Mapped[TestA] = relationship(back_populates="other")
+
+    r = SAResource(mock_engine, TestA)
+    assert r.name == "test_a"
+    assert r.fields["other"] == {
+        "type": "ReferenceOneField",
+        "props": {
+            "children": {"_": {"type": "DatagridSingle", "props": {
+                "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id"}}
+    assert "other" not in r.inputs
+
+    r = SAResource(mock_engine, TestB)
+    assert r.name == "test_b"
+    assert r.fields["linked"] == {
+        "type": "ReferenceField",
+        "props": {
+            "children": {"_": {"type": "DatagridSingle", "props": {
+                "children": {"str": {"type": "TextField", "props": {}}}}}},
+            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id"}}
+    assert "linked" not in r.inputs
 
 
 def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
