@@ -128,3 +128,14 @@ def test_extra_props() -> None:
                                                    "label": "Spam"}
     assert test_state["inputs"]["id"]["props"] == {"alwaysOn": "alwaysOn", "type": "email",
                                                    "multiline": True, "resettable": False}
+
+
+def test_invalid_repr() -> None:
+    app = web.Application()
+    model = DummyResource("test", {"id": {"type": "TextField", "props": {}},
+                                   "foo": {"type": "TextField", "props": {}}}, {}, "id")
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ({"model": model, "repr": "bar"},)}
+
+    with pytest.raises(ValueError, match=r"not a valid field name: bar"):
+        aiohttp_admin.setup(app, schema)
