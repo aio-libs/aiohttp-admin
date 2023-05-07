@@ -4,13 +4,45 @@ When running this file, admin will be accessible at /admin.
 """
 
 from datetime import datetime
+from enum import Enum
 
+import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from _models import Base, Simple, SimpleParent
 from aiohttp_admin.backends.sqlalchemy import SAResource
+
+# Example DB models
+
+
+class Currency(Enum):
+    EUR = "EUR"
+    GBP = "GBP"
+    USD = "USD"
+
+
+class Base(DeclarativeBase):
+    """Base model."""
+
+
+class Simple(Base):
+    __tablename__ = "simple"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    num: Mapped[int]
+    optional_num: Mapped[float | None]
+    value: Mapped[str]
+
+
+class SimpleParent(Base):
+    __tablename__ = "parent"
+
+    id: Mapped[int] = mapped_column(sa.ForeignKey(Simple.id, ondelete="CASCADE"),
+                                    primary_key=True)
+    date: Mapped[datetime]
+    currency: Mapped[Currency] = mapped_column(default="USD")
 
 
 async def check_credentials(username: str, password: str) -> bool:

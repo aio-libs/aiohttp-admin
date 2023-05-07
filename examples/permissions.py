@@ -9,14 +9,35 @@ import json
 from datetime import datetime
 from functools import partial
 
+import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from _models import Base, Simple, SimpleParent
 from aiohttp_admin import Permissions, UserDetails
 from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for as p
+
+
+class Base(DeclarativeBase):
+    """Base model."""
+
+
+class Simple(Base):
+    __tablename__ = "simple"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    num: Mapped[int]
+    optional_num: Mapped[float | None]
+    value: Mapped[str]
+
+
+class SimpleParent(Base):
+    __tablename__ = "parent"
+
+    id: Mapped[int] = mapped_column(sa.ForeignKey(Simple.id, ondelete="CASCADE"),
+                                    primary_key=True)
+    date: Mapped[datetime]
 
 
 class User(Base):
