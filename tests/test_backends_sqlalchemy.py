@@ -119,7 +119,7 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         __tablename__ = "test_a"
         id: Mapped[int] = mapped_column(primary_key=True)
         str: Mapped[str]
-        other: Mapped["TestB"] = relationship(back_populates="linked")
+        other: Mapped["TestB"] = relationship(back_populates="linked")  # noqa: F821
 
     class TestB(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test_b"
