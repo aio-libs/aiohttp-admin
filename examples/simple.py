@@ -16,6 +16,7 @@ from aiohttp_admin.backends.sqlalchemy import SAResource
 
 # Example DB models
 
+
 class Currency(Enum):
     EUR = "EUR"
     GBP = "GBP"
