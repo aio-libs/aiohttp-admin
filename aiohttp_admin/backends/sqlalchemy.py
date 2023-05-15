@@ -30,7 +30,7 @@ _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
 
 logger = logging.getLogger(__name__)
 
-FIELD_TYPES = MPT({
+FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]] = MPT({
     sa.Boolean: ("BooleanField", "BooleanInput", MPT({})),
     sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False})),
     sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True})),
@@ -172,10 +172,10 @@ class SAResource(AbstractAdminResource):
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                props: dict[str, object] = {"reference": key.column.table.name,
-                                            "source": c.name, "target": key.column.name}
+                props: dict[str, Any] = {"reference": key.column.table.name,
+                                         "source": c.name, "target": key.column.name}
             else:
-                field, inp, props = get_components(reveal_type(c.type))
+                field, inp, props = get_components(c.type)
 
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name} for e in c.type.python_type)
