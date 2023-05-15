@@ -106,8 +106,9 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "type": "ReferenceManyField",
         "props": {
             "children": {"_": {"type": "Datagrid", "props": {
-                "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
+                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
+            "sortable": False}}
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
@@ -116,8 +117,9 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "type": "ReferenceField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"foo": {"type": "NumberField", "props": {}}}}}},
-            "label": "Many", "reference": "many", "source": "many_id", "target": "id"}}
+                "rowClick": "show", "children": {"foo": {"type": "NumberField", "props": {}}}}}},
+            "label": "Many", "reference": "many", "source": "many_id", "target": "id",
+            "sortable": False, "link": "show"}}
     assert "many" not in r.inputs
 
 
@@ -140,8 +142,9 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "type": "ReferenceOneField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id"}}
+                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
+            "sortable": False, "link": "show"}}
     assert "other" not in r.inputs
 
     r = SAResource(mock_engine, TestB)
@@ -150,8 +153,9 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "type": "ReferenceField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"str": {"type": "TextField", "props": {}}}}}},
-            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id"}}
+                "rowClick": "show", "children": {"str": {"type": "TextField", "props": {}}}}}},
+            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
+            "sortable": False, "link": "show"}}
     assert "linked" not in r.inputs
 
 
