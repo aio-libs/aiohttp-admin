@@ -12,9 +12,9 @@ import {
     FilterButton, SelectColumnsButton, TopToolbar,
     // Fields
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, TextField,
+    ReferenceOneField, SelectField, TextField,
     // Inputs
-    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
+    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput, TimeInput,
     ReferenceInput as _ReferenceInput,
     // Filters
     email, maxLength, maxValue, minLength, minValue, regex, required,
@@ -37,22 +37,26 @@ const ReferenceInput = (props) => {
 /** Display a single record in a Datagrid-like view (e.g. for ReferenceField). */
 const DatagridSingle = (props) => (
     <WithRecord {...props} render={
-        (record) => <Datagrid {...props} data={[record]} bulkActionButtons={false} hover={false} rowClick={false} setSort={false} />
+        (record) => <Datagrid {...props} data={[record]} bulkActionButtons={false}
+                     hover={false} rowClick={false} setSort={false}
+                     sort={{field: "id", order: "DESC"}} />
     } />
 );
 
-
-const _body = document.querySelector("body");
-const STATE = JSON.parse(_body.dataset.state);
 // Create a mapping of components, so we can reference them by name later.
-const COMPONENTS = {
+const COMPONENTS = Object.freeze({
     Datagrid, DatagridSingle,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, TextField,
+    ReferenceOneField, SelectField, TextField,
 
-    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, TextInput};
-const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
+    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
+    TextInput, TimeInput
+});
+const VALIDATORS = Object.freeze(
+    {email, maxLength, maxValue, minLength, minValue, regex, required});
+const _body = document.querySelector("body");
+const STATE = Object.freeze(JSON.parse(_body.dataset.state));
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
@@ -139,24 +143,27 @@ function createFields(resource, name, permissions) {
         if (C === undefined)
             throw Error(`Unknown component '${state["type"]}'`);
 
+        const {children, ...props} = state["props"];
         let c;
-        if (state["props"]["children"]) {
-            let child_fields = createFields({"fields": state["props"]["children"],
-                                             "display": Object.keys(state["props"]["children"])},
-                                            name, permissions);
-            delete state["props"]["children"];
-            c = <C source={field} {...state["props"]}>{child_fields}</C>;
+        if (children) {
+            let child_fields = createFields(
+                {"fields": children, "display": Object.keys(children)}, name, permissions);
+            c = <C source={field} {...props}>{child_fields}</C>;
         } else {
-            c = <C source={field} {...state["props"]} />;
+            c = <C source={field} {...props} />;
         }
-        if (field === "_")
+        if (field === "_") {
             // Layout component, not related to a specific field.
             components.push(c);
-        else
+        } else {
+            const withRecordProps = {
+                "source": field, "label": props["label"], "sortable": props["sortable"],
+                "sortBy": props["sortBy"], "sortByOrder": props["sortByOrder"]}
             // Show icon if user doesn't have permission to view this field (based on filters).
-            components.push(<WithRecord source={field} label={state["props"]["label"]} render={
+            components.push(<WithRecord {...withRecordProps} render={
                 (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
             } />);
+        }
     }
     return components;
 }

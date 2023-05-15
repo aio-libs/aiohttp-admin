@@ -4,7 +4,7 @@ import logging
 import operator
 import sys
 from collections.abc import Callable, Coroutine, Iterator, Sequence
-from types import MappingProxyType
+from types import MappingProxyType as MPT
 from typing import Any, Literal, Optional, TypeVar, Union
 
 import sqlalchemy as sa
@@ -30,15 +30,52 @@ _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
 
 logger = logging.getLogger(__name__)
 
-FIELD_TYPES = MappingProxyType({
-    sa.Integer: ("NumberField", "NumberInput"),
-    sa.Text: ("TextField", "TextInput"),
-    sa.Float: ("NumberField", "NumberInput"),
-    sa.Date: ("DateField", "DateInput"),
-    sa.DateTime: ("DateField", "DateTimeInput"),
-    sa.Boolean: ("BooleanField", "BooleanInput"),
-    sa.String: ("TextField", "TextInput")
+FIELD_TYPES = MPT({
+    sa.Boolean: ("BooleanField", "BooleanInput", MPT({})),
+    sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False})),
+    sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True})),
+    sa.Enum: ("SelectField", "SelectInput", MPT({})),
+    sa.Integer: ("NumberField", "NumberInput", MPT({})),
+    sa.Numeric: ("NumberField", "NumberInput", MPT({})),
+    sa.String: ("TextField", "TextInput", MPT({})),
+    sa.Time: ("DateField", "TimeInput", MPT({"showDate": False, "showTime": True})),
+    sa.Uuid: ("TextField", "TextInput", MPT({})),  # TODO: validators
+    # TODO: Set fields for below types.
+    #sa.sql.sqltypes._AbstractInterval: (),
+    #sa.types._Binary: (),
+    #sa.types.PickleType: (),
+
+    #sa.ARRAY: (),
+    #sa.JSON: (),
+
+    #sa.dialects.postgresql.AbstractRange: (),
+    #sa.dialects.postgresql.BIT: (),
+    #sa.dialects.postgresql.CIDR: (),
+    #sa.dialects.postgresql.HSTORE: (),
+    #sa.dialects.postgresql.INET: (),
+    #sa.dialects.postgresql.MACADDR: (),
+    #sa.dialects.postgresql.MACADDR8: (),
+    #sa.dialects.postgresql.MONEY: (),
+    #sa.dialects.postgresql.OID: (),
+    #sa.dialects.postgresql.REGCONFIG: (),
+    #sa.dialects.postgresql.REGCLASS: (),
+    #sa.dialects.postgresql.TSQUERY: (),
+    #sa.dialects.postgresql.TSVECTOR: (),
+    #sa.dialects.mysql.BIT: (),
+    #sa.dialects.mysql.YEAR: (),
+    #sa.dialects.oracle.ROWID: (),
+    #sa.dialects.mssql.MONEY: (),
+    #sa.dialects.mssql.SMALLMONEY: (),
+    #sa.dialects.mssql.SQL_VARIANT: (),
 })
+
+
+def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, bool]]:
+    for key, (field, inp, props) in FIELD_TYPES.items():
+        if isinstance(t, key):
+            return (field, inp, props.copy())
+
+    return ("TextField", "TextInput", {})
 
 
 def handle_errors(
@@ -129,6 +166,7 @@ class SAResource(AbstractAdminResource):
         self.name = table.name
         self.fields = {}
         self.inputs = {}
+        self.omit_fields = set()
         for c in table.c.values():
             if c.foreign_keys:
                 field = "ReferenceField"
@@ -137,8 +175,10 @@ class SAResource(AbstractAdminResource):
                 props: dict[str, object] = {"reference": key.column.table.name,
                                             "source": c.name, "target": key.column.name}
             else:
-                field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
-                props = {}
+                field, inp, props = get_components(reveal_type(c.type))
+
+            if isinstance(c.type, sa.Enum):
+                props["choices"] = tuple({"id": e.value, "name": e.name} for e in c.type.python_type)
 
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
@@ -161,24 +201,28 @@ class SAResource(AbstractAdminResource):
                 local, remote = relationship.local_remote_pairs[0]
 
                 props = {"reference": relationship.entity.persist_selectable.name,
-                         "label": name.title(), "source": local.name, "target": remote.name}
+                         "label": name.title(), "source": local.name,
+                         "target": remote.name, "sortable": False}
                 if local.foreign_keys:
                     t = "ReferenceField"
+                    props["link"] = "show"
                 elif relationship.uselist:
                     t = "ReferenceManyField"
                 else:
                     t = "ReferenceOneField"
+                    props["link"] = "show"
 
                 children = {}
                 for c in relationship.target.c.values():
                     if c is remote:  # Skip the foreign key
                         continue
-                    field, inp = FIELD_TYPES.get(type(c.type), ("TextField", "TextInput"))
-                    children[c.name] = {"type": field, "props": {}}
+                    field, inp, c_props = get_components(c.type)
+                    children[c.name] = {"type": field, "props": c_props}
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
-                props["children"] = {"_": {"type": container, "props": {"children": children}}}
+                props["children"] = {"_": {"type": container, "props": {"children": children, "rowClick": "show"}}}
 
                 self.fields[name] = {"type": t, "props": props}
+                self.omit_fields.add(name)
 
         self._db = db
         self._table = table

@@ -2,7 +2,7 @@ import asyncio
 import json
 import warnings
 from abc import ABC, abstractmethod
-from datetime import date, datetime
+from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
@@ -21,7 +21,8 @@ INPUT_TYPES = MappingProxyType({
     "BooleanInput": bool,
     "DateInput": date,
     "DateTimeInput": datetime,
-    "NumberInput": float
+    "NumberInput": float,
+    "TimeInput": time
 })
 
 
@@ -29,6 +30,9 @@ class Encoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
         if isinstance(o, date):
             return str(o)
+        if isinstance(o, time):
+            # React-admin needs a datetime to display only a time...
+            return f"2000-01-01T{o}"
         if isinstance(o, Enum):
             return o.value
 
@@ -95,6 +99,7 @@ class AbstractAdminResource(ABC):
     fields: dict[str, FieldState]
     inputs: dict[str, InputState]
     primary_key: str
+    omit_fields: set[str]
 
     def __init__(self) -> None:
         if "id" in self.fields and self.primary_key != "id":

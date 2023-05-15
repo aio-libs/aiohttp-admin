@@ -9,12 +9,19 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql.type_api import TypeEngine
+from sqlalchemy.types import TypeDecorator
 
 import aiohttp_admin
 from _auth import check_credentials
-from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for
+from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permission_for
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+
+
+def test_no_subtypes() -> None:
+    """We don't want any subtypes in the lookup, as this would depend on test ordering."""
+    assert all({TypeEngine, TypeDecorator} & set(t.__bases__) for t in FIELD_TYPES)
 
 
 def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
