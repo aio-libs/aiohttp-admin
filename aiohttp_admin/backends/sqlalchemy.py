@@ -178,7 +178,8 @@ class SAResource(AbstractAdminResource):
                 field, inp, props = get_components(c.type)
 
             if isinstance(c.type, sa.Enum):
-                props["choices"] = tuple({"id": e.value, "name": e.name} for e in c.type.python_type)
+                props["choices"] = tuple({"id": e.value, "name": e.name}
+                                         for e in c.type.python_type)
 
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
@@ -219,7 +220,8 @@ class SAResource(AbstractAdminResource):
                     field, inp, c_props = get_components(c.type)
                     children[c.name] = {"type": field, "props": c_props}
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
-                props["children"] = {"_": {"type": container, "props": {"children": children, "rowClick": "show"}}}
+                props["children"] = {"_": {"type": container, "props": {
+                    "children": children, "rowClick": "show"}}}
 
                 self.fields[name] = {"type": t, "props": props}
                 self.omit_fields.add(name)
