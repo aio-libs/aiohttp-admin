@@ -1,5 +1,5 @@
-from collections.abc import Collection
-from typing import Any, Awaitable, Callable, Optional, Sequence, TypedDict, Union
+from collections.abc import Callable, Collection, Sequence
+from typing import Any, Awaitable, Optional, TypedDict, Union
 
 
 class FieldState(TypedDict):

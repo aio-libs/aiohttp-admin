@@ -9,12 +9,19 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql.type_api import TypeEngine
+from sqlalchemy.types import TypeDecorator
 
 import aiohttp_admin
 from _auth import check_credentials
-from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for
+from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permission_for
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+
+
+def test_no_subtypes() -> None:
+    """We don't want any subtypes in the lookup, as this would depend on test ordering."""
+    assert all({TypeEngine, TypeDecorator} & set(t.__bases__) for t in FIELD_TYPES)
 
 
 def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -99,8 +106,9 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "type": "ReferenceManyField",
         "props": {
             "children": {"_": {"type": "Datagrid", "props": {
-                "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Ones", "reference": "one", "source": "id", "target": "many_id"}}
+                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
+            "sortable": False}}
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
@@ -109,8 +117,9 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "type": "ReferenceField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"foo": {"type": "NumberField", "props": {}}}}}},
-            "label": "Many", "reference": "many", "source": "many_id", "target": "id"}}
+                "rowClick": "show", "children": {"foo": {"type": "NumberField", "props": {}}}}}},
+            "label": "Many", "reference": "many", "source": "many_id", "target": "id",
+            "sortable": False, "link": "show"}}
     assert "many" not in r.inputs
 
 
@@ -133,8 +142,9 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "type": "ReferenceOneField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id"}}
+                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
+            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
+            "sortable": False, "link": "show"}}
     assert "other" not in r.inputs
 
     r = SAResource(mock_engine, TestB)
@@ -143,8 +153,9 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "type": "ReferenceField",
         "props": {
             "children": {"_": {"type": "DatagridSingle", "props": {
-                "children": {"str": {"type": "TextField", "props": {}}}}}},
-            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id"}}
+                "rowClick": "show", "children": {"str": {"type": "TextField", "props": {}}}}}},
+            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
+            "sortable": False, "link": "show"}}
     assert "linked" not in r.inputs
 
 

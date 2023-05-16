@@ -23,7 +23,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         try:
             omit_fields = m.fields.keys() - r["display"]
         except KeyError:
-            omit_fields = ()
+            omit_fields = m.omit_fields
         else:
             if not all(f in m.fields for f in r["display"]):
                 raise ValueError(f"Display includes non-existent field {r['display']}")

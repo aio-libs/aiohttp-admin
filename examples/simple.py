@@ -18,9 +18,9 @@ from aiohttp_admin.backends.sqlalchemy import SAResource
 
 
 class Currency(Enum):
-    EUR = "EUR"
-    GBP = "GBP"
-    USD = "USD"
+    EUR = 1
+    GBP = 2
+    USD = 3
 
 
 class Base(DeclarativeBase):

@@ -13,6 +13,7 @@ class DummyResource(AbstractAdminResource):
         self.fields = fields
         self.inputs = inputs
         self.primary_key = primary_key
+        self.omit_fields = set()
         super().__init__()
 
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:  # pragma: no cover  # noqa: B950
