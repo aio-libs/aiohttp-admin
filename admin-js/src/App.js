@@ -240,7 +240,7 @@ function createBulkUpdates(resource, name, permissions) {
             }
         }
         if (allowed)
-            buttons.push(<BulkUpdateButton label={label} data={data} />);
+            buttons.push(<BulkUpdateButton mutationMode="pessimistic" label={label} data={data} />);
     }
     return buttons;
 }
