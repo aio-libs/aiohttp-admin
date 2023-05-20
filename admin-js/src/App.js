@@ -8,8 +8,8 @@ import {
     // Show
     SimpleShowLayout, Show,
     // Actions
-    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CreateButton, ExportButton,
-    FilterButton, SelectColumnsButton, TopToolbar,
+    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CloneButton, CreateButton,
+    ExportButton, FilterButton, ListButton, SelectColumnsButton, ShowButton, TopToolbar,
     // Fields
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField,
@@ -289,6 +289,14 @@ const AiohttpShow = (resource, name, permissions) => {
 }
 
 const AiohttpEdit = (resource, name, permissions) => {
+    const EditActions = () => (
+        <TopToolbar>
+            <CloneButton />
+            <ShowButton />
+            <ListButton />
+        </TopToolbar>
+    );
+
     const AiohttpEditToolbar = props => (
         <Toolbar {...props} sx={{ display: "flex", justifyContent: "space-between" }}>
             <SaveButton />
@@ -299,7 +307,7 @@ const AiohttpEdit = (resource, name, permissions) => {
     );
 
     return(
-        <Edit mutationMode="pessimistic">
+        <Edit actions={<EditActions />} mutationMode="pessimistic">
             <SimpleForm toolbar={<AiohttpEditToolbar />} sanitizeEmptyValues warnWhenUnsavedChanges>
                 {createInputs(resource, name, "edit", permissions)}
             </SimpleForm>
