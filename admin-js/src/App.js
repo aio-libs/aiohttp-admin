@@ -44,7 +44,7 @@ const DatagridSingle = (props) => (
 );
 
 // Create a mapping of components, so we can reference them by name later.
-const COMPONENTS = Object.freeze({
+const COMPONENTS = {
     Datagrid, DatagridSingle,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
@@ -52,11 +52,24 @@ const COMPONENTS = Object.freeze({
 
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput
-});
-const VALIDATORS = Object.freeze(
-    {email, maxLength, maxValue, minLength, minValue, regex, required});
+};
+const USER_FUNCS = {};
+const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
 const STATE = Object.freeze(JSON.parse(_body.dataset.state));
+
+let MODULE_LOADER;
+if (STATE["js_module"]) {
+    // The inline comment skips the webpack import() and allows us to use the native
+    // browser's import() function. Needed to dynamically import a module.
+    MODULE_LOADER = import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
+        Object.assign(COMPONENTS, mod.components);
+        Object.assign(VALIDATORS, mod.validators);
+        Object.assign(USER_FUNCS, mod.funcs);
+    });
+} else {
+    MODULE_LOADER = Promise.resolve();
+}
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
@@ -386,4 +399,4 @@ const App = () => (
     </Admin>
 );
 
-export default App;
+export {App, MODULE_LOADER};

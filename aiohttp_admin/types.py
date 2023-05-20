@@ -84,6 +84,7 @@ class Resource(_Resource):
 
 class _Schema(TypedDict, total=False):
     view: _ViewSchema
+    js_module: str
 
 
 class Schema(_Schema):
@@ -105,3 +106,4 @@ class State(TypedDict):
     resources: dict[str, _ResourceState]
     urls: dict[str, str]
     view: _ViewSchema
+    js_module: Optional[str]

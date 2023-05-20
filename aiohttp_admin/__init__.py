@@ -76,7 +76,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     admin.on_startup.append(on_startup)
     admin["check_credentials"] = schema["security"]["check_credentials"]
     admin["identity_callback"] = schema["security"].get("identity_callback")
-    admin["state"] = {"view": schema.get("view", {})}
+    admin["state"] = {"view": schema.get("view", {}), "js_module": schema.get("js_module")}
 
     max_age = schema["security"].get("max_age")
     secure = schema["security"].get("secure", True)
