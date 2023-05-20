@@ -53,10 +53,10 @@ const COMPONENTS = {
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput
 };
+const USER_FUNCS = {};
 const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
 const STATE = Object.freeze(JSON.parse(_body.dataset.state));
-const USER_FUNCS = {};
 
 let MODULE_LOADER;
 if (STATE["js_module"]) {

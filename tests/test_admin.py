@@ -19,6 +19,24 @@ def test_path() -> None:
     assert str(admin.router["index"].url_for()) == "/another/admin"
 
 
+def test_js_module() -> None:
+    app = web.Application()
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": (), "js_module": "/custom_js.js"}
+    admin = aiohttp_admin.setup(app, schema)
+
+    assert admin["state"]["js_module"] == "/custom_js.js"
+
+
+def test_no_js_module() -> None:
+    app = web.Application()
+    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
+                                    "resources": ()}
+    admin = aiohttp_admin.setup(app, schema)
+
+    assert admin["state"]["js_module"] is None
+
+
 def test_validators() -> None:
     dummy = DummyResource(
         "dummy", {"id": {"type": "NumberField", "props": {}}},

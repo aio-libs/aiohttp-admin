@@ -72,6 +72,7 @@ async def create_app() -> web.Application:
                        "validators": {User.username.name: (("regex", r"^[A-Z][a-z]+$"),),
                                       User.email.name: (("email",),),
                                       # Custom validator from our JS module.
+                                      # Min/Max validators are automatically included.
                                       User.votes.name: (("odd",),)}},),
         # Use our JS module to include our custom validator.
         "js_module": str(app.router["js"].url_for())
