@@ -8,8 +8,6 @@ from aiohttp import web
 from . import views
 from .types import Schema
 
-_VALIDATORS = ("email", "maxLength", "maxValue", "minLength", "minValue", "regex", "required")
-
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
     admin["resources"] = []
@@ -37,8 +35,6 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         inputs = copy.deepcopy(m.inputs)
 
         for name, validators in r.get("validators", {}).items():
-            if not all(v[0] in _VALIDATORS for v in validators):
-                raise ValueError(f"First value in validators must be one of {_VALIDATORS}")
             inputs[name] = inputs[name].copy()
             inputs[name]["validators"] = tuple(inputs[name]["validators"]) + tuple(validators)
 

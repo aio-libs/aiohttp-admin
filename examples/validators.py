@@ -11,6 +11,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
+JS = """
+const odd = () => (value, allValues) => {
+    if (value % 2 === 0)
+        return "Votes must be an odd number";
+    return undefined;
+};
+
+export const validators = {odd};
+"""
+
 
 class Base(DeclarativeBase):
     """Base model."""
@@ -26,11 +36,16 @@ class User(Base):
     votes: Mapped[int] = mapped_column()
 
     __table_args__ = (sa.CheckConstraint(sa.func.char_length(username) >= 3),
-                      sa.CheckConstraint(votes >= 1), sa.CheckConstraint(votes < 5))
+                      sa.CheckConstraint(votes >= 1), sa.CheckConstraint(votes < 6),
+                      sa.CheckConstraint(votes % 2 == 1))
 
 
 async def check_credentials(username: str, password: str) -> bool:
     return username == "admin" and password == "admin"
+
+
+async def serve_js(request: web.Request) -> web.Response:
+    return web.Response(text=JS, content_type="text/javascript")
 
 
 async def create_app() -> web.Application:
@@ -41,10 +56,11 @@ async def create_app() -> web.Application:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with session.begin() as sess:
-        sess.add(User(username="Foo", votes=4))
+        sess.add(User(username="Foo", votes=5))
         sess.add(User(username="Spam", votes=1, note="Second user"))
 
     app = web.Application()
+    app.router.add_get("/js", serve_js, name="js")
 
     # This is the setup required for aiohttp-admin.
     schema: aiohttp_admin.Schema = {
@@ -54,7 +70,11 @@ async def create_app() -> web.Application:
         },
         "resources": ({"model": SAResource(engine, User),
                        "validators": {User.username.name: (("regex", r"^[A-Z][a-z]+$"),),
-                                      User.email.name: (("email",),)}},)
+                                      User.email.name: (("email",),),
+                                      # Custom validator from our JS module.
+                                      User.votes.name: (("odd",),)}},),
+        # Use our JS module to include our custom validator.
+        "js_module": str(app.router["js"].url_for())
     }
     aiohttp_admin.setup(app, schema)
 
