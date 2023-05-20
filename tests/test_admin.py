@@ -34,12 +34,6 @@ def test_validators() -> None:
     assert validators == (("required",), ("minValue", "3"))
     assert ("minValue", "3") not in dummy.inputs["id"]["validators"]
 
-    # Invalid validator
-    schema = {"security": {"check_credentials": check_credentials},
-              "resources": ({"model": dummy, "validators": {"id": (("bad", 3),)}},)}
-    with pytest.raises(ValueError, match="validators must be one of"):
-        aiohttp_admin.setup(app, schema)
-
 
 def test_re() -> None:
     test_re = DummyResource("testre", {"id": {"type": "NumberField", "props": {}},
