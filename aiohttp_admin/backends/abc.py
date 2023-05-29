@@ -28,11 +28,8 @@ INPUT_TYPES = MappingProxyType({
 
 class Encoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
-        if isinstance(o, date):
+        if isinstance(o, (date, time)):
             return str(o)
-        if isinstance(o, time):
-            # React-admin needs a datetime to display only a time...
-            return f"2000-01-01T{o}"
         if isinstance(o, Enum):
             return o.value
 

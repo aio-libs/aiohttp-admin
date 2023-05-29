@@ -14,14 +14,26 @@ import {
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField,
     // Inputs
-    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput, TimeInput,
-    ReferenceInput as _ReferenceInput,
+    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
+    TimeInput as _TimeInput, ReferenceInput as _ReferenceInput,
     // Filters
     email, maxLength, maxValue, minLength, minValue, regex, required,
     // Misc
     AutocompleteInput, EditButton, HttpError, WithRecord
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
+// Hacked TimeField/TimeInput to actually work with times.
+// TODO: Replace once new components are introduced using Temporal API.
+
+const TimeField = (props) => (
+    <WithRecord {...props} render={
+        (record) => <DateField {...props} showDate={false} showTime={true}
+                     record={{...record, [props["source"]]: record[props["source"]] === null ? null : "2020-01-01T" + record[props["source"]]}} />
+    } />
+);
+
+const TimeInput = (props) => (<_TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
 /** Reconfigure ReferenceInput to filter by the displayed repr field. */
 const ReferenceInput = (props) => {
@@ -48,7 +60,7 @@ const COMPONENTS = {
     Datagrid, DatagridSingle,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, SelectField, TextField,
+    ReferenceOneField, SelectField, TextField, TimeField,
 
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput
