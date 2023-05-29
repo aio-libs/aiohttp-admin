@@ -38,7 +38,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]
     sa.Integer: ("NumberField", "NumberInput", MPT({})),
     sa.Numeric: ("NumberField", "NumberInput", MPT({})),
     sa.String: ("TextField", "TextInput", MPT({})),
-    sa.Time: ("DateField", "TimeInput", MPT({"showDate": False, "showTime": True})),
+    sa.Time: ("TimeField", "TimeInput", MPT({})),
     sa.Uuid: ("TextField", "TextInput", MPT({})),  # TODO: validators
     # TODO: Set fields for below types.
     # sa.sql.sqltypes._AbstractInterval: (),
