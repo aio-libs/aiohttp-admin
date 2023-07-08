@@ -57,7 +57,7 @@ const DatagridSingle = (props) => (
 
 // Create a mapping of components, so we can reference them by name later.
 const COMPONENTS = {
-    Datagrid, DatagridSingle,
+    CloneButton, Datagrid, DatagridSingle,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField, TimeField,
@@ -284,9 +284,19 @@ const AiohttpList = (resource, name, permissions) => {
     );
 }
 
+
+function createAction(component_name) {
+    const C = COMPONENTS[component_name];
+    if (C === undefined)
+        throw Error(`Unknown component '${component_name}'`);
+
+    return <C />
+}
+
 const AiohttpShow = (resource, name, permissions) => {
     const ShowActions = () => (
         <TopToolbar>
+            {resource["show_actions"].map(createAction)}
             <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
         </TopToolbar>
     );

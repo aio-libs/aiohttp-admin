@@ -76,6 +76,8 @@ class _Resource(TypedDict, total=False):
     # Custom props to add to inputs.
     input_props: dict[str, dict[str, Any]]
 
+    show_actions: Sequence[str]
+
 
 class Resource(_Resource):
     # The admin resource model.
