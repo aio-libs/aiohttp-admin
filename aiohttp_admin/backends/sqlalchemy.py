@@ -197,8 +197,12 @@ class SAResource(AbstractAdminResource):
             mapper = sa.inspect(model_or_table)
             assert mapper is not None  # noqa: S101
             for name, relationship in mapper.relationships.items():
+                # https://github.com/sqlalchemy/sqlalchemy/discussions/10161#discussioncomment-6583442
+                assert relationship.local_remote_pairs  # noqa: S101
                 if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")
+                if not isinstance(relationship.entity.persist_selectable, sa.Table):
+                    continue
                 local, remote = relationship.local_remote_pairs[0]
 
                 props = {"reference": relationship.entity.persist_selectable.name,
@@ -214,11 +218,11 @@ class SAResource(AbstractAdminResource):
                     props["link"] = "show"
 
                 children = {}
-                for c in relationship.target.c.values():
-                    if c is remote:  # Skip the foreign key
+                for kc in relationship.target.c.values():
+                    if kc is remote:  # Skip the foreign key
                         continue
-                    field, inp, c_props = get_components(c.type)
-                    children[c.name] = {"type": field, "props": c_props}
+                    field, inp, c_props = get_components(kc.type)
+                    children[kc.name] = {"type": field, "props": c_props}
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
                 props["children"] = {"_": {"type": container, "props": {
                     "children": children, "rowClick": "show"}}}
