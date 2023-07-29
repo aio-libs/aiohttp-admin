@@ -34,14 +34,13 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         fields = copy.deepcopy(m.fields)
         inputs = copy.deepcopy(m.inputs)
 
-        for name, validators in r.get("validators", {}).items():
-            inputs[name] = inputs[name].copy()
-            inputs[name]["validators"] = tuple(inputs[name]["validators"]) + tuple(validators)
-
+        validators = r.get("validators", {})
         input_props = r.get("input_props", {})
         for k, v in inputs.items():
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
+            if k in validators:
+                v["props"]["validate"] = tuple(v["props"].get("validate", ())) + tuple(validators[k])
             v["props"].update(input_props.get(k, {}))
 
         for name, props in r.get("field_props", {}).items():

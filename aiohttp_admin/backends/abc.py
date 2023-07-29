@@ -13,7 +13,7 @@ from aiohttp_security import check_permission, permits
 from pydantic import Json, parse_obj_as
 
 from ..security import permissions_as_dict
-from ..types import FieldState, InputState
+from ..types import ComponentState, InputState
 
 Record = dict[str, object]
 
@@ -93,7 +93,7 @@ class DeleteManyParams(_Params):
 
 class AbstractAdminResource(ABC):
     name: str
-    fields: dict[str, FieldState]
+    fields: dict[str, ComponentState]
     inputs: dict[str, InputState]
     primary_key: str
     omit_fields: set[str]

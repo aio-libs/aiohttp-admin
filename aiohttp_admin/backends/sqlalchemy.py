@@ -16,6 +16,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
     GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
+from ..types import comp, func, regex
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -184,13 +185,13 @@ class SAResource(AbstractAdminResource):
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
 
-            self.fields[c.name] = {"type": field, "props": props}
+            self.fields[c.name] = comp(field, props)
             if c.computed is None:
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
                 show = c is not table.autoincrement_column
-                validators = self._get_validators(table, c)
-                self.inputs[c.name] = {"type": inp, "props": props, "show_create": show,
-                                       "validators": validators}
+                props["validate"] = self._get_validators(table, c)
+                self.inputs[c.name] = comp(inp, props)
+                self.inputs[c.name]["show_create"] = show
 
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
@@ -213,17 +214,18 @@ class SAResource(AbstractAdminResource):
                     t = "ReferenceOneField"
                     props["link"] = "show"
 
-                children = {}
+                children = []
                 for c in relationship.target.c.values():
                     if c is remote:  # Skip the foreign key
                         continue
                     field, inp, c_props = get_components(c.type)
-                    children[c.name] = {"type": field, "props": c_props}
+                    c_props["source"] = c.name
+                    children.append(comp(field, c_props))
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
-                props["children"] = {"_": {"type": container, "props": {
-                    "children": children, "rowClick": "show"}}}
+                datagrid = comp(container, {"children": children, "rowClick": show})
+                props["children"] = (datagrid,)
 
-                self.fields[name] = {"type": t, "props": props}
+                self.fields[name] = comp(t, props)
                 self.omit_fields.add(name)
 
         self._db = db
@@ -319,10 +321,10 @@ class SAResource(AbstractAdminResource):
     ) -> list[tuple[Union[str, int], ...]]:
         validators: list[tuple[Union[str, int], ...]] = []
         if c.default is None and c.server_default is None and not c.nullable:
-            validators.append(("required",))
+            validators.append(func("required", ()))
         max_length = getattr(c.type, "length", None)
         if max_length:
-            validators.append(("maxLength", max_length))
+            validators.append(func("maxLength", (max_length,)))
 
         for constr in table.constraints:
             if not isinstance(constr, sa.CheckConstraint):
@@ -335,13 +337,13 @@ class SAResource(AbstractAdminResource):
                     if not isinstance(right, sa.BindParameter) or right.value is None:
                         continue
                     if op is operator.ge:  # type: ignore[comparison-overlap]
-                        validators.append(("minValue", right.value))
+                        validators.append(func("minValue", (right.value,)))
                     elif op is operator.gt:  # type: ignore[comparison-overlap]
-                        validators.append(("minValue", right.value + 1))
+                        validators.append(func("minValue", (right.value + 1,)))
                     elif op is operator.le:  # type: ignore[comparison-overlap]
-                        validators.append(("maxValue", right.value))
+                        validators.append(func("maxValue", (right.value,)))
                     elif op is operator.lt:  # type: ignore[comparison-overlap]
-                        validators.append(("maxValue", right.value - 1))
+                        validators.append(func("maxValue", (right.value - 1,)))
                 elif isinstance(left, sa.Function):
                     if left.name == "char_length":
                         if next(iter(left.clauses)) is not c:
@@ -349,9 +351,9 @@ class SAResource(AbstractAdminResource):
                         if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
                         if op is operator.ge:  # type: ignore[comparison-overlap]
-                            validators.append(("minLength", right.value))
+                            validators.append(func("minLength", (right.value,)))
                         elif op is operator.gt:  # type: ignore[comparison-overlap]
-                            validators.append(("minLength", right.value + 1))
+                            validators.append(func("minLength", (right.value + 1,)))
             elif isinstance(constr.sqltext, sa.Function):
                 if constr.sqltext.name in ("regexp", "regexp_like"):
                     clauses = tuple(constr.sqltext.clauses)
@@ -359,6 +361,6 @@ class SAResource(AbstractAdminResource):
                         continue
                     if clauses[1].value is None:
                         continue
-                    validators.append(("regex", clauses[1].value))
+                    validators.append(func("regex", (regex(clauses[1].value),)))
 
         return validators
