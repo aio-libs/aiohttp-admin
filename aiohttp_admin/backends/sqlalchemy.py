@@ -201,6 +201,8 @@ class SAResource(AbstractAdminResource):
                 assert relationship.local_remote_pairs
                 if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")
+                if not isinstance(relationship.entity.persist_selectable, sa.Table):
+                    continue
                 local, remote = relationship.local_remote_pairs[0]
 
                 props = {"reference": relationship.entity.persist_selectable.name,
