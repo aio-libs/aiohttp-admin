@@ -197,7 +197,7 @@ class SAResource(AbstractAdminResource):
             mapper = sa.inspect(model_or_table)
             assert mapper is not None  # noqa: S101
             for name, relationship in mapper.relationships.items():
-                if not relationship.local_remote_pairs or len(relationship.local_remote_pairs) > 1:
+                if len(relationship.local_remote_pairs) > 1:
                     raise NotImplementedError("Composite foreign keys not supported yet.")
                 local, remote = relationship.local_remote_pairs[0]
 
