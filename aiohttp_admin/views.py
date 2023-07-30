@@ -1,10 +1,17 @@
 import __main__
 import json
-from typing import TypedDict
+import sys
 
 from aiohttp import web
 from aiohttp_security import forget, remember
-from pydantic import Json, parse_obj_as
+from pydantic import Json
+
+from .security import check
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
 class _Login(TypedDict):
@@ -47,7 +54,7 @@ async def index(request: web.Request) -> web.Response:
 
 async def token(request: web.Request) -> web.Response:
     """Validate user credentials and log the user in."""
-    data = parse_obj_as(Json[_Login], await request.read())
+    data = check(Json[_Login], await request.read())
 
     check_credentials = request.app["check_credentials"]
     if not await check_credentials(data["username"], data["password"]):

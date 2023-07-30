@@ -1,19 +1,25 @@
 import asyncio
 import json
+import sys
 import warnings
 from abc import ABC, abstractmethod
 from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, Optional, Union
 
 from aiohttp import web
 from aiohttp_security import check_permission, permits
-from pydantic import Json, parse_obj_as
+from pydantic import Json
 
-from ..security import permissions_as_dict
-from ..types import FieldState, InputState
+from ..security import check, permissions_as_dict
+from ..types import ComponentState, InputState
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 Record = dict[str, object]
 
@@ -93,7 +99,7 @@ class DeleteManyParams(_Params):
 
 class AbstractAdminResource(ABC):
     name: str
-    fields: dict[str, FieldState]
+    fields: dict[str, ComponentState]
     inputs: dict[str, InputState]
     primary_key: str
     omit_fields: set[str]
@@ -149,7 +155,7 @@ class AbstractAdminResource(ABC):
 
     async def _get_list(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
-        query = parse_obj_as(GetListParams, request.query)
+        query = check(GetListParams, request.query)
 
         # When sort order refers to "id", this should be translated to primary key.
         if query["sort"]["field"] == "id":
@@ -174,7 +180,7 @@ class AbstractAdminResource(ABC):
 
     async def _get_one(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
-        query = parse_obj_as(GetOneParams, request.query)
+        query = check(GetOneParams, request.query)
 
         result = await self.get_one(query)
         if not await permits(request, f"admin.{self.name}.view", context=(request, result)):
@@ -185,7 +191,7 @@ class AbstractAdminResource(ABC):
 
     async def _get_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
-        query = parse_obj_as(GetManyParams, request.query)
+        query = check(GetManyParams, request.query)
 
         results = await self.get_many(query)
         if not results:
@@ -198,12 +204,12 @@ class AbstractAdminResource(ABC):
         return json_response({"data": results})
 
     async def _create(self, request: web.Request) -> web.Response:
-        query = parse_obj_as(CreateParams, request.query)
+        query = check(CreateParams, request.query)
         # TODO(Pydantic): Dissallow extra arguments
         for k in query["data"]:
             if k not in self.inputs and k != "id":
                 raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
-        query["data"] = parse_obj_as(self._record_type, query["data"])
+        query["data"] = check(self._record_type, query["data"])
         await check_permission(request, f"admin.{self.name}.add", context=(request, query["data"]))
         for k, v in query["data"].items():
             if v is not None:
@@ -217,13 +223,13 @@ class AbstractAdminResource(ABC):
 
     async def _update(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
-        query = parse_obj_as(UpdateParams, request.query)
+        query = check(UpdateParams, request.query)
         # TODO(Pydantic): Dissallow extra arguments
         for k in query["data"]:
             if k not in self.inputs and k != "id":
                 raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
-        query["data"] = parse_obj_as(self._record_type, query["data"])
-        query["previousData"] = parse_obj_as(self._record_type, query["previousData"])
+        query["data"] = check(self._record_type, query["data"])
+        query["previousData"] = check(self._record_type, query["previousData"])
 
         if self.primary_key != "id":
             query["data"].pop("id", None)
@@ -251,12 +257,12 @@ class AbstractAdminResource(ABC):
 
     async def _update_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
-        query = parse_obj_as(UpdateManyParams, request.query)
+        query = check(UpdateManyParams, request.query)
         # TODO(Pydantic): Dissallow extra arguments
         for k in query["data"]:
             if k not in self.inputs and k != "id":
                 raise web.HTTPBadRequest(reason=f"Invalid field '{k}'")
-        query["data"] = parse_obj_as(self._record_type, query["data"])
+        query["data"] = check(self._record_type, query["data"])
 
         # Check original records are allowed by permission filters.
         originals = await self.get_many({"ids": query["ids"]})
@@ -278,8 +284,8 @@ class AbstractAdminResource(ABC):
 
     async def _delete(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
-        query = parse_obj_as(DeleteParams, request.query)
-        query["previousData"] = parse_obj_as(self._record_type, query["previousData"])
+        query = check(DeleteParams, request.query)
+        query["previousData"] = check(self._record_type, query["previousData"])
 
         original = await self.get_one({"id": query["id"]})
         if not await permits(request, f"admin.{self.name}.delete", context=(request, original)):
@@ -292,7 +298,7 @@ class AbstractAdminResource(ABC):
 
     async def _delete_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
-        query = parse_obj_as(DeleteManyParams, request.query)
+        query = check(DeleteManyParams, request.query)
 
         originals = await self.get_many(query)
         allowed = await asyncio.gather(*(permits(request, f"admin.{self.name}.delete",

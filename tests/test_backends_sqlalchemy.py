@@ -15,6 +15,7 @@ from sqlalchemy.types import TypeDecorator
 import aiohttp_admin
 from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permission_for
+from aiohttp_admin.types import comp, func, regex
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 
@@ -33,16 +34,14 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     r = SAResource(mock_engine, TestModel)
     assert r.name == "dummy"
     assert r.primary_key == "id"
-    assert r.fields == {
-        "id": {"type": "NumberField", "props": {}},
-        "num": {"type": "TextField", "props": {}}
-    }
+    assert r.fields == {"id": comp("NumberField", {"source": "id"}),
+                        "num": comp("TextField", {"source": "num"})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": {"type": "NumberInput", "show_create": False, "props": {},
-               "validators": [("required",)]},
-        "num": {"type": "TextInput", "show_create": True, "props": {},
-                "validators": [("required",)]}
+        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
+        | {"show_create": False},
+        "num": comp("TextInput", {"source": "num", "validate": [func("required", ())]})
+        | {"show_create": True}
     }
 
 
@@ -55,15 +54,15 @@ def test_table(mock_engine: AsyncEngine) -> None:
     assert r.name == "dummy"
     assert r.primary_key == "id"
     assert r.fields == {
-        "id": {"type": "NumberField", "props": {}},
-        "num": {"type": "TextField", "props": {}}
+        "id": comp("NumberField", {"source": "id"}),
+        "num": comp("TextField", {"source": "num"})
     }
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": {"type": "NumberInput", "show_create": False, "props": {},
-               "validators": [("required",)]},
-        "num": {"type": "TextInput", "show_create": True, "props": {},
-                "validators": [("maxLength", 30)]}
+        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
+        | {"show_create": False},
+        "num": comp("TextInput", {"source": "num", "validate": [func("maxLength", (30,))]})
+        | {"show_create": True}
     }
 
 
@@ -79,12 +78,13 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     r = SAResource(mock_engine, TestChildModel)
     assert r.name == "child"
     assert r.primary_key == "id"
-    assert r.fields == {"id": {"type": "ReferenceField", "props": {
-        "reference": "dummy", "source": "id", "target": "id"}}}
+    assert r.fields == {"id": comp("ReferenceField",
+                                   {"reference": "dummy", "source": "id", "target": "id"})}
     # PK with FK constraint should be shown in create form.
-    assert r.inputs == {"id": {
-        "type": "ReferenceInput", "show_create": True, "validators": [("required",)],
-        "props": {"reference": "dummy", "source": "id", "target": "id"}}}
+    assert r.inputs == {"id": comp(
+        "ReferenceInput",
+        {"validate": [func("required", ())], "reference": "dummy",
+         "source": "id", "target": "id"}) | {"show_create": True}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -92,7 +92,7 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         __tablename__ = "many"
         id: Mapped[int] = mapped_column(primary_key=True)
         foo: Mapped[int]
-        ones: Mapped[list["TestOne"]] = relationship(back_populates="many")  # noqa: F821
+        ones: Mapped[list["TestOne"]] = relationship(back_populates="many")
 
     class TestOne(base):  # type: ignore[misc,valid-type]
         __tablename__ = "one"
@@ -102,24 +102,22 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
 
     r = SAResource(mock_engine, TestMany)
     assert r.name == "many"
-    assert r.fields["ones"] == {
-        "type": "ReferenceManyField",
-        "props": {
-            "children": {"_": {"type": "Datagrid", "props": {
-                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
-            "sortable": False}}
+    assert r.fields["ones"] == comp(
+        "ReferenceManyField",
+        {"children": (comp("Datagrid", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
+         "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
+         "sortable": False})
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
     assert r.name == "one"
-    assert r.fields["many"] == {
-        "type": "ReferenceField",
-        "props": {
-            "children": {"_": {"type": "DatagridSingle", "props": {
-                "rowClick": "show", "children": {"foo": {"type": "NumberField", "props": {}}}}}},
-            "label": "Many", "reference": "many", "source": "many_id", "target": "id",
-            "sortable": False, "link": "show"}}
+    assert r.fields["many"] == comp(
+        "ReferenceField",
+        {"children": (comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": "foo"})]}),),
+         "label": "Many", "reference": "many", "source": "many_id", "target": "id",
+         "sortable": False, "link": "show"})
     assert "many" not in r.inputs
 
 
@@ -128,7 +126,7 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         __tablename__ = "test_a"
         id: Mapped[int] = mapped_column(primary_key=True)
         str: Mapped[str]
-        other: Mapped["TestB"] = relationship(back_populates="linked")  # noqa: F821
+        other: Mapped["TestB"] = relationship(back_populates="linked")
 
     class TestB(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test_b"
@@ -138,24 +136,22 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
 
     r = SAResource(mock_engine, TestA)
     assert r.name == "test_a"
-    assert r.fields["other"] == {
-        "type": "ReferenceOneField",
-        "props": {
-            "children": {"_": {"type": "DatagridSingle", "props": {
-                "rowClick": "show", "children": {"id": {"type": "NumberField", "props": {}}}}}},
-            "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
-            "sortable": False, "link": "show"}}
+    assert r.fields["other"] == comp(
+        "ReferenceOneField",
+        {"children": (comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
+         "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
+         "sortable": False, "link": "show"})
     assert "other" not in r.inputs
 
     r = SAResource(mock_engine, TestB)
     assert r.name == "test_b"
-    assert r.fields["linked"] == {
-        "type": "ReferenceField",
-        "props": {
-            "children": {"_": {"type": "DatagridSingle", "props": {
-                "rowClick": "show", "children": {"str": {"type": "TextField", "props": {}}}}}},
-            "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
-            "sortable": False, "link": "show"}}
+    assert r.fields["linked"] == comp(
+        "ReferenceField",
+        {"children": (comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("TextField", {"source": "str"})]}),),
+         "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
+         "sortable": False, "link": "show"})
     assert "linked" not in r.inputs
 
 
@@ -185,19 +181,20 @@ def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine
     r = SAResource(mock_engine, TestCC)
 
     f = r.inputs
-    assert f["pk"]["validators"] == [("required",)]
-    assert f["default"]["validators"] == []
-    assert f["server_default"]["validators"] == []
-    assert f["nullable"]["validators"] == []
-    assert f["not_nullable"]["validators"] == [("required",)]
-    assert f["max_length"]["validators"] == [("required",), ("maxLength", 16)]
-    assert f["gt"]["validators"] == [("required",), ("minValue", 4)]
-    assert f["gte"]["validators"] == [("required",), ("minValue", 3)]
-    assert f["lt"]["validators"] == [("required",), ("maxValue", 2)]
-    assert f["lte"]["validators"] == [("maxValue", 3)]
-    assert f["min_length"]["validators"] == [("required",), ("minLength", 5)]
-    assert f["min_length_gt"]["validators"] == [("required",), ("minLength", 6)]
-    assert f["regex"]["validators"] == [("required",), ("regex", "abc.*")]
+    required = func("required", ())
+    assert f["pk"]["props"]["validate"] == [required]
+    assert f["default"]["props"]["validate"] == []
+    assert f["server_default"]["props"]["validate"] == []
+    assert f["nullable"]["props"]["validate"] == []
+    assert f["not_nullable"]["props"]["validate"] == [required]
+    assert f["max_length"]["props"]["validate"] == [required, func("maxLength", (16,))]
+    assert f["gt"]["props"]["validate"] == [required, func("minValue", (4,))]
+    assert f["gte"]["props"]["validate"] == [required, func("minValue", (3,))]
+    assert f["lt"]["props"]["validate"] == [required, func("maxValue", (2,))]
+    assert f["lte"]["props"]["validate"] == [func("maxValue", (3,))]
+    assert f["min_length"]["props"]["validate"] == [required, func("minLength", (5,))]
+    assert f["min_length_gt"]["props"]["validate"] == [required, func("minLength", (6,))]
+    assert f["regex"]["props"]["validate"] == [required, func("regex", (regex("abc.*"),))]
 
 
 async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -210,14 +207,14 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
     assert r.name == "test"
     assert r.primary_key == "num"
     assert r.fields == {
-        "num": {"type": "NumberField", "props": {}},
-        "other": {"type": "TextField", "props": {}}
+        "num": comp("NumberField", {"source": "num"}),
+        "other": comp("TextField", {"source": "other"})
     }
     assert r.inputs == {
-        "num": {"type": "NumberInput", "show_create": False, "props": {},
-                "validators": [("required",)]},
-        "other": {"type": "TextInput", "show_create": True, "props": {},
-                  "validators": [("required",)]}
+        "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
+        | {"show_create": False},
+        "other": comp("TextInput", {"source": "other", "validate": [func("required", ())]})
+        | {"show_create": True}
     }
 
 

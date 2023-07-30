@@ -65,8 +65,7 @@ const COMPONENTS = {
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput
 };
-const USER_FUNCS = {};
-const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
+const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
 const STATE = Object.freeze(JSON.parse(_body.dataset.state));
 
@@ -76,8 +75,7 @@ if (STATE["js_module"]) {
     // browser's import() function. Needed to dynamically import a module.
     MODULE_LOADER = import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
         Object.assign(COMPONENTS, mod.components);
-        Object.assign(VALIDATORS, mod.validators);
-        Object.assign(USER_FUNCS, mod.funcs);
+        Object.assign(FUNCTIONS, mod.functions);
     });
 } else {
     MODULE_LOADER = Promise.resolve();
@@ -157,38 +155,50 @@ const authProvider = {
     },
 };
 
+function evaluate(obj) {
+    if (obj === null || obj === undefined)
+        return obj;
+    if (Array.isArray(obj))
+        return obj.map(evaluate);
+    if (obj["__type__"] === "component") {
+        const C = COMPONENTS[obj["type"]];
+        if (C === undefined)
+            throw Error(`Unknown component '${obj["type"]}'`);
 
-function createFields(resource, name, permissions) {
+        let {children, ...props} = obj["props"];
+        props = Object.fromEntries(Object.entries(props).map(([k, v]) => [k, evaluate(v)]));
+        if (children)
+            return <C {...props}>{evaluate(children)}</C>;
+        return <C {...props} />;
+    }
+    if (obj["__type__"] === "function") {
+        const f = FUNCTIONS[obj["name"]];
+        if (f === undefined)
+            throw Error(`Unknown function '${obj["name"]}'`);
+        if (obj["args"] === null)
+            return f;
+        return f(...evaluate(obj["args"]));
+    }
+    if (obj["__type__"] === "regexp")
+        return new RegExp(obj["value"]);
+    return obj;
+}
+
+
+function createFields(fields, name, permissions) {
     let components = [];
-    for (const [field, state] of Object.entries(resource["fields"])) {
+    for (const [field, state] of Object.entries(fields)) {
         if (!hasPermission(`${name}.${field}.view`, permissions))
             continue;
 
-        const C = COMPONENTS[state["type"]];
-        if (C === undefined)
-            throw Error(`Unknown component '${state["type"]}'`);
-
-        const {children, ...props} = state["props"];
-        let c;
-        if (children) {
-            let child_fields = createFields(
-                {"fields": children, "display": Object.keys(children)}, name, permissions);
-            c = <C source={field} {...props}>{child_fields}</C>;
-        } else {
-            c = <C source={field} {...props} />;
-        }
-        if (field === "_") {
-            // Layout component, not related to a specific field.
-            components.push(c);
-        } else {
-            const withRecordProps = {
-                "source": field, "label": props["label"], "sortable": props["sortable"],
-                "sortBy": props["sortBy"], "sortByOrder": props["sortByOrder"]}
-            // Show icon if user doesn't have permission to view this field (based on filters).
-            components.push(<WithRecord {...withRecordProps} render={
-                (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
-            } />);
-        }
+        const c = evaluate(state);
+        const withRecordPropNames = ["label", "sortable", "sortBy", "sortByOrder"];
+        const withRecordProps = Object.fromEntries(withRecordPropNames.map(
+            (k) => [k, evaluate(state["props"][k])]));
+        // Show icon if user doesn't have permission to view this field (based on filters).
+        components.push(<WithRecord source={field} {...withRecordProps} render={
+            (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
+        } />);
     }
     return components;
 }
@@ -196,7 +206,7 @@ function createFields(resource, name, permissions) {
 function createInputs(resource, name, perm_type, permissions) {
     let components = [];
     const resource_filters = getFilters(name, perm_type, permissions);
-    for (const [field, state] of Object.entries(resource["inputs"])) {
+    for (let [field, state] of Object.entries(resource["inputs"])) {
         if ((perm_type === "add" && !state["show_create"])
             || !hasPermission(`${name}.${field}.${perm_type}`, permissions))
             continue;
@@ -216,19 +226,11 @@ function createInputs(resource, name, perm_type, permissions) {
                 <SelectInput source={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
                     validate={nullable < 0 && required()} disabled={disabled} />);
         } else {
-            const C = COMPONENTS[state["type"]];
-            if (C === undefined)
-                throw Error(`Unknown component '${state["type"]}'`);
-
-            let validators = [];
-            if (perm_type !== "view") {
-                for (let validator of state["validators"]) {
-                    if (validator[0] === "regex")
-                        validator[1] = new RegExp(validator[1]);
-                    validators.push(VALIDATORS[validator[0]](...validator.slice(1)))
-                }
+            if (perm_type === "view") {
+                state = structuredClone(state);
+                delete state["props"]["validate"];
             }
-            const c = <C source={field} validate={validators} {...state["props"]} />;
+            const c = evaluate(state);
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
                 components.push(<WithRecord source={field} render={
@@ -277,7 +279,7 @@ const AiohttpList = (resource, name, permissions) => {
     return (
         <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}>
             <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
-                {createFields(resource, name, permissions)}
+                {createFields(resource["fields"], name, permissions)}
                 <WithRecord label="[Edit]" render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
             </DatagridConfigurable>
         </List>
@@ -294,7 +296,7 @@ const AiohttpShow = (resource, name, permissions) => {
     return (
         <Show actions={<ShowActions />}>
             <SimpleShowLayout>
-                {createFields(resource, name, permissions)}
+                {createFields(resource["fields"], name, permissions)}
             </SimpleShowLayout>
         </Show>
     );

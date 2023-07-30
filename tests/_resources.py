@@ -3,11 +3,11 @@ from typing import Union
 from aiohttp_admin.backends.abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
     GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
-from aiohttp_admin.types import FieldState, InputState
+from aiohttp_admin.types import ComponentState, InputState
 
 
 class DummyResource(AbstractAdminResource):
-    def __init__(self, name: str, fields: dict[str, FieldState],
+    def __init__(self, name: str, fields: dict[str, ComponentState],
                  inputs: dict[str, InputState], primary_key: str):
         self.name = name
         self.fields = fields

@@ -4,6 +4,7 @@ from aiohttp import web
 import aiohttp_admin
 from _auth import check_credentials
 from _resources import DummyResource
+from aiohttp_admin.types import comp, func
 
 
 def test_path() -> None:
@@ -39,23 +40,25 @@ def test_no_js_module() -> None:
 
 def test_validators() -> None:
     dummy = DummyResource(
-        "dummy", {"id": {"type": "NumberField", "props": {}}},
-        {"id": {"type": "NumberInput", "props": {}, "show_create": True,
-         "validators": (("required",),)}}, "id")
+        "dummy",
+        {"id": {"__type__": "component", "type": "NumberField", "props": {}}},
+        {"id": {"__type__": "component", "type": "NumberInput",
+                "props": {"validate": ({"__type__": "function", "name": "required", "args": ()},)},
+                "show_create": True}},
+        "id")
     app = web.Application()
-    schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
-                                    "resources": ({"model": dummy,
-                                                   "validators": {"id": (("minValue", 3),)}},)}
+    schema: aiohttp_admin.Schema = {
+        "security": {"check_credentials": check_credentials},
+        "resources": ({"model": dummy, "validators": {"id": (func("minValue", (3,)),)}},)}
     admin = aiohttp_admin.setup(app, schema)
-    validators = admin["state"]["resources"]["dummy"]["inputs"]["id"]["validators"]
-    # TODO(Pydantic2): Should be int 3 in both lines.
-    assert validators == (("required",), ("minValue", "3"))
-    assert ("minValue", "3") not in dummy.inputs["id"]["validators"]
+    validators = admin["state"]["resources"]["dummy"]["inputs"]["id"]["props"]["validate"]
+    assert validators == (func("required", ()), func("minValue", (3,)))
+    assert ("minValue", 3) not in dummy.inputs["id"]["props"]["validate"]  # type: ignore[operator]
 
 
 def test_re() -> None:
-    test_re = DummyResource("testre", {"id": {"type": "NumberField", "props": {}},
-                                       "value": {"type": "TextField", "props": {}}}, {}, "id")
+    test_re = DummyResource(
+        "testre", {"id": comp("NumberField"), "value": comp("TextField")}, {}, "id")
 
     app = web.Application()
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
@@ -90,10 +93,9 @@ def test_display() -> None:
     app = web.Application()
     model = DummyResource(
         "test",
-        {"id": {"type": "TextField", "props": {}}, "foo": {"type": "TextField", "props": {}}},
-        {"id": {"type": "TextInput", "props": {}, "show_create": False,
-         "validators": (("required",),)},
-         "foo": {"type": "TextInput", "props": {}, "show_create": True, "validators": ()}},
+        {"id": comp("TextField"), "foo": comp("TextField")},
+        {"id": comp("TextInput", {"validate": (func("required", ()),)}) | {"show_create": False},  # type: ignore[dict-item]
+         "foo": comp("TextInput") | {"show_create": True}},  # type: ignore[dict-item]
         "id")
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": model, "display": ("foo",)},)}
@@ -102,14 +104,13 @@ def test_display() -> None:
 
     test_state = admin["state"]["resources"]["test"]
     assert test_state["list_omit"] == ("id",)
-    assert test_state["inputs"]["id"]["props"] == {}
+    assert test_state["inputs"]["id"]["props"] == {"validate": (func("required", ()),)}
     assert test_state["inputs"]["foo"]["props"] == {"alwaysOn": "alwaysOn"}
 
 
 def test_display_invalid() -> None:
     app = web.Application()
-    model = DummyResource("test", {"id": {"type": "TextField", "props": {}},
-                                   "foo": {"type": "TextField", "props": {}}}, {}, "id")
+    model = DummyResource("test", {"id": comp("TextField"), "foo": comp("TextField")}, {}, "id")
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": model, "display": ("bar",)},)}
 
@@ -121,9 +122,9 @@ def test_extra_props() -> None:
     app = web.Application()
     model = DummyResource(
         "test",
-        {"id": {"type": "TextField", "props": {"textAlign": "right", "placeholder": "foo"}}},
-        {"id": {"type": "TextInput", "props": {"resettable": False, "type": "text"},
-         "show_create": False, "validators": ()}},
+        {"id": comp("TextField", {"textAlign": "right", "placeholder": "foo"})},
+        {"id": comp("TextInput", {"resettable": False, "type": "text"})
+         | {"show_create": False}},  # type: ignore[dict-item]
         "id")
     schema: aiohttp_admin.Schema = {
         "security": {"check_credentials": check_credentials},
@@ -144,8 +145,7 @@ def test_extra_props() -> None:
 
 def test_invalid_repr() -> None:
     app = web.Application()
-    model = DummyResource("test", {"id": {"type": "TextField", "props": {}},
-                                   "foo": {"type": "TextField", "props": {}}}, {}, "id")
+    model = DummyResource("test", {"id": comp("TextField"), "foo": comp("TextField")}, {}, "id")
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": model, "repr": "bar"},)}
 

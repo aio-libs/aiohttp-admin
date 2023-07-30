@@ -1,18 +1,33 @@
+import sys
 from collections.abc import Callable, Collection, Sequence
-from typing import Any, Awaitable, Optional, TypedDict, Union
+from typing import Any, Awaitable, Literal, Mapping, Optional
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
-class FieldState(TypedDict):
+class ComponentState(TypedDict):
+    __type__: Literal["component"]
     type: str
     props: dict[str, object]
 
 
-class InputState(FieldState):
+class FunctionState(TypedDict):
+    __type__: Literal["function"]
+    name: str
+    args: Optional[Sequence[object]]
+
+
+class RegexState(TypedDict):
+    __type__: Literal["regexp"]
+    value: str
+
+
+class InputState(ComponentState):
     # Whether to show this input in the create form.
     show_create: bool
-    # Validators to add to the input. Each validator is the name of the validator
-    # function, followed by arguments for that function. e.g. ("minValue", 5)
-    validators: Sequence[Sequence[Union[str, int]]]
 
 
 class _IdentityDict(TypedDict, total=False):
@@ -70,7 +85,7 @@ class _Resource(TypedDict, total=False):
     # e.g. {"Reset Views": {"views": 0}}
     bulk_update: dict[str, dict[str, Any]]
     # Custom validators to add to inputs.
-    validators: dict[str, Sequence[Sequence[Union[str, int]]]]
+    validators: dict[str, Sequence[FunctionState]]
     # Custom props to add to fields.
     field_props: dict[str, dict[str, Any]]
     # Custom props to add to inputs.
@@ -94,7 +109,7 @@ class Schema(_Schema):
 
 class _ResourceState(TypedDict):
     display: Sequence[str]
-    fields: dict[str, FieldState]
+    fields: dict[str, ComponentState]
     inputs: dict[str, InputState]
     repr: str
     icon: Optional[str]
@@ -107,3 +122,24 @@ class State(TypedDict):
     urls: dict[str, str]
     view: _ViewSchema
     js_module: Optional[str]
+
+
+def comp(t: str, props: Optional[Mapping[str, object]] = None) -> ComponentState:
+    """Use a component of type t with the given props."""
+    return {"__type__": "component", "type": t, "props": dict(props or {})}
+
+
+def func(name: str, args: Optional[Sequence[object]] = None) -> FunctionState:
+    """Use the function with matching name.
+
+    If args are provided, the function will be called with those arguments.
+    Otherwise, the function itself will be passed in the frontend.
+    e.g. To use the 'required' validator, use func("required", ())
+         Or, to pass a custom function directly as a prop, use func("myFunction")
+    """
+    return {"__type__": "function", "name": name, "args": args}
+
+
+def regex(value: str) -> RegexState:
+    """Convert value to a RegExp object on the frontend."""
+    return {"__type__": "regexp", "value": value}

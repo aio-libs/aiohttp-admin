@@ -10,15 +10,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
+from aiohttp_admin.types import func, regex
 
 JS = """
-const odd = () => (value, allValues) => {
+const odd = (value, allValues) => {
     if (value % 2 === 0)
         return "Votes must be an odd number";
     return undefined;
 };
 
-export const validators = {odd};
+export const functions = {odd};
 """
 
 
@@ -69,11 +70,12 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": ({"model": SAResource(engine, User),
-                       "validators": {User.username.name: (("regex", r"^[A-Z][a-z]+$"),),
-                                      User.email.name: (("email",),),
+                       "validators": {User.username.name: (func("regex",
+                                                                (regex(r"^[A-Z][a-z]+$"),)),),
+                                      User.email.name: (func("email", ()),),
                                       # Custom validator from our JS module.
                                       # Min/Max validators are automatically included.
-                                      User.votes.name: (("odd",),)}},),
+                                      User.votes.name: (func("odd"),)}},),
         # Use our JS module to include our custom validator.
         "js_module": str(app.router["js"].url_for())
     }
