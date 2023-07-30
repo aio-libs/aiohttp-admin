@@ -90,7 +90,7 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         __tablename__ = "many"
         id: Mapped[int] = mapped_column(primary_key=True)
         foo: Mapped[int]
-        ones: Mapped[list["TestOne"]] = relationship(back_populates="many")  # noqa: F821
+        ones: Mapped[list["TestOne"]] = relationship(back_populates="many")
 
     class TestOne(base):  # type: ignore[misc,valid-type]
         __tablename__ = "one"
@@ -124,7 +124,7 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         __tablename__ = "test_a"
         id: Mapped[int] = mapped_column(primary_key=True)
         str: Mapped[str]
-        other: Mapped["TestB"] = relationship(back_populates="linked")  # noqa: F821
+        other: Mapped["TestB"] = relationship(back_populates="linked")
 
     class TestB(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test_b"
