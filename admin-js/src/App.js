@@ -65,8 +65,7 @@ const COMPONENTS = {
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput
 };
-const USER_FUNCS = {};
-const VALIDATORS = {email, maxLength, maxValue, minLength, minValue, regex, required};
+const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
 const STATE = Object.freeze(JSON.parse(_body.dataset.state));
 
@@ -76,8 +75,7 @@ if (STATE["js_module"]) {
     // browser's import() function. Needed to dynamically import a module.
     MODULE_LOADER = import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
         Object.assign(COMPONENTS, mod.components);
-        Object.assign(VALIDATORS, mod.validators);
-        Object.assign(USER_FUNCS, mod.funcs);
+        Object.assign(FUNCTIONS, mod.functions);
     });
 } else {
     MODULE_LOADER = Promise.resolve();
@@ -208,7 +206,7 @@ function createFields(fields, name, permissions) {
 function createInputs(resource, name, perm_type, permissions) {
     let components = [];
     const resource_filters = getFilters(name, perm_type, permissions);
-    for (const [field, state] of Object.entries(resource["inputs"])) {
+    for (let [field, state] of Object.entries(resource["inputs"])) {
         if ((perm_type === "add" && !state["show_create"])
             || !hasPermission(`${name}.${field}.${perm_type}`, permissions))
             continue;
@@ -228,6 +226,10 @@ function createInputs(resource, name, perm_type, permissions) {
                 <SelectInput source={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
                     validate={nullable < 0 && required()} disabled={disabled} />);
         } else {
+            if (perm_type === "view") {
+                state = structuredClone(state);
+                delete state["props"]["validate"];
+            }
             const c = evaluate(state);
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.

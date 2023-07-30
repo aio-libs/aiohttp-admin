@@ -1,5 +1,11 @@
+import sys
 from collections.abc import Callable, Collection, Sequence
-from typing import Any, Awaitable, Literal, Optional, TypedDict, Union
+from typing import Any, Awaitable, Literal, Optional, Union
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
 class ComponentState(TypedDict):

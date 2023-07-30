@@ -1,10 +1,15 @@
 import __main__
 import json
-from typing import TypedDict
+import sys
 
 from aiohttp import web
 from aiohttp_security import forget, remember
 from pydantic import Json, parse_obj_as
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
 class _Login(TypedDict):

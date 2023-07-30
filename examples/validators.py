@@ -10,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
-from aiohttp_admin.types import func
+from aiohttp_admin.types import func, regex
 
 JS = """
 const odd = (value, allValues) => {
@@ -70,7 +70,7 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": ({"model": SAResource(engine, User),
-                       "validators": {User.username.name: (func("regex", (r"^[A-Z][a-z]+$",)),),
+                       "validators": {User.username.name: (func("regex", (regex(r"^[A-Z][a-z]+$"),)),),
                                       User.email.name: (func("email", ()),),
                                       # Custom validator from our JS module.
                                       # Min/Max validators are automatically included.

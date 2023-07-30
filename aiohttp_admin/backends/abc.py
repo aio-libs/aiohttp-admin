@@ -1,12 +1,13 @@
 import asyncio
 import json
+import sys
 import warnings
 from abc import ABC, abstractmethod
 from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, Optional, Union
 
 from aiohttp import web
 from aiohttp_security import check_permission, permits
@@ -14,6 +15,11 @@ from pydantic import Json, parse_obj_as
 
 from ..security import permissions_as_dict
 from ..types import ComponentState, InputState
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 Record = dict[str, object]
 

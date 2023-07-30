@@ -174,9 +174,10 @@ class SAResource(AbstractAdminResource):
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
                 props: dict[str, Any] = {"reference": key.column.table.name,
-                                         "source": c.name, "target": key.column.name}
+                                         "target": key.column.name}
             else:
                 field, inp, props = get_components(c.type)
+            props["source"] = c.name
 
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
@@ -188,6 +189,7 @@ class SAResource(AbstractAdminResource):
             self.fields[c.name] = comp(field, props)
             if c.computed is None:
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
+                props = props.copy()
                 show = c is not table.autoincrement_column
                 props["validate"] = self._get_validators(table, c)
                 self.inputs[c.name] = comp(inp, props)
