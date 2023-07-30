@@ -58,9 +58,9 @@ def test_table(mock_engine: AsyncEngine) -> None:
     # Autoincremented PK should not be in create form
     assert r.inputs == {
         "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
-              | {"show_create": False},
+        | {"show_create": False},
         "num": comp("TextInput", {"source": "num", "validate": [func("maxLength", (30,))]})
-              | {"show_create": True}
+        | {"show_create": True}
     }
 
 
@@ -104,8 +104,8 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "ReferenceManyField",
         {"children": (comp("Datagrid", {
             "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
-        "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
-        "sortable": False})
+         "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
+         "sortable": False})
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
@@ -114,8 +114,8 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "ReferenceField",
         {"children": (comp("DatagridSingle", {
             "rowClick": "show", "children": [comp("NumberField", {"source": "foo"})]}),),
-        "label": "Many", "reference": "many", "source": "many_id", "target": "id",
-        "sortable": False, "link": "show"})
+         "label": "Many", "reference": "many", "source": "many_id", "target": "id",
+         "sortable": False, "link": "show"})
     assert "many" not in r.inputs
 
 
@@ -138,8 +138,8 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "ReferenceOneField",
         {"children": (comp("DatagridSingle", {
             "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
-        "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
-        "sortable": False, "link": "show"})
+         "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
+         "sortable": False, "link": "show"})
     assert "other" not in r.inputs
 
     r = SAResource(mock_engine, TestB)
@@ -148,8 +148,8 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
         "ReferenceField",
         {"children": (comp("DatagridSingle", {
             "rowClick": "show", "children": [comp("TextField", {"source": "str"})]}),),
-        "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
-        "sortable": False, "link": "show"})
+         "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
+         "sortable": False, "link": "show"})
     assert "linked" not in r.inputs
 
 
@@ -210,9 +210,9 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
     }
     assert r.inputs == {
         "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
-               | {"show_create": False},
+        | {"show_create": False},
         "other": comp("TextInput", {"source": "other", "validate": [func("required", ())]})
-                 | {"show_create": True}
+        | {"show_create": True}
     }
 
 

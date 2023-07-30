@@ -32,8 +32,9 @@ async def test_admin_view(admin_client: TestClient) -> None:
     r = state["resources"]["dummy"]
     assert r["list_omit"] == []
     assert r["fields"] == {"id": comp("NumberField", {"source": "id"})}
-    assert r["inputs"] == {"id":
-        comp("NumberInput", {"source": "id", "alwaysOn": "alwaysOn", "validate": [func("required", [])]})
+    assert r["inputs"] == {
+        "id": comp("NumberInput",
+                   {"source": "id", "alwaysOn": "alwaysOn", "validate": [func("required", [])]})
         | {"show_create": False}}
     assert r["repr"] == "id"
     assert state["urls"] == {"token": "/admin/token", "logout": "/admin/logout"}

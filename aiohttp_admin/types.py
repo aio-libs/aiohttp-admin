@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Callable, Collection, Sequence
-from typing import Any, Awaitable, Literal, Mapping, Optional, Union
+from typing import Any, Awaitable, Literal, Mapping, Optional
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
