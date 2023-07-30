@@ -7,10 +7,10 @@ import aiohttp_session
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from pydantic import ValidationError, parse_obj_as
+from pydantic import ValidationError
 
 from .routes import setup_resources, setup_routes
-from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy
+from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy, check
 from .types import Schema, UserDetails
 
 __all__ = ("Permissions", "Schema", "UserDetails", "setup")
@@ -67,7 +67,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
             m = res["model"]
             admin["state"]["resources"][m.name]["urls"] = {key(r): value(r) for r in m.routes}
 
-    schema = parse_obj_as(Schema, schema)
+    schema = check(Schema, schema)
     if secret is None:
         secret = secrets.token_bytes()
 

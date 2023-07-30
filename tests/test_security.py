@@ -92,13 +92,17 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
     async with admin_client.post(url, json={"foo": "bar", "password": None}) as resp:
         assert resp.status == 400
         assert await resp.json() == [{
-            "loc": ["__root__", "username"],
-            "msg": "field required",
-            "type": "value_error.missing"
+            "loc": ["username"],
+            "msg": "Field required",
+            "type": "missing",
+            "input": {"foo": "bar", "password": None},
+            "url": "https://errors.pydantic.dev/2.1/v/missing"
         }, {
-            "loc": ["__root__", "password"],
-            "msg": "none is not an allowed value",
-            "type": "type_error.none.not_allowed"
+            "loc": ["password"],
+            "msg": "Input should be a valid string",
+            "type": "string_type",
+            "input": None,
+            "url": "https://errors.pydantic.dev/2.1/v/string_type"
         }]
 
 

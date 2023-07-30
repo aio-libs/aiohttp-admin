@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Callable, Collection, Sequence
-from typing import Any, Awaitable, Literal, Optional, Union
+from typing import Any, Awaitable, Literal, Mapping, Optional, Union
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
@@ -124,9 +124,9 @@ class State(TypedDict):
     js_module: Optional[str]
 
 
-def comp(t: str, props: Optional[dict[str, object]] = None) -> ComponentState:
+def comp(t: str, props: Optional[Mapping[str, object]] = None) -> ComponentState:
     """Use a component of type t with the given props."""
-    return {"__type__": "component", "type": t, "props": props or {}}
+    return {"__type__": "component", "type": t, "props": dict(props or {})}
 
 
 def func(name: str, args: Optional[Sequence[object]] = None) -> FunctionState:

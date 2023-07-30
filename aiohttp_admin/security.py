@@ -1,14 +1,27 @@
 import json
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Collection, Hashable, Mapping, Sequence
 from enum import Enum
-from typing import Optional, Union
+from functools import lru_cache
+from typing import Optional, Type, TypeVar, Union
 
 from aiohttp import web
 from aiohttp_security import AbstractAuthorizationPolicy, SessionIdentityPolicy
 from cryptography.fernet import Fernet, InvalidToken
-from pydantic import Json, ValidationError, parse_obj_as
+from pydantic import Json, TypeAdapter, ValidationError
 
 from .types import IdentityDict, Schema, UserDetails
+
+_T = TypeVar("_T", bound=Hashable)
+
+
+@lru_cache
+def _get_schema(t: Type[_T]) -> TypeAdapter[_T]:
+    return TypeAdapter(t)
+
+
+def check(t: Type[_T], value: object) -> _T:
+    """Validate value is of static type t."""
+    return _get_schema(t).validate_python(value)
 
 
 class Permissions(str, Enum):
@@ -101,7 +114,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         # Validate JS token
         hdr = request.headers.get("Authorization")
         try:
-            identity_data = parse_obj_as(Json[IdentityDict], hdr)
+            identity_data = check(Json[IdentityDict], hdr)
         except ValidationError:
             return None
 

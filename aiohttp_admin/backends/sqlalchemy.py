@@ -16,7 +16,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from .abc import (
     AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
     GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
-from ..types import comp, func, regex
+from ..types import FunctionState, comp, func, regex
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -192,7 +192,7 @@ class SAResource(AbstractAdminResource):
                 props = props.copy()
                 show = c is not table.autoincrement_column
                 props["validate"] = self._get_validators(table, c)
-                self.inputs[c.name] = comp(inp, props)
+                self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
 
         if not isinstance(model_or_table, sa.Table):
@@ -228,7 +228,7 @@ class SAResource(AbstractAdminResource):
                     c_props["source"] = kc.name
                     children.append(comp(field, c_props))
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
-                datagrid = comp(container, {"children": children, "rowClick": show})
+                datagrid = comp(container, {"children": children, "rowClick": "show"})
                 props["children"] = (datagrid,)
 
                 self.fields[name] = comp(t, props)
@@ -322,10 +322,8 @@ class SAResource(AbstractAdminResource):
             r = await conn.scalars(stmt.returning(self._table.c[self.primary_key]))
             return list(r)
 
-    def _get_validators(
-        self, table: sa.Table, c: sa.Column[object]
-    ) -> list[tuple[Union[str, int], ...]]:
-        validators: list[tuple[Union[str, int], ...]] = []
+    def _get_validators(self, table: sa.Table, c: sa.Column[object]) -> list[FunctionState]:
+        validators: list[FunctionState] = []
         if c.default is None and c.server_default is None and not c.nullable:
             validators.append(func("required", ()))
         max_length = getattr(c.type, "length", None)

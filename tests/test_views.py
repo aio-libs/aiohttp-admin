@@ -5,6 +5,8 @@ from collections.abc import Awaitable, Callable
 import sqlalchemy as sa
 from aiohttp.test_utils import TestClient
 
+from aiohttp_admin.types import comp, func
+
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 
 
@@ -29,9 +31,10 @@ async def test_admin_view(admin_client: TestClient) -> None:
 
     r = state["resources"]["dummy"]
     assert r["list_omit"] == []
-    assert r["fields"] == {"id": {"type": "NumberField", "props": {}}}
-    assert r["inputs"] == {"id": {"type": "NumberInput", "props": {"alwaysOn": "alwaysOn"},
-                                  "show_create": False, "validators": [["required"]]}}
+    assert r["fields"] == {"id": comp("NumberField", {"source": "id"})}
+    assert r["inputs"] == {"id":
+        comp("NumberInput", {"source": "id", "alwaysOn": "alwaysOn", "validate": [func("required", [])]})
+        | {"show_create": False}}
     assert r["repr"] == "id"
     assert state["urls"] == {"token": "/admin/token", "logout": "/admin/logout"}
 
