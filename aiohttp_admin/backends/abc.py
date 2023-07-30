@@ -38,6 +38,8 @@ class Encoder(json.JSONEncoder):
             return str(o)
         if isinstance(o, Enum):
             return o.value
+        if isinstance(o, bytes):
+            return o.decode(errors="replace")
 
         return super().default(o)
 

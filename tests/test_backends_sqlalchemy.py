@@ -66,6 +66,47 @@ def test_table(mock_engine: AsyncEngine) -> None:
     }
 
 
+async def test_binary(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    login: _Login
+) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        binary: Mapped[bytes]
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    db = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+    async with db.begin() as sess:
+        sess.add(TestModel(binary=b"foo"))
+        sess.add(TestModel(binary=b"\x01\xFF\x02"))
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, TestModel)},)
+    }
+    app["admin"] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    url = app["admin"].router["test_get_one"].url_for()
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "binary": "foo"}}
+
+    async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "binary": "\x01�\x02"}}
+
+
 def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "dummy"
