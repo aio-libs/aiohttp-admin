@@ -272,7 +272,7 @@ const AiohttpList = (resource, name, permissions) => {
         <>
             {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions)}
             <BulkExportButton />
-            {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton />}
+            {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton mutationMode="pessimistic" />}
         </>
     );
 
