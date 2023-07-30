@@ -1,12 +1,12 @@
 -e .
-aiohttp==3.8.4
+aiohttp==3.8.5
 aiohttp-security==0.4.0
 aiohttp-session[secure]==2.12.0
 aiosqlite==0.19.0
-cryptography==41.0.1
+cryptography==41.0.2
 pydantic==2.1.1
 pytest==7.4.0
 pytest-aiohttp==1.0.4
 pytest-cov==4.1.0
-sqlalchemy==2.0.18
+sqlalchemy==2.0.19
 typing_extensions>=3.10; python_version<"3.10"
