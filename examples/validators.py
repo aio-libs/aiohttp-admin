@@ -70,7 +70,8 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": ({"model": SAResource(engine, User),
-                       "validators": {User.username.name: (func("regex", (regex(r"^[A-Z][a-z]+$"),)),),
+                       "validators": {User.username.name: (func("regex",
+                                                                (regex(r"^[A-Z][a-z]+$"),)),),
                                       User.email.name: (func("email", ()),),
                                       # Custom validator from our JS module.
                                       # Min/Max validators are automatically included.

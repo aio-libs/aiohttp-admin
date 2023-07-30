@@ -38,8 +38,10 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
                         "num": comp("TextField", {"source": "num"})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]}) | {"show_create": False},
-        "num": comp("TextInput", {"source": "num", "validate": [func("required", ())]}) | {"show_create": True}
+        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
+        | {"show_create": False},
+        "num": comp("TextInput", {"source": "num", "validate": [func("required", ())]})
+        | {"show_create": True}
     }
 
 

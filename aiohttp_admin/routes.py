@@ -40,7 +40,8 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
             if k in validators:
-                v["props"]["validate"] = tuple(v["props"].get("validate", ())) + tuple(validators[k])
+                v["props"]["validate"] = (tuple(v["props"].get("validate", ()))
+                                          + tuple(validators[k])
             v["props"].update(input_props.get(k, {}))
 
         for name, props in r.get("field_props", {}).items():
