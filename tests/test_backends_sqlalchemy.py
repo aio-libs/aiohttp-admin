@@ -81,8 +81,8 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": comp(
         "ReferenceInput",
-         {"validate": [func("required", ())], "reference": "dummy",
-          "source": "id", "target": "id"}) | {"show_create": True}}
+        {"validate": [func("required", ())], "reference": "dummy",
+         "source": "id", "target": "id"}) | {"show_create": True}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
