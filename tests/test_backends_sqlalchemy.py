@@ -147,7 +147,7 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         "ReferenceManyField",
         {"bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"}),
          "children": (comp("Datagrid", {
-            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
+             "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
          "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
          "sortable": False})
     assert "ones" not in r.inputs
