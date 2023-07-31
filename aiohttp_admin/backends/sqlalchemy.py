@@ -177,14 +177,23 @@ class SAResource(AbstractAdminResource):
                                          "target": key.column.name}
             else:
                 field, inp, props = get_components(c.type)
-            props["source"] = c.name
 
+            props["source"] = c.name
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
                                          for e in c.type.python_type)
 
+            length = getattr(c.type, "length", 0)
+            if length is None or length > 31:
+                props["fullWidth"] = True
+                if length is None or length > 127:
+                    props["multiline"] = True
+
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
+
+            if c.comment:
+                props["helperText"] = c.comment
 
             self.fields[c.name] = comp(field, props)
             if c.computed is None:
