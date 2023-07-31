@@ -59,7 +59,8 @@ const DatagridSingle = (props) => (
 const COMPONENTS = {
     Datagrid, DatagridSingle,
 
-    BulkDeleteButton,
+    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CloneButton, CreateButton,
+    ExportButton, FilterButton, ListButton, ShowButton,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField, TimeField,
@@ -291,6 +292,7 @@ const AiohttpList = (resource, name, permissions) => {
 const AiohttpShow = (resource, name, permissions) => {
     const ShowActions = () => (
         <TopToolbar>
+            {resource["show_actions"].map(evaluate)}
             <WithRecord render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
         </TopToolbar>
     );

@@ -49,7 +49,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
 
         state = {"fields": fields, "inputs": inputs, "list_omit": tuple(omit_fields),
                  "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
-                 "bulk_update": r.get("bulk_update", {})}
+                 "bulk_update": r.get("bulk_update", {}), "show_actions": r.get("show_actions", ())}
         admin["state"]["resources"][m.name] = state
 
 
