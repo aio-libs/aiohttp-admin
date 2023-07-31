@@ -35,8 +35,8 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.name == "dummy"
     assert r.primary_key == "id"
     assert r.fields == {"id": comp("NumberField", {"source": "id"}),
-                        "num": comp("TextField", {
-        "source": "num", "fullWidth": True, "multiline": True})}
+                        "num": comp("TextField", {"source": "num", "fullWidth": True,
+                                                  "multiline": True})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
         "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
