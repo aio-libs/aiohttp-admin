@@ -35,12 +35,15 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.name == "dummy"
     assert r.primary_key == "id"
     assert r.fields == {"id": comp("NumberField", {"source": "id"}),
-                        "num": comp("TextField", {"source": "num"})}
+                        "num": comp("TextField", {
+        "source": "num", "fullWidth": True, "multiline": True})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
         "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
         | {"show_create": False},
-        "num": comp("TextInput", {"source": "num", "validate": [func("required", ())]})
+        "num": comp("TextInput", {
+            "source": "num", "fullWidth": True, "multiline": True,
+            "validate": [func("required", ())]})
         | {"show_create": True}
     }
 
@@ -265,12 +268,14 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
     assert r.primary_key == "num"
     assert r.fields == {
         "num": comp("NumberField", {"source": "num"}),
-        "other": comp("TextField", {"source": "other"})
+        "other": comp("TextField", {"source": "other", "fullWidth": True, "multiline": True})
     }
     assert r.inputs == {
         "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
         | {"show_create": False},
-        "other": comp("TextInput", {"source": "other", "validate": [func("required", ())]})
+        "other": comp("TextInput", {
+            "fullWidth": True, "multiline": True, "source": "other",
+            "validate": [func("required", ())]})
         | {"show_create": True}
     }
 
