@@ -317,7 +317,7 @@ class AbstractAdminResource(ABC):
     def _get_input_type(self, inp: InputState) -> TypeAlias:
         t = INPUT_TYPES.get(inp["type"], str)
         validators = inp.get("props", {}).get("validate", ())
-        assert isinstance(validators, Sequence)
+        assert isinstance(validators, Sequence)  # noqa: S101
         return t if any(v["name"] == "required" for v in validators) else Optional[t]
 
     @cached_property
