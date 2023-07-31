@@ -229,6 +229,9 @@ class SAResource(AbstractAdminResource):
                     children.append(comp(field, c_props))
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
                 datagrid = comp(container, {"children": children, "rowClick": "show"})
+                if t == "ReferenceManyField":
+                    datagrid["props"]["bulkActionButtons"] = comp(
+                        "BulkDeleteButton", {"mutationMode": "pessimistic"})
                 props["children"] = (datagrid,)
 
                 self.fields[name] = comp(t, props)
