@@ -8,7 +8,7 @@ from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
-from typing import Any, Literal, Optional, TypeAlias, Union
+from typing import Any, Literal, Optional, Union
 
 from aiohttp import web
 from aiohttp_security import check_permission, permits
@@ -16,6 +16,11 @@ from pydantic import Json
 
 from ..security import check, permissions_as_dict
 from ..types import ComponentState, InputState
+
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
