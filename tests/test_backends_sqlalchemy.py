@@ -145,7 +145,8 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert r.name == "many"
     assert r.fields["ones"] == comp(
         "ReferenceManyField",
-        {"children": (comp("Datagrid", {
+        {"bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"}),
+         "children": (comp("Datagrid", {
             "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
          "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
          "sortable": False})
