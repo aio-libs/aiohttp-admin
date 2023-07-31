@@ -261,7 +261,7 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test"
         num: Mapped[int] = mapped_column(primary_key=True)
-        other: Mapped[str] = mapped_column(String(64))
+        other: Mapped[str] = mapped_column(sa.String(64))
 
     r = SAResource(mock_engine, TestModel)
     assert r.name == "test"
