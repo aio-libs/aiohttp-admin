@@ -59,6 +59,8 @@ const DatagridSingle = (props) => (
 const COMPONENTS = {
     Datagrid, DatagridSingle,
 
+    BulkDeleteButton,
+
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField, TimeField,
 
