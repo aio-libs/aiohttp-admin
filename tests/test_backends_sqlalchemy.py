@@ -274,7 +274,8 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
         "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
         | {"show_create": False},
         "other": comp("TextInput", {
-            "fullWidth": True, "source": "other", "validate": [func("required", ())]})
+            "fullWidth": True, "source": "other",
+            "validate": [func("required", ()), func("maxLength", (64,))]})
         | {"show_create": True}
     }
 
