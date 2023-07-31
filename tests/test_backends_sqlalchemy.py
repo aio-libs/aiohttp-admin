@@ -146,8 +146,8 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert r.fields["ones"] == comp(
         "ReferenceManyField",
         {"children": (comp("Datagrid", {
-             "rowClick": "show", "children": [comp("NumberField", {"source": "id"})],
-             "bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"})}),),
+            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})],
+            "bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"})}),),
          "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
          "sortable": False})
     assert "ones" not in r.inputs
