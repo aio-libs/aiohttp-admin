@@ -35,12 +35,15 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.name == "dummy"
     assert r.primary_key == "id"
     assert r.fields == {"id": comp("NumberField", {"source": "id"}),
-                        "num": comp("TextField", {"source": "num"})}
+                        "num": comp("TextField", {"source": "num", "fullWidth": True,
+                                                  "multiline": True})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
         "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
         | {"show_create": False},
-        "num": comp("TextInput", {"source": "num", "validate": [func("required", ())]})
+        "num": comp("TextInput", {
+            "source": "num", "fullWidth": True, "multiline": True,
+            "validate": [func("required", ())]})
         | {"show_create": True}
     }
 
@@ -64,6 +67,21 @@ def test_table(mock_engine: AsyncEngine) -> None:
         "num": comp("TextInput", {"source": "num", "validate": [func("maxLength", (30,))]})
         | {"show_create": True}
     }
+
+
+def test_extra_props(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "dummy"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        num: Mapped[str] = mapped_column(sa.String(128), comment="Foo", default="Bar")
+
+    r = SAResource(mock_engine, TestModel)
+    assert r.fields["num"]["props"] == {
+        "source": "num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "helperText": "Foo"}
+    assert r.inputs["num"]["props"] == {
+        "source": "num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "helperText": "Foo", "validate": [func("maxLength", (128,))]}
 
 
 async def test_binary(
@@ -243,19 +261,21 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
     class TestModel(base):  # type: ignore[misc,valid-type]
         __tablename__ = "test"
         num: Mapped[int] = mapped_column(primary_key=True)
-        other: Mapped[str]
+        other: Mapped[str] = mapped_column(sa.String(64))
 
     r = SAResource(mock_engine, TestModel)
     assert r.name == "test"
     assert r.primary_key == "num"
     assert r.fields == {
         "num": comp("NumberField", {"source": "num"}),
-        "other": comp("TextField", {"source": "other"})
+        "other": comp("TextField", {"source": "other", "fullWidth": True})
     }
     assert r.inputs == {
         "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
         | {"show_create": False},
-        "other": comp("TextInput", {"source": "other", "validate": [func("required", ())]})
+        "other": comp("TextInput", {
+            "fullWidth": True, "source": "other",
+            "validate": [func("required", ()), func("maxLength", (64,))]})
         | {"show_create": True}
     }
 
