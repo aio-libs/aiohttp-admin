@@ -66,6 +66,21 @@ def test_table(mock_engine: AsyncEngine) -> None:
     }
 
 
+def test_extra_props(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "dummy"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        num: Mapped[str] = mapped_column(sa.String(128), comment="Foo", default="Bar")
+
+    r = SAResource(mock_engine, TestModel)
+    assert r.fields["num"]["props"] == {
+        "source": "num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "helperText": "Foo"}
+    assert r.inputs["num"]["props"] == {
+        "source": "num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "helperText": "Foo", "validate": [func("maxLength", (128,))]}
+
+
 async def test_binary(
     base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
     login: _Login
