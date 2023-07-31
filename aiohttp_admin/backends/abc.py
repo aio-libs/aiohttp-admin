@@ -3,6 +3,7 @@ import json
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
@@ -15,6 +16,11 @@ from pydantic import Json
 
 from ..security import check, permissions_as_dict
 from ..types import ComponentState, InputState
+
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
@@ -110,7 +116,7 @@ class AbstractAdminResource(ABC):
         if "id" in self.fields and self.primary_key != "id":
             warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
 
-        d = {k: INPUT_TYPES.get(v["type"], str) for k, v in self.inputs.items()}
+        d = {k: self._get_input_type(v) for k, v in self.inputs.items()}
         # For runtime type checking only.
         self._record_type = TypedDict("RecordType", d, total=False)  # type: ignore[misc]
 
@@ -312,6 +318,12 @@ class AbstractAdminResource(ABC):
         if not ids:
             raise web.HTTPNotFound()
         return json_response({"data": ids})
+
+    def _get_input_type(self, inp: InputState) -> TypeAlias:
+        t = INPUT_TYPES.get(inp["type"], str)
+        validators = inp.get("props", {}).get("validate", ())
+        assert isinstance(validators, Sequence)  # noqa: S101
+        return t if any(v["name"] == "required" for v in validators) else Optional[t]
 
     @cached_property
     def routes(self) -> tuple[web.RouteDef, ...]:
