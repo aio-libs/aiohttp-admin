@@ -90,6 +90,8 @@ class _Resource(TypedDict, total=False):
     field_props: dict[str, dict[str, Any]]
     # Custom props to add to inputs.
     input_props: dict[str, dict[str, Any]]
+    # Custom components to add to the actions in the show view.
+    show_actions: Sequence[ComponentState]
 
 
 class Resource(_Resource):
@@ -111,6 +113,7 @@ class _ResourceState(TypedDict):
     display: Sequence[str]
     fields: dict[str, ComponentState]
     inputs: dict[str, InputState]
+    show_actions: Sequence[ComponentState]
     repr: str
     icon: Optional[str]
     urls: dict[str, tuple[str, str]]  # (method, url)
