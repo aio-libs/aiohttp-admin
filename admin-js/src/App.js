@@ -19,9 +19,17 @@ import {
     // Filters
     email, maxLength, maxValue, minLength, minValue, regex, required,
     // Misc
-    AutocompleteInput, EditButton, HttpError, WithRecord
+    AutocompleteInput, EditButton, HttpError, WithRecord,
+    // For custom components...
+    useCreatePath, useRecordContext, Button,
 } from "react-admin";
+import { createElement } from "react";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
+
+import Queue from '@mui/icons-material/Queue';
+import { Link } from 'react-router-dom';
+import { stringify } from 'query-string';
 
 // Hacked TimeField/TimeInput to actually work with times.
 // TODO: Replace once new components are introduced using Temporal API.
@@ -66,7 +74,9 @@ const COMPONENTS = {
     ReferenceOneField, SelectField, TextField, TimeField,
 
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
-    TextInput, TimeInput
+    TextInput, TimeInput,
+
+    useRecordContext, useCreatePath, Button, Queue, Link, stringify, createElement
 };
 const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
@@ -77,6 +87,8 @@ if (STATE["js_module"]) {
     // The inline comment skips the webpack import() and allows us to use the native
     // browser's import() function. Needed to dynamically import a module.
     MODULE_LOADER = import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
+        for (const k of Object.keys(mod.g))
+            mod.g[k] = COMPONENTS[k]
         Object.assign(COMPONENTS, mod.components);
         Object.assign(FUNCTIONS, mod.functions);
     });
