@@ -1,16 +1,18 @@
 export const g = {"Queue": null, "Link": null, "stringify": null, "Button": null,
-                  "createElement": null, "useRecordContext": null, "useCreatePath": null}
+                  "createElement": null, "useRecordContext": null, "useCreatePath": null,
+                  "useResourceContext": null}
 
-const CopyUSButton = (props) => {
+const CustomCloneButton = (props) => {
     const {
-        label = "Copy to US",
+        label = "My custom clone",
         scrollToTop = true,
         icon = g.createElement(g.Queue),
         ...rest
     } = props;
+    const resource = g.useResourceContext(props);
     const record = g.useRecordContext(props);
     const createPath = g.useCreatePath();
-    const pathname = createPath({resource: "rhymes_us", type: "create"});
+    const pathname = createPath({resource, type: "create"});
     props = {
         component: g.Link,
         to: (
@@ -34,4 +36,4 @@ const stopPropagation = e => e.stopPropagation();
 
 const sanitizeRestProps = ({resource, record, ...rest}) => rest;
 
-export const components = {CopyUSButton: CopyUSButton};
+export const components = {CustomCloneButton: CustomCloneButton};

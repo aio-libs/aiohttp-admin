@@ -5,6 +5,7 @@ When running this file, admin will be accessible at /admin.
 
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 
 import sqlalchemy as sa
 from aiohttp import web
@@ -13,6 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
+from aiohttp_admin.types import comp
 
 # Example DB models
 
@@ -49,6 +51,11 @@ async def check_credentials(username: str, password: str) -> bool:
     return username == "admin" and password == "admin"
 
 
+async def serve_js(request):
+    js = Path(__file__).with_name("custom-clone.js").read_text()
+    return web.Response(text=js, content_type="text/javascript")
+
+
 async def create_app() -> web.Application:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     session = async_sessionmaker(engine, expire_on_commit=False)
@@ -64,6 +71,7 @@ async def create_app() -> web.Application:
         sess.add(SimpleParent(id=p.id, date=datetime(2023, 2, 13, 19, 4)))
 
     app = web.Application()
+    app.router.add_get("/js", serve_js, name="js")
 
     # This is the setup required for aiohttp-admin.
     schema: aiohttp_admin.Schema = {
@@ -72,9 +80,10 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Simple)},
+            {"model": SAResource(engine, Simple), "show_actions": (comp("CustomCloneButton"),)},
             {"model": SAResource(engine, SimpleParent)}
-        )
+        ),
+        "js_module": str(app.router["js"].url_for())
     }
     aiohttp_admin.setup(app, schema)
 

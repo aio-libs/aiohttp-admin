@@ -21,7 +21,7 @@ import {
     // Misc
     AutocompleteInput, EditButton, HttpError, WithRecord,
     // For custom components...
-    useCreatePath, useRecordContext, Button,
+    useCreatePath, useRecordContext, useResourceContext, Button,
 } from "react-admin";
 import { createElement } from "react";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -76,7 +76,7 @@ const COMPONENTS = {
     BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
     TextInput, TimeInput,
 
-    useRecordContext, useCreatePath, Button, Queue, Link, stringify, createElement
+    useRecordContext, useResourceContext, useCreatePath, Button, Queue, Link, stringify, createElement
 };
 const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
