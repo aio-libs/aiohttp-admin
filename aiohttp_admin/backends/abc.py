@@ -112,7 +112,7 @@ class AbstractAdminResource(ABC):
     primary_key: str
     omit_fields: set[str]
 
-    def __init__(self, record_type: Optional[dict[str, type[object]]] = None) -> None:
+    def __init__(self, record_type: Optional[dict[str, TypeAlias]] = None) -> None:
         if "id" in self.fields and self.primary_key != "id":
             warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
 
