@@ -204,10 +204,10 @@ class SAResource(AbstractAdminResource):
                 props["validate"] = self._get_validators(table, c)
                 self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
-                t: Any = c.type.python_type
+                field_type: Any = c.type.python_type
                 if c.nullable:
-                    t = Optional[t]
-                record_type[c.name] = t
+                    field_type = Optional[field_type]
+                record_type[c.name] = field_type
 
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
