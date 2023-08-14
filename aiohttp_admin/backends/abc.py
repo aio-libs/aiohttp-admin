@@ -3,7 +3,6 @@ import json
 import sys
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
