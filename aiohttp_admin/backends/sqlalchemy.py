@@ -204,7 +204,7 @@ class SAResource(AbstractAdminResource):
                 props["validate"] = self._get_validators(table, c)
                 self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
-                t = c.type.python_type
+                t: Any = c.type.python_type
                 if c.nullable:
                     t = Optional[t]
                 record_type[c.name] = t
