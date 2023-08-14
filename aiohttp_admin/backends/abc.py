@@ -112,13 +112,14 @@ class AbstractAdminResource(ABC):
     primary_key: str
     omit_fields: set[str]
 
-    def __init__(self) -> None:
+    def __init__(self, record_type: Optional[dict[str, type[object]]] = None) -> None:
         if "id" in self.fields and self.primary_key != "id":
             warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
 
-        d = {k: self._get_input_type(v) for k, v in self.inputs.items()}
         # For runtime type checking only.
-        self._record_type = TypedDict("RecordType", d, total=False)  # type: ignore[misc]
+        if record_type is None:
+            record_type = {k: Any for k in self.inputs}
+        self._record_type = TypedDict("RecordType", record_type, total=False)  # type: ignore[misc]
 
     async def filter_by_permissions(self, request: web.Request, perm_type: str,
                                     record: Record, original: Optional[Record] = None) -> Record:
@@ -318,12 +319,6 @@ class AbstractAdminResource(ABC):
         if not ids:
             raise web.HTTPNotFound()
         return json_response({"data": ids})
-
-    def _get_input_type(self, inp: InputState) -> TypeAlias:
-        t = INPUT_TYPES.get(inp["type"], str)
-        validators = inp.get("props", {}).get("validate", ())
-        assert isinstance(validators, Sequence)  # noqa: S101
-        return t if any(v["name"] == "required" for v in validators) else Optional[t]
 
     @cached_property
     def routes(self) -> tuple[web.RouteDef, ...]:
