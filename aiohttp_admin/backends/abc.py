@@ -3,7 +3,6 @@ import json
 import sys
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
@@ -112,7 +111,7 @@ class AbstractAdminResource(ABC):
     primary_key: str
     omit_fields: set[str]
 
-    def __init__(self, record_type: Optional[dict[str, type[object]]] = None) -> None:
+    def __init__(self, record_type: Optional[dict[str, TypeAlias]] = None) -> None:
         if "id" in self.fields and self.primary_key != "id":
             warnings.warn("A non-PK 'id' column is likely to break the admin.", stacklevel=2)
 
