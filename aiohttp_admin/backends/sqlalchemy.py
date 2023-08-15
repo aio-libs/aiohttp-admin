@@ -168,6 +168,7 @@ class SAResource(AbstractAdminResource):
         self.fields = {}
         self.inputs = {}
         self.omit_fields = set()
+        record_type = {}
         for c in table.c.values():
             if c.foreign_keys:
                 field = "ReferenceField"
@@ -203,6 +204,10 @@ class SAResource(AbstractAdminResource):
                 props["validate"] = self._get_validators(table, c)
                 self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
+                field_type: Any = c.type.python_type
+                if c.nullable:
+                    field_type = Optional[field_type]
+                record_type[c.name] = field_type
 
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
@@ -257,7 +262,7 @@ class SAResource(AbstractAdminResource):
             raise NotImplementedError("Composite keys not supported yet.")
         self.primary_key = pk[0]
 
-        super().__init__()
+        super().__init__(record_type)
 
     @handle_errors
     async def get_list(self, params: GetListParams) -> tuple[list[Record], int]:

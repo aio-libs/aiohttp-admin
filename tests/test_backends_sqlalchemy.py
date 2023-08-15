@@ -1,7 +1,7 @@
 import json
 from collections.abc import Awaitable, Callable
 from datetime import date, datetime
-from typing import Union
+from typing import Optional, Union
 
 import pytest
 import sqlalchemy as sa
@@ -439,3 +439,56 @@ def test_permission_for(base: type[DeclarativeBase]) -> None:
 
     with pytest.raises(ValueError, match="not an attribute"):
         permission_for(M, filters={Wrong.id: 1})
+
+
+async def test_record_type(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    login: _Login
+) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        foo: Mapped[Optional[bool]]
+        bar: Mapped[int]
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, TestModel)},)
+    }
+    app["admin"] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    url = app["admin"].router["test_create"].url_for()
+    p = {"data": json.dumps({"foo": True, "bar": 5})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 1, "foo": True, "bar": 5}}
+    p = {"data": json.dumps({"foo": None, "bar": -1})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": {"id": 2, "foo": None, "bar": -1}}
+
+    p = {"data": json.dumps({"foo": 5, "bar": "foo"})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 400
+        errors = await resp.json()
+        assert any(e["loc"] == ["foo"] and e["type"] == "bool_parsing" for e in errors)
+        assert any(e["loc"] == ["bar"] and e["type"] == "int_parsing" for e in errors)
+
+    p = {"data": json.dumps({"foo": "foo", "bar": None})}
+    async with admin_client.post(url, params=p, headers=h) as resp:
+        assert resp.status == 400
+        errors = await resp.json()
+        assert any(e["loc"] == ["foo"] and e["type"] == "bool_parsing" for e in errors)
+        assert any(e["loc"] == ["bar"] and e["type"] == "int_type" for e in errors)
