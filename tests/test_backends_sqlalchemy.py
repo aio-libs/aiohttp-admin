@@ -453,7 +453,6 @@ async def test_record_type(
 
     app = web.Application()
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    db = async_sessionmaker(engine, expire_on_commit=False)
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
 
@@ -479,7 +478,6 @@ async def test_record_type(
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": 2, "foo": None, "bar": -1}}
-
 
     p = {"data": json.dumps({"foo": 5, "bar": "foo"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
