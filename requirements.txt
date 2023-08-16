@@ -8,5 +8,5 @@ pydantic==2.1.1
 pytest==7.4.0
 pytest-aiohttp==1.0.4
 pytest-cov==4.1.0
-sqlalchemy==2.0.19
+sqlalchemy==2.0.20
 typing_extensions>=3.10; python_version<"3.10"
