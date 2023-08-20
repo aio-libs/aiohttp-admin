@@ -1,4 +1,4 @@
-from typing import Sequence, Union
+from typing import Sequence
 
 from aiohttp_admin.backends.abc import AbstractAdminResource, GetListParams, Meta, Record
 from aiohttp_admin.types import ComponentState, InputState
