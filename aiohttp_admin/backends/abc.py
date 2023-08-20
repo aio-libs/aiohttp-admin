@@ -205,7 +205,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     async def _get_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = check(GetManyParams, request.query)
-        record_ids = check(tuple[self._id_type, ...], query["ids"])
+        record_ids = check(tuple[self._id_type, ...], query["ids"])  # type: ignore[name-defined]
 
         results = await self.get_many(record_ids, query.get("meta"))
         if not results:
@@ -270,7 +270,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     async def _update_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.edit", context=(request, None))
         query = check(UpdateManyParams, request.query)
-        record_ids = check(tuple[self._id_type, ...], query["ids"])
+        record_ids = check(tuple[self._id_type, ...], query["ids"])  # type: ignore[name-defined]
         # TODO(Pydantic): Dissallow extra arguments
         for k in query["data"]:
             if k not in self.inputs and k != "id":
@@ -313,7 +313,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     async def _delete_many(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.delete", context=(request, None))
         query = check(DeleteManyParams, request.query)
-        record_ids = check(tuple[self._id_type, ...], query["ids"])
+        record_ids = check(tuple[self._id_type, ...], query["ids"])  # type: ignore[name-defined]
 
         originals = await self.get_many(record_ids, query.get("meta"))
         allowed = await asyncio.gather(*(permits(request, f"admin.{self.name}.delete",
@@ -329,7 +329,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     @final
     def _check_record(self, record: Record) -> Record:
         """Check and convert input record."""
-        return check(self._record_type, record)
+        return check(self._record_type, record) # type: ignore[no-any-return]
 
     @final
     async def _convert_record(self, record: Record, request: web.Request) -> Record:
@@ -343,7 +343,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         return record
 
     @final
-    def _convert_ids(self, ids: Sequence[_ID]) -> tuple[str]:
+    def _convert_ids(self, ids: Sequence[_ID]) -> tuple[str, ...]:
         """Convert IDs to correct output format."""
         return tuple(str(i) for i in ids)
 
