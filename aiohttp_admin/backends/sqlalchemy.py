@@ -16,11 +16,6 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from .abc import AbstractAdminResource, GetListParams, Meta, Record
 from ..types import FunctionState, comp, func, regex
 
-if sys.version_info >= (3, 12):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
-
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
 else:
