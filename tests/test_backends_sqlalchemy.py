@@ -118,11 +118,11 @@ async def test_binary(
     url = app["admin"].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "binary": "foo"}}
+        assert await resp.json() == {"data": {"id": "1", "binary": "foo"}}
 
     async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "binary": "\x01�\x02"}}
+        assert await resp.json() == {"data": {"id": "2", "binary": "\x01�\x02"}}
 
 
 def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -144,6 +144,51 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
         "ReferenceInput",
         {"validate": [func("required", ())], "reference": "dummy",
          "source": "id", "target": "id"}) | {"show_create": True}}
+
+
+async def test_fk_output(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    login: _Login
+) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+
+    class TestModelParent(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "parent"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        child_id: Mapped[int] = mapped_column(sa.ForeignKey(TestModel.id))
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    db = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+    async with db.begin() as sess:
+        child = TestModel()
+        sess.add(child)
+    async with db.begin() as sess:
+        sess.add(TestModelParent(child_id=child.id))
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, TestModel)},
+                      {"model": SAResource(engine, TestModelParent)})
+    }
+    app["admin"] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    url = app["admin"].router["parent_get_one"].url_for()
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        # child_id must be converted to str ID.
+        assert await resp.json() == {"data": {"id": "1", "child_id": "1"}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -335,31 +380,31 @@ async def test_nonid_pk_api(
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 8, "num": 8, "other": "bar"},
-                                              {"id": 5, "num": 5, "other": "foo"}], "total": 2}
+        assert await resp.json() == {"data": [{"id": "8", "num": 8, "other": "bar"},
+                                              {"id": "5", "num": 5, "other": "foo"}], "total": 2}
 
     url = app["admin"].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 8}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 8, "num": 8, "other": "bar"}}
+        assert await resp.json() == {"data": {"id": "8", "num": 8, "other": "bar"}}
 
     url = app["admin"].router["test_get_many"].url_for()
-    async with admin_client.get(url, params={"ids": "[5, 8]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["5", "8"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 5, "num": 5, "other": "foo"},
-                                              {"id": 8, "num": 8, "other": "bar"}]}
+        assert await resp.json() == {"data": [{"id": "5", "num": 5, "other": "foo"},
+                                              {"id": "8", "num": 8, "other": "bar"}]}
 
     url = app["admin"].router["test_create"].url_for()
     p = {"data": json.dumps({"num": 12, "other": "this"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 12, "num": 12, "other": "this"}}
+        assert await resp.json() == {"data": {"id": "12", "num": 12, "other": "this"}}
 
     url = app["admin"].router["test_update"].url_for()
     p1 = {"id": 5, "data": json.dumps({"id": 5, "other": "that"}), "previousData": "{}"}
     async with admin_client.put(url, params=p1, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 5, "num": 5, "other": "that"}}
+        assert await resp.json() == {"data": {"id": "5", "num": 5, "other": "that"}}
 
 
 async def test_datetime(
@@ -396,14 +441,14 @@ async def test_datetime(
     url = app["admin"].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "date": "2023-04-23",
+        assert await resp.json() == {"data": {"id": "1", "date": "2023-04-23",
                                               "time": "2023-01-02 03:04:00"}}
 
     url = app["admin"].router["test_create"].url_for()
     p = {"data": json.dumps({"date": "2024-05-09", "time": "2020-11-12 03:04:05"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "date": "2024-05-09",
+        assert await resp.json() == {"data": {"id": "2", "date": "2024-05-09",
                                               "time": "2020-11-12 03:04:05"}}
 
 
@@ -473,11 +518,11 @@ async def test_record_type(
     p = {"data": json.dumps({"foo": True, "bar": 5})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "foo": True, "bar": 5}}
+        assert await resp.json() == {"data": {"id": "1", "foo": True, "bar": 5}}
     p = {"data": json.dumps({"foo": None, "bar": -1})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "foo": None, "bar": -1}}
+        assert await resp.json() == {"data": {"id": "2", "foo": None, "bar": -1}}
 
     p = {"data": json.dumps({"foo": 5, "bar": "foo"})}
     async with admin_client.post(url, params=p, headers=h) as resp:

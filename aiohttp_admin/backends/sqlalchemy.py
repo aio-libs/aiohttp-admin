@@ -13,9 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, QueryableAttribute
 from sqlalchemy.sql.roles import ExpressionElementRole
 
-from .abc import (
-    AbstractAdminResource, CreateParams, DeleteManyParams, DeleteParams, GetListParams,
-    GetManyParams, GetOneParams, Record, UpdateManyParams, UpdateParams)
+from .abc import AbstractAdminResource, GetListParams, Meta, Record
 from ..types import FunctionState, comp, func, regex
 
 if sys.version_info >= (3, 10):
@@ -155,7 +153,8 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
             for k, v in filters.items())
 
 
-class SAResource(AbstractAdminResource):
+# ID is based on PK, which we can't infer from types, so must use Any here.
+class SAResource(AbstractAdminResource[Any]):
     def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, type[DeclarativeBase]]):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
@@ -168,12 +167,14 @@ class SAResource(AbstractAdminResource):
         self.fields = {}
         self.inputs = {}
         self.omit_fields = set()
+        self._foreign_rows = set()
         record_type = {}
         for c in table.c.values():
             if c.foreign_keys:
                 field = "ReferenceField"
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
+                self._foreign_rows.add(c.name)
                 props: dict[str, Any] = {"reference": key.column.table.name,
                                          "target": key.column.name}
             else:
@@ -261,6 +262,7 @@ class SAResource(AbstractAdminResource):
             # TODO: Test composite primary key
             raise NotImplementedError("Composite keys not supported yet.")
         self.primary_key = pk[0]
+        self._id_type = table.c[pk[0]].type.python_type
 
         super().__init__(record_type)
 
@@ -286,56 +288,57 @@ class SAResource(AbstractAdminResource):
         return entities, count
 
     @handle_errors
-    async def get_one(self, params: GetOneParams) -> Record:
+    async def get_one(self, record_id: Any, meta: Meta) -> Record:
         async with self._db.connect() as conn:
-            stmt = sa.select(self._table).where(self._table.c[self.primary_key] == params["id"])
+            stmt = sa.select(self._table).where(self._table.c[self.primary_key] == record_id)
             result = await conn.execute(stmt)
             return result.one()._asdict()
 
     @handle_errors
-    async def get_many(self, params: GetManyParams) -> list[Record]:
+    async def get_many(self, record_ids: Sequence[Any], meta: Meta) -> list[Record]:
         async with self._db.connect() as conn:
-            stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
+            stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(record_ids))
             result = await conn.execute(stmt)
             return [r._asdict() for r in result]
 
     @handle_errors
-    async def create(self, params: CreateParams) -> Record:
+    async def create(self, data: Record, meta: Meta) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.insert(self._table).values(params["data"]).returning(*self._table.c)
+            stmt = sa.insert(self._table).values(data).returning(*self._table.c)
             try:
                 row = await conn.execute(stmt)
             except sa.exc.IntegrityError:
-                logger.warning("IntegrityError (%s)", params["data"], exc_info=True)
+                logger.warning("IntegrityError (%s)", data, exc_info=True)
                 raise web.HTTPBadRequest(reason="Integrity error (element already exists?)")
             return row.one()._asdict()
 
     @handle_errors
-    async def update(self, params: UpdateParams) -> Record:
+    async def update(self, record_id: Any, data: Record, previous_data: Record,
+                     meta: Meta) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c[self.primary_key] == params["id"])
-            stmt = stmt.values(params["data"]).returning(*self._table.c)
+            stmt = sa.update(self._table).where(self._table.c[self.primary_key] == record_id)
+            stmt = stmt.values(data).returning(*self._table.c)
             row = await conn.execute(stmt)
             return row.one()._asdict()
 
     @handle_errors
-    async def update_many(self, params: UpdateManyParams) -> list[Union[str, int]]:
+    async def update_many(self, record_ids: Sequence[Any], data: Record, meta: Meta) -> list[Any]:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
-            stmt = stmt.values(params["data"]).returning(self._table.c[self.primary_key])
+            stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(record_ids))
+            stmt = stmt.values(data).returning(self._table.c[self.primary_key])
             return list(await conn.scalars(stmt))
 
     @handle_errors
-    async def delete(self, params: DeleteParams) -> Record:
+    async def delete(self, record_id: Any, previous_data: Record, meta: Meta) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.delete(self._table).where(self._table.c[self.primary_key] == params["id"])
+            stmt = sa.delete(self._table).where(self._table.c[self.primary_key] == record_id)
             row = await conn.execute(stmt.returning(*self._table.c))
             return row.one()._asdict()
 
     @handle_errors
-    async def delete_many(self, params: DeleteManyParams) -> list[Union[str, int]]:
+    async def delete_many(self, record_ids: Sequence[Any], meta: Meta) -> list[Any]:
         async with self._db.begin() as conn:
-            stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(params["ids"]))
+            stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(record_ids))
             r = await conn.scalars(stmt.returning(self._table.c[self.primary_key]))
             return list(r)
 

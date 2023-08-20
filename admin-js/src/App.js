@@ -105,7 +105,7 @@ function dataRequest(resource, endpoint, params) {
     for (const [k, v] of Object.entries(params)) {
         if (v === undefined)
             delete params[k];
-        if (typeof v === "object" && v !== null)
+        else if (typeof v === "object" && v !== null)
             params[k] = JSON.stringify(v);
     }
     const query = new URLSearchParams(params).toString();
