@@ -12,7 +12,7 @@ class DummyResource(AbstractAdminResource[str]):
         self.inputs = inputs
         self.primary_key = primary_key
         self.omit_fields = set()
-        self._pk_type = str
+        self._id_type = str
         self._foreign_rows = set()
         super().__init__()
 
