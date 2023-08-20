@@ -313,7 +313,8 @@ class SAResource(AbstractAdminResource[Any]):
             return row.one()._asdict()
 
     @handle_errors
-    async def update(self, record_id: Any, data: Record, previous_data: Record, meta: Meta) -> Record:
+    async def update(self, record_id: Any, data: Record, previous_data: Record,
+                     meta: Meta) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._table.c[self.primary_key] == record_id)
             stmt = stmt.values(data).returning(*self._table.c)
