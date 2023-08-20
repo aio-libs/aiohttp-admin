@@ -8,7 +8,7 @@ from datetime import date, datetime, time
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
-from typing import Any, Generic, Literal, Optional, TypeVar, Union, final
+from typing import Any, Generic, Literal, Optional, TypeVar, final
 
 from aiohttp import web
 from aiohttp_security import check_permission, permits
@@ -329,7 +329,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     @final
     def _check_record(self, record: Record) -> Record:
         """Check and convert input record."""
-        return check(self._record_type, record) # type: ignore[no-any-return]
+        return check(self._record_type, record)  # type: ignore[no-any-return]
 
     @final
     async def _convert_record(self, record: Record, request: web.Request) -> Record:
