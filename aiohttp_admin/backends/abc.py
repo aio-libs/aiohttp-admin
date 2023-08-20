@@ -147,7 +147,8 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         """Return the matching records."""
 
     @abstractmethod
-    async def update(self, record_id: _ID, data: Record, previous_data: Record, meta: Meta) -> Record:
+    async def update(self, record_id: _ID, data: Record, previous_data: Record,
+                     meta: Meta) -> Record:
         """Update the record and return the updated record."""
 
     @abstractmethod
