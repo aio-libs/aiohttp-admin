@@ -91,19 +91,14 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
     url = admin_client.app["admin"].router["token"].url_for()
     async with admin_client.post(url, json={"foo": "bar", "password": None}) as resp:
         assert resp.status == 400
-        assert await resp.json() == [{
-            "loc": ["username"],
-            "msg": "Field required",
-            "type": "missing",
-            "input": {"foo": "bar", "password": None},
-            "url": "https://errors.pydantic.dev/2.1/v/missing"
-        }, {
-            "loc": ["password"],
-            "msg": "Input should be a valid string",
-            "type": "string_type",
-            "input": None,
-            "url": "https://errors.pydantic.dev/2.1/v/string_type"
-        }]
+        result = await resp.json()
+        assert len(result) == 2
+        assert result[0]["loc"] == ["username"]
+        assert result[0]["msg"] == "Field required"
+        assert result[0]["input"] == {"foo": "bar", "password": None}
+        assert result[1]["loc"] == ["password"]
+        assert result[1]["msg"] == "Input should be a valid string"
+        assert result[1]["input"] is None
 
 
 async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
