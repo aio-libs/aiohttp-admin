@@ -28,7 +28,7 @@ class DummyResource(AbstractAdminResource[str]):
     async def update(self, record_id: str, data: Record, previous_data: Record, meta: Meta) -> Record:  # pragma: no cover
         raise NotImplementedError()
 
-    async def update_many(self, record_ids: Sequence[str], data: Record, meta: Meta) -> list[Union[int, str]]:  # pragma: no cover  # noqa: B950
+    async def update_many(self, record_ids: Sequence[str], data: Record, meta: Meta) -> list[str]:  # pragma: no cover  # noqa: B950
         raise NotImplementedError()
 
     async def create(self, data: Record, meta: Meta) -> Record:  # pragma: no cover
@@ -37,5 +37,5 @@ class DummyResource(AbstractAdminResource[str]):
     async def delete(self, record_id: str, previous_data: Record, meta: Meta) -> Record:  # pragma: no cover
         raise NotImplementedError()
 
-    async def delete_many(self, record_ids: Sequence[str], meta: Meta) -> list[Union[int, str]]:  # pragma: no cover  # noqa: B950
+    async def delete_many(self, record_ids: Sequence[str], meta: Meta) -> list[str]:  # pragma: no cover  # noqa: B950
         raise NotImplementedError()
