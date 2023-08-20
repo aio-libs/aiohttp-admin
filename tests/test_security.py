@@ -41,7 +41,7 @@ async def test_valid_login_logout(admin_client: TestClient) -> None:
     h = {"Authorization": token}
     async with admin_client.get(get_one_url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1}}
+        assert await resp.json() == {"data": {"id": "1"}}
 
     # Continue to test logout
     logout_url = admin_client.app["admin"].router["logout"].url_for()
@@ -139,7 +139,7 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient, 
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1}}
+        assert await resp.json() == {"data": {"id": "1"}}
 
 
 async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -155,7 +155,7 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1}}
+        assert await resp.json() == {"data": {"id": "1"}}
 
 
 async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -178,7 +178,7 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
     url = admin_client.app["admin"].router["dummy2_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "1", "msg": "Test"}}
 
     url = admin_client.app["admin"].router["dummy2_create"].url_for()
     p = {"data": '{"msg": "Foo"}'}
@@ -203,7 +203,7 @@ async def test_list_resource_finegrained_permission(create_admin_client: _Create
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 3}, {"id": 2}, {"id": 1}], "total": 3}
+        assert await resp.json() == {"data": [{"id": "3"}, {"id": "2"}, {"id": "1"}], "total": 3}
 
 
 async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -219,7 +219,7 @@ async def test_get_resource_finegrained_permission(create_admin_client: _CreateC
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1}}
+        assert await resp.json() == {"data": {"id": "1"}}
 
 
 async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -233,9 +233,9 @@ async def test_get_many_resource_finegrained_permission(create_admin_client: _Cr
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
     h = await login(admin_client)
-    async with admin_client.get(url, params={"ids": "[1]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["1"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 1}]}
+        assert await resp.json() == {"data": [{"id": "1"}]}
 
 
 async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -257,7 +257,7 @@ async def test_create_resource_finegrained_permission(create_admin_client: _Crea
 
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4, "msg": None}}
+        assert await resp.json() == {"data": {"id": "4", "msg": None}}
 
 
 async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -279,7 +279,7 @@ async def test_create_resource_filtered_permission(create_admin_client: _CreateC
 
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4}}
+        assert await resp.json() == {"data": {"id": "4"}}
 
 
 async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -296,7 +296,7 @@ async def test_update_resource_finegrained_permission(create_admin_client: _Crea
     p = {"id": 1, "data": json.dumps({"id": 222, "msg": "ABC"}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 222, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "222", "msg": "Test"}}
 
 
 async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -313,7 +313,7 @@ async def test_update_resource_filtered_permission(create_admin_client: _CreateC
     p = {"id": 1, "data": json.dumps({"id": 222, "msg": "ABC"}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 222}}
+        assert await resp.json() == {"data": {"id": "222"}}
 
     async with admin_client.app["db"]() as sess:
         r = await sess.get(admin_client.app["model2"], 1)
@@ -333,7 +333,7 @@ async def test_update_many_resource_finegrained_permission(  # type: ignore[no-a
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[1]", "data": json.dumps({"msg": "ABC"})}
+    p = {"ids": '["1"]', "data": json.dumps({"msg": "ABC"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
         # TODO(aiohttp-security05)
@@ -354,7 +354,7 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
     p = {"id": 1, "previousData": "{}"}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1}}
+        assert await resp.json() == {"data": {"id": "1"}}
 
 
 async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -394,7 +394,7 @@ async def test_permission_filter_list(create_admin_client: _CreateClient,  # typ
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {
-            "data": [{"id": 4, "msg": "Foo"}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}],
+            "data": [{"id": "4", "msg": "Foo"}, {"id": "2", "msg": "Test"}, {"id": "1", "msg": "Test"}],
             "total": 3}
 
 
@@ -413,7 +413,7 @@ async def test_permission_filter_list2(create_admin_client: _CreateClient,  # ty
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {
-            "data": [{"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 2}
+            "data": [{"id": "2", "msg": "Test"}, {"id": "1", "msg": "Test"}], "total": 2}
 
 
 async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -428,7 +428,7 @@ async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # 
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "2", "msg": "Test"}}
     async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
         assert resp.status == 403
 
@@ -445,7 +445,7 @@ async def test_permission_filter_get_one2(create_admin_client: _CreateClient,  #
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 2, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "2", "msg": "Test"}}
     async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
         assert resp.status == 403
 
@@ -460,10 +460,10 @@ async def test_permission_filter_get_many(create_admin_client: _CreateClient,  #
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
     h = await login(admin_client)
-    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["2", "3"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}]}
-    async with admin_client.get(url, params={"ids": "[3]"}, headers=h) as resp:
+        assert await resp.json() == {"data": [{"id": "2", "msg": "Test"}]}
+    async with admin_client.get(url, params={"ids": '["3"]'}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": []}
 
@@ -478,10 +478,10 @@ async def test_permission_filter_get_many2(create_admin_client: _CreateClient,  
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
     h = await login(admin_client)
-    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["2", "3"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}]}
-    async with admin_client.get(url, params={"ids": "[3]"}, headers=h) as resp:
+        assert await resp.json() == {"data": [{"id": "2", "msg": "Test"}]}
+    async with admin_client.get(url, params={"ids": '["3"]'}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": []}
 
@@ -499,7 +499,7 @@ async def test_permission_filter_create(create_admin_client: _CreateClient,  # t
     p = {"data": json.dumps({"msg": "Test"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "4", "msg": "Test"}}
     p = {"data": json.dumps({"msg": "Foo"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 403
@@ -518,7 +518,7 @@ async def test_permission_filter_create2(create_admin_client: _CreateClient,  # 
     p = {"data": json.dumps({"msg": "Test"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "4", "msg": "Test"}}
     p = {"data": json.dumps({"msg": "Foo"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 403
@@ -577,13 +577,13 @@ async def test_permission_filter_update_many(  # type: ignore[no-any-unimported]
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[3]", "data": json.dumps({"msg": "Test"})}
+    p = {"ids": '["3"]', "data": json.dumps({"msg": "Test"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1]", "data": json.dumps({"msg": "Foo"})}
+    p = {"ids": '["1"]', "data": json.dumps({"msg": "Foo"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Test"})}
+    p = {"ids": '["1", "2"]', "data": json.dumps({"msg": "Test"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
 
@@ -599,13 +599,13 @@ async def test_permission_filter_update_many2(  # type: ignore[no-any-unimported
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[3]", "data": json.dumps({"msg": "Test"})}
+    p = {"ids": '["3"]', "data": json.dumps({"msg": "Test"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1]", "data": json.dumps({"msg": "Foo"})}
+    p = {"ids": '["1"]', "data": json.dumps({"msg": "Foo"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Test"})}
+    p = {"ids": '["1", "2"]', "data": json.dumps({"msg": "Test"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
 
@@ -656,16 +656,16 @@ async def test_permission_filter_delete_many(create_admin_client: _CreateClient,
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_delete_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[2, 3]"}
+    p = {"ids": '["2", "3"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[3]"}
+    p = {"ids": '["3"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]"}
+    p = {"ids": '["1", "2"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [1, 2]}
+        assert await resp.json() == {"data": ["1", "2"]}
 
 
 async def test_permission_filter_delete_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -678,16 +678,16 @@ async def test_permission_filter_delete_many2(create_admin_client: _CreateClient
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_delete_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[2, 3]"}
+    p = {"ids": '["2", "3"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[3]"}
+    p = {"ids": '["3"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]"}
+    p = {"ids": '["1", "2"]'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [1, 2]}
+        assert await resp.json() == {"data": ["1", "2"]}
 
 
 async def test_permission_filter_field_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -705,7 +705,7 @@ async def test_permission_filter_field_list(create_admin_client: _CreateClient, 
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {
-            "data": [{"id": 3}, {"id": 2, "msg": "Test"}, {"id": 1, "msg": "Test"}], "total": 3}
+            "data": [{"id": "3"}, {"id": "2", "msg": "Test"}, {"id": "1", "msg": "Test"}], "total": 3}
 
 
 async def test_permission_filter_field_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -723,7 +723,7 @@ async def test_permission_filter_field_list2(create_admin_client: _CreateClient,
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {
-            "data": [{"id": 3, "msg": "Other"}, {"id": 2}, {"id": 1, "msg": "Test"}], "total": 3}
+            "data": [{"id": "3", "msg": "Other"}, {"id": "2"}, {"id": "1", "msg": "Test"}], "total": 3}
 
 
 async def test_permission_filter_field_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -738,10 +738,10 @@ async def test_permission_filter_field_get_one(create_admin_client: _CreateClien
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "1", "msg": "Test"}}
     async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 3}}
+        assert await resp.json() == {"data": {"id": "3"}}
 
 
 async def test_permission_filter_field_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -756,10 +756,10 @@ async def test_permission_filter_field_get_one2(create_admin_client: _CreateClie
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "1", "msg": "Test"}}
     async with admin_client.get(url, params={"id": 3}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 3}}
+        assert await resp.json() == {"data": {"id": "3"}}
 
 
 async def test_permission_filter_field_get_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -772,9 +772,9 @@ async def test_permission_filter_field_get_many(create_admin_client: _CreateClie
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
     h = await login(admin_client)
-    async with admin_client.get(url, params={"ids": "[2, 3]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["2", "3"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 2, "msg": "Test"}, {"id": 3}]}
+        assert await resp.json() == {"data": [{"id": "2", "msg": "Test"}, {"id": "3"}]}
 
 
 async def test_permission_filter_field_get_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -787,9 +787,9 @@ async def test_permission_filter_field_get_many2(create_admin_client: _CreateCli
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_get_many"].url_for()
     h = await login(admin_client)
-    async with admin_client.get(url, params={"ids": "[1, 3]"}, headers=h) as resp:
+    async with admin_client.get(url, params={"ids": '["1", "3"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": 1, "msg": "Test"}, {"id": 3}]}
+        assert await resp.json() == {"data": [{"id": "1", "msg": "Test"}, {"id": "3"}]}
 
 
 async def test_permission_filter_field_create(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
@@ -807,7 +807,7 @@ async def test_permission_filter_field_create(create_admin_client: _CreateClient
         assert resp.status == 403
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4}}
+        assert await resp.json() == {"data": {"id": "4"}}
     async with admin_client.app["db"]() as sess:
         r = await sess.get(admin_client.app["model2"], 4)
         assert r.msg is None
@@ -828,7 +828,7 @@ async def test_permission_filter_field_create2(create_admin_client: _CreateClien
         assert resp.status == 403
     async with admin_client.post(url, params={"data": "{}"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 4, "msg": None}}
+        assert await resp.json() == {"data": {"id": "4", "msg": None}}
     async with admin_client.app["db"]() as sess:
         r = await sess.get(admin_client.app["model2"], 4)
         assert r.msg is None
@@ -851,11 +851,11 @@ async def test_permission_filter_field_update(create_admin_client: _CreateClient
     p = {"id": 1, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "msg": "Spam"}}
+        assert await resp.json() == {"data": {"id": "1", "msg": "Spam"}}
     p = {"id": 2, "data": json.dumps({"id": 5}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 5}}
+        assert await resp.json() == {"data": {"id": "5"}}
     async with admin_client.app["db"]() as sess:
         r = await sess.get(admin_client.app["model2"], 2)
         assert r is None
@@ -873,18 +873,18 @@ async def test_permission_filter_field_update2(create_admin_client: _CreateClien
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update"].url_for()
     h = await login(admin_client)
-    p = {"id": 3, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    p = {"id": "3", "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 400
         assert await resp.text() == "400: No allowed fields to change."
-    p = {"id": 1, "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
+    p = {"id": "1", "data": json.dumps({"msg": "Spam"}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 1, "msg": "Spam"}}
-    p = {"id": 2, "data": json.dumps({"id": 5}), "previousData": "{}"}
+        assert await resp.json() == {"data": {"id": "1", "msg": "Spam"}}
+    p = {"id": "2", "data": json.dumps({"id": 5}), "previousData": "{}"}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": 5, "msg": "Test"}}
+        assert await resp.json() == {"data": {"id": "5", "msg": "Test"}}
     async with admin_client.app["db"]() as sess:
         r = await sess.get(admin_client.app["model2"], 2)
         assert r is None
@@ -903,13 +903,13 @@ async def test_permission_filter_field_update_many(  # type: ignore[no-any-unimp
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[3]", "data": json.dumps({"msg": "Spam"})}
+    p = {"ids": '["3"]', "data": json.dumps({"msg": "Spam"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Spam"})}
+    p = {"ids": '["1", "2"]', "data": json.dumps({"msg": "Spam"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [1, 2]}
+        assert await resp.json() == {"data": ["1", "2"]}
 
 
 async def test_permission_filter_field_update_many2(  # type: ignore[no-any-unimported]
@@ -923,10 +923,10 @@ async def test_permission_filter_field_update_many2(  # type: ignore[no-any-unim
     assert admin_client.app
     url = admin_client.app["admin"].router["dummy2_update_many"].url_for()
     h = await login(admin_client)
-    p = {"ids": "[3]", "data": json.dumps({"msg": "Spam"})}
+    p = {"ids": '["3"]', "data": json.dumps({"msg": "Spam"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 403
-    p = {"ids": "[1, 2]", "data": json.dumps({"msg": "Spam"})}
+    p = {"ids": '["1", "2"]', "data": json.dumps({"msg": "Spam"})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [1, 2]}
+        assert await resp.json() == {"data": ["1", "2"]}
