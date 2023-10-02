@@ -164,7 +164,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
 
         auth = self._fernet.encrypt(identity.encode("utf-8")).decode("utf-8")
         identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": {}}
-        # https://github.com/python/mypy/issues/6462
+        # We change type of permissions below, so need to ignore this type error.
         identity_dict.update(user_details)  # type: ignore[typeddict-item]
         identity_dict["permissions"] = permissions_as_dict(user_details["permissions"])
 
