@@ -367,38 +367,47 @@ class SAResource(AbstractAdminResource[Any]):
         for constr in table.constraints:
             if not isinstance(constr, sa.CheckConstraint):
                 continue
-            if isinstance(constr.sqltext, sa.BinaryExpression):
-                left = constr.sqltext.left
-                right = constr.sqltext.right
-                op = constr.sqltext.operator
-                if left.expression is c:
-                    if not isinstance(right, sa.BindParameter) or right.value is None:
-                        continue
-                    if op is operator.ge:  # type: ignore[comparison-overlap]
-                        validators.append(func("minValue", (right.value,)))
-                    elif op is operator.gt:  # type: ignore[comparison-overlap]
-                        validators.append(func("minValue", (right.value + 1,)))
-                    elif op is operator.le:  # type: ignore[comparison-overlap]
-                        validators.append(func("maxValue", (right.value,)))
-                    elif op is operator.lt:  # type: ignore[comparison-overlap]
-                        validators.append(func("maxValue", (right.value - 1,)))
-                elif isinstance(left, sa.Function):
-                    if left.name == "char_length":
-                        if next(iter(left.clauses)) is not c:
-                            continue
+
+            if isinstance(constr.sqltext, sa.BooleanClauseList):
+                if constr.sqltext.operator is not operator.and_:  # type: ignore[comparison-overlap]
+                    continue
+                exprs = constr.sqltext.clauses
+            else:
+                exprs = (constr.sqltext,)
+
+            for expr in exprs:
+                if isinstance(expr, sa.BinaryExpression):
+                    left = expr.left
+                    right = expr.right
+                    op = expr.operator
+                    if left.expression is c:
                         if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
                         if op is operator.ge:  # type: ignore[comparison-overlap]
-                            validators.append(func("minLength", (right.value,)))
+                            validators.append(func("minValue", (right.value,)))
                         elif op is operator.gt:  # type: ignore[comparison-overlap]
-                            validators.append(func("minLength", (right.value + 1,)))
-            elif isinstance(constr.sqltext, sa.Function):
-                if constr.sqltext.name in ("regexp", "regexp_like"):
-                    clauses = tuple(constr.sqltext.clauses)
-                    if clauses[0] is not c or not isinstance(clauses[1], sa.BindParameter):
-                        continue
-                    if clauses[1].value is None:
-                        continue
-                    validators.append(func("regex", (regex(clauses[1].value),)))
+                            validators.append(func("minValue", (right.value + 1,)))
+                        elif op is operator.le:  # type: ignore[comparison-overlap]
+                            validators.append(func("maxValue", (right.value,)))
+                        elif op is operator.lt:  # type: ignore[comparison-overlap]
+                            validators.append(func("maxValue", (right.value - 1,)))
+                    elif isinstance(left, sa.Function):
+                        if left.name == "char_length":
+                            if next(iter(left.clauses)) is not c:
+                                continue
+                            if not isinstance(right, sa.BindParameter) or right.value is None:
+                                continue
+                            if op is operator.ge:  # type: ignore[comparison-overlap]
+                                validators.append(func("minLength", (right.value,)))
+                            elif op is operator.gt:  # type: ignore[comparison-overlap]
+                                validators.append(func("minLength", (right.value + 1,)))
+                elif isinstance(expr, sa.Function):
+                    if expr.name in ("regexp", "regexp_like"):
+                        clauses = tuple(expr.clauses)
+                        if clauses[0] is not c or not isinstance(clauses[1], sa.BindParameter):
+                            continue
+                        if clauses[1].value is None:
+                            continue
+                        validators.append(func("regex", (regex(clauses[1].value),)))
 
         return validators
