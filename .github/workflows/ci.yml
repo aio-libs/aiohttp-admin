@@ -50,7 +50,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        pyver: ['3.9', '3.10', '3.11']
+        pyver: ['3.9', '3.10', '3.11', '3.12']
         include:
           - pyver: pypy-3.9
     runs-on: ubuntu-latest
@@ -61,6 +61,7 @@ jobs:
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v4
       with:
+        allow-prereleases: true
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
