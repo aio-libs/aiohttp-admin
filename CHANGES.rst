@@ -4,6 +4,20 @@ CHANGES
 
 .. towncrier release notes start
 
+0.1.0a2 (2023-10-02)
+====================
+
+- Added ``permission_for()`` to create sqlalchemy permissions programatically.
+- Added ``field_props`` and ``input_props`` to the schema to pass extra props to components.
+- Added support for more relationships (one-to-many, many-to-one etc.).
+- Added a ``js_module`` option to include custom functions.
+- Added ``comp()``, ``func()`` and ``regex()``.
+- Added ``show_actions`` to allow customising the show actions.
+- Set many additional props/validators from inspecting the SqlAlchemy models.
+- Migrated to Pydantic v2.
+- Fixed behaviour with dates and times.
+- Various minor improvements.
+
 0.1.0a1 (2023-04-23)
 ====================
 
