@@ -285,7 +285,7 @@ def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine
                           sa.CheckConstraint(sa.func.char_length(min_length_gt) > 5),
                           sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")),
                           sa.CheckConstraint(sa.and_(with_and > 7, with_and < 12)),
-                          sa.CheckConstraint(sa.or_(with_and > 7, with_and < 12)))
+                          sa.CheckConstraint(sa.or_(with_or > 7, with_or < 12)))
 
     r = SAResource(mock_engine, TestCC)
 
