@@ -180,6 +180,9 @@ class SAResource(AbstractAdminResource[Any]):
             else:
                 field, inp, props = get_components(c.type)
 
+            if inp == "BooleanInput" and c.nullable:
+                inp = "NullableBooleanInput"
+
             props["source"] = c.name
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}

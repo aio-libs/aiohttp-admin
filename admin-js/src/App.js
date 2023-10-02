@@ -14,7 +14,8 @@ import {
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField,
     // Inputs
-    BooleanInput, DateInput, DateTimeInput, NumberInput, SelectInput, TextInput,
+    BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
+    SelectInput, TextInput,
     TimeInput as _TimeInput, ReferenceInput as _ReferenceInput,
     // Filters
     email, maxLength, maxValue, minLength, minValue, regex, required,
@@ -65,8 +66,8 @@ const COMPONENTS = {
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
     ReferenceOneField, SelectField, TextField, TimeField,
 
-    BooleanInput, DateInput, DateTimeInput, NumberInput, ReferenceInput, SelectInput,
-    TextInput, TimeInput
+    BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
+    ReferenceInput, SelectInput, TextInput, TimeInput
 };
 const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");
