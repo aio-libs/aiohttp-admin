@@ -281,7 +281,10 @@ class SAResource(AbstractAdminResource[Any]):
 
         async def get_count() -> int:
             async with self._db.connect() as conn:
-                return await conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
+                count = await conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
+                if count is None:
+                    raise RuntimeError("Failed to get count.")
+                return count
 
         async def get_entities() -> list[Record]:
             async with self._db.connect() as conn:
