@@ -14,7 +14,7 @@ from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy
 from .types import Schema, UserDetails
 
 __all__ = ("Permissions", "Schema", "UserDetails", "setup")
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a2"
 
 
 @web.middleware
