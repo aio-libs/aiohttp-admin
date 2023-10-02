@@ -276,12 +276,14 @@ def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine
         min_length: Mapped[str] = mapped_column()
         min_length_gt: Mapped[str] = mapped_column()
         regex: Mapped[str] = mapped_column()
+        with_and: Mapped[str] = mapped_column()
 
         __table_args__ = (sa.CheckConstraint(gt > 3), sa.CheckConstraint(gte >= 3),
                           sa.CheckConstraint(lt < 3), sa.CheckConstraint(lte <= 3),
                           sa.CheckConstraint(sa.func.char_length(min_length) >= 5),
                           sa.CheckConstraint(sa.func.char_length(min_length_gt) > 5),
-                          sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")))
+                          sa.CheckConstraint(sa.func.regexp(regex, r"abc.*")),
+                          sa.CheckConstraint(sa.and_(with_and > 7, with_and < 12)))
 
     r = SAResource(mock_engine, TestCC)
 
@@ -300,6 +302,8 @@ def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine
     assert f["min_length"]["props"]["validate"] == [required, func("minLength", (5,))]
     assert f["min_length_gt"]["props"]["validate"] == [required, func("minLength", (6,))]
     assert f["regex"]["props"]["validate"] == [required, func("regex", (regex("abc.*"),))]
+    assert f["with_and"]["props"]["validate"] == [
+        required, func("minValue", (8,)), func("maxValue", (11,))]
 
 
 async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
