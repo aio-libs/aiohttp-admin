@@ -177,6 +177,11 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         # When sort order refers to "id", this should be translated to primary key.
         if query["sort"]["field"] == "id":
             query["sort"]["field"] = self.primary_key
+        id_filter = query["filter"].pop("id", None)
+        if id_filter is not None:
+            if not isinstance(id_filter, str):  # str used for like filtering.
+                id_filter = check(self._id_type, id_filter)
+            query["filter"][self.primary_key] = id_filter
 
         # Add filters from advanced permissions.
         # The permissions will be cached on the request from a previous permissions check.
