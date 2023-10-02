@@ -275,20 +275,22 @@ class SAResource(AbstractAdminResource[Any]):
         offset = (params["pagination"]["page"] - 1) * per_page
 
         filters = params["filter"]
-        async with self._db.connect() as conn:
-            query = sa.select(self._table)
-            if filters:
-                query = query.where(*create_filters(self._table.c, filters))
+        query = sa.select(self._table)
+        if filters:
+            query = query.where(*create_filters(self._table.c, filters))
 
-            count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
+        async def get_count() -> int:
+            async with self._db.connect() as conn:
+                return await conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
 
-            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
-            order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
-            stmt = query.offset(offset).limit(per_page).order_by(order_by)
-            result, count = await asyncio.gather(conn.execute(stmt), count_t)
-            entities = [r._asdict() for r in result]
+        async def get_entities() -> list[Record]:
+            async with self._db.connect() as conn:
+                sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
+                order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
+                stmt = query.offset(offset).limit(per_page).order_by(order_by)
+                return [r._asdict() for r in await conn.execute(stmt)]
 
-        return entities, count
+        return await asyncio.gather(get_entities(), get_count())
 
     @handle_errors
     async def get_one(self, record_id: Any, meta: Meta) -> Record:
