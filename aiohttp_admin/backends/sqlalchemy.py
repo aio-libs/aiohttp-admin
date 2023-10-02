@@ -369,7 +369,7 @@ class SAResource(AbstractAdminResource[Any]):
                 continue
 
             if isinstance(constr.sqltext, sa.BooleanClauseList):
-                if constr.sqltext.operator is not operator.and_:
+                if constr.sqltext.operator is not operator.and_:  # type: ignore[comparison-overlap]
                     continue
                 exprs = constr.sqltext.clauses
             else:
