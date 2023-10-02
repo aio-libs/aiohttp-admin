@@ -206,6 +206,12 @@ class SAResource(AbstractAdminResource[Any]):
                 props = props.copy()
                 show = c is not table.autoincrement_column
                 props["validate"] = self._get_validators(table, c)
+                if inp == "NumberInput":
+                    for v in props["validate"]:
+                        if v["name"] == "minValue":
+                            props["min"] = v["args"][0]
+                        elif v["name"] == "maxValue":
+                            props["max"] = v["args"][0]
                 self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
                 field_type: Any = c.type.python_type
