@@ -1,0 +1,61 @@
+To build a custom component:
+
+    First we need to replace some of our dependencies with a shim (ensure shim/ is copied
+    to your project directory).
+    In package.json, update the dependencies which are available in the shim/ directory:
+
+        "react": "file:./shim/react",
+        "react-admin": "file:./shim/react-admin",
+        "react-dom": "file:./shim/react-dom",
+
+    Also repeat these in a 'resolutions' config:
+
+        "resolutions": {
+            "react": "file:./shim/react",
+            "react-admin": "file:./shim/react-admin",
+            "react-dom": "file:./shim/react-dom",
+            "react-router-dom": "file:./shim/react-router-dom",
+            "query-string": "file:./shim/query-string"
+        },
+
+    Using the shim for atleast react-admin is required, otherwise the components will
+    end up using different contexts to the application and will fail to function.
+    Using the shim for other libraries is recommended as it will significantly reduce
+    the size of your compiled module.
+
+
+
+    Second, we need to ensure that it is built as an ES6 module. To achieve this, add
+    craco to the dependencies:
+
+        "@craco/craco": "^7.1.0",
+
+    Then create a craco.config.js file:
+
+        module.exports = {
+          webpack: {
+            configure: {
+              output: {
+                library: {
+                  type: "module"
+                }
+              },
+              experiments: {outputModule: true}
+            }
+          }
+        }
+
+    And replace `react-scripts` with `craco` in the 'scripts' config:
+
+        "scripts": {
+            "start": "craco start",
+            "build": "craco build",
+            "test": "craco test",
+            "eject": "craco eject"
+        },
+
+
+    Then the components can be built as normal:
+
+        yarn install
+        yarn build
