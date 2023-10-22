@@ -10,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
-from aiohttp_admin.types import comp, func, regex
+from aiohttp_admin.types import comp
 
 
 class Base(DeclarativeBase):
