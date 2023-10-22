@@ -35,10 +35,6 @@ async def check_credentials(username: str, password: str) -> bool:
     return username == "admin" and password == "admin"
 
 
-async def serve_js(request: web.Request) -> web.Response:
-    return web.Response(text=JS, content_type="text/javascript")
-
-
 async def create_app() -> web.Application:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     session = async_sessionmaker(engine, expire_on_commit=False)
