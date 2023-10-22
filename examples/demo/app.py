@@ -56,7 +56,8 @@ async def create_app() -> web.Application:
             "check_credentials": check_credentials,
             "secure": False
         },
-        "resources": ({"model": SAResource(engine, User), "show_actions": (comp("CustomCloneButton"),)},),
+        "resources": ({"model": SAResource(engine, User),
+                       "show_actions": (comp("CustomCloneButton"),)},),
         # Use our JS module to include our custom validator.
         "js_module": str(app.router["static"].url_for(filename="admin.js"))
     }
