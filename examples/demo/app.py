@@ -10,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
 from aiohttp_admin.backends.sqlalchemy import SAResource
-from aiohttp_admin.types import comp, func, regex
+from aiohttp_admin.types import comp
 
 
 class Base(DeclarativeBase):
@@ -56,7 +56,8 @@ async def create_app() -> web.Application:
             "check_credentials": check_credentials,
             "secure": False
         },
-        "resources": ({"model": SAResource(engine, User), "show_actions": (comp("CustomCloneButton"),)},),
+        "resources": ({"model": SAResource(engine, User),
+                       "show_actions": (comp("CustomCloneButton"),)},),
         # Use our JS module to include our custom validator.
         "js_module": str(app.router["static"].url_for(filename="admin.js"))
     }
