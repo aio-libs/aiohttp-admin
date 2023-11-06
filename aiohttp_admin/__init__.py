@@ -11,9 +11,9 @@ from pydantic import ValidationError
 
 from .routes import setup_resources, setup_routes
 from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy, check
-from .types import Schema, UserDetails
+from .types import Schema, State, UserDetails, check_credentials_key, permission_re_key, state_key
 
-__all__ = ("Permissions", "Schema", "UserDetails", "setup")
+__all__ = ("Permissions", "Schema", "UserDetails", "permission_re_key", "setup")
 __version__ = "0.1.0a2"
 
 
@@ -51,7 +51,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
         enclosing scope later.
         """
         storage._cookie_params["path"] = prefixed_subapp.canonical
-        admin["state"]["urls"] = {
+        admin[state_key]["urls"] = {
             "token": str(admin.router["token"].url_for()),
             "logout": str(admin.router["logout"].url_for())
         }
@@ -65,7 +65,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
 
         for res in schema["resources"]:
             m = res["model"]
-            admin["state"]["resources"][m.name]["urls"] = {key(r): value(r) for r in m.routes}
+            admin[state_key]["resources"][m.name]["urls"].update((key(r), value(r)) for r in m.routes)
 
     schema = check(Schema, schema)
     if secret is None:
@@ -74,9 +74,8 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     admin = web.Application()
     admin.middlewares.append(pydantic_middleware)
     admin.on_startup.append(on_startup)
-    admin["check_credentials"] = schema["security"]["check_credentials"]
-    admin["identity_callback"] = schema["security"].get("identity_callback")
-    admin["state"] = {"view": schema.get("view", {}), "js_module": schema.get("js_module")}
+    admin[check_credentials_key] = schema["security"]["check_credentials"]
+    admin[state_key] = State({"view": schema.get("view", {}), "js_module": schema.get("js_module"), "urls": {}, "resources": {}})
 
     max_age = schema["security"].get("max_age")
     secure = schema["security"].get("secure", True)
@@ -90,7 +89,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     setup_resources(admin, schema)
 
     resource_patterns = []
-    for r, state in admin["state"]["resources"].items():
+    for r, state in admin[state_key]["resources"].items():
         fields = state["fields"].keys()
         resource_patterns.append(
             r"(?#Resource name){r}"
@@ -102,7 +101,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     p_re = (r"(?#Global admin permission)~?admin\.(view|edit|add|delete|\*)"
             r"|"
             r"(?#Resource permission)(~)?admin\.({})").format("|".join(resource_patterns))
-    admin["permission_re"] = re.compile(p_re)
+    admin[permission_re_key] = re.compile(p_re)
 
     prefixed_subapp = app.add_subapp(path, admin)
     return admin

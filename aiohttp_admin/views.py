@@ -7,6 +7,7 @@ from aiohttp_security import forget, remember
 from pydantic import Json
 
 from .security import check
+from .types import check_credentials_key, state_key
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
@@ -38,15 +39,15 @@ async def index(request: web.Request) -> web.Response:
     """Root page which loads react-admin."""
     static = request.app.router["static"]
     js = static.url_for(filename="admin.js")
-    state = json.dumps(request.app["state"])
+    state = json.dumps(request.app[state_key])
 
     # __package__ can be None, despite what the documentation claims.
     package_name = __main__.__package__ or "My"
     # Common convention is to have _app suffix for package name, so try and strip that.
     package_name = package_name.removesuffix("_app").replace("_", " ").title()
-    name = request.app["state"]["view"].get("name", package_name)
+    name = request.app[state_key]["view"].get("name", package_name)
 
-    icon = request.app["state"]["view"].get("icon", static.url_for(filename="favicon.svg"))
+    icon = request.app[state_key]["view"].get("icon", static.url_for(filename="favicon.svg"))
 
     output = INDEX_TEMPLATE.format(name=name, icon=icon, js=js, state=state)
     return web.Response(text=output, content_type="text/html")
@@ -56,7 +57,7 @@ async def token(request: web.Request) -> web.Response:
     """Validate user credentials and log the user in."""
     data = check(Json[_Login], await request.read())
 
-    check_credentials = request.app["check_credentials"]
+    check_credentials = request.app[check_credentials_key]
     if not await check_credentials(data["username"], data["password"]):
         raise web.HTTPUnauthorized(text="Wrong username or password")
 

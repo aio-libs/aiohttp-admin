@@ -4,7 +4,7 @@ from aiohttp import web
 import aiohttp_admin
 from _auth import check_credentials
 from _resources import DummyResource
-from aiohttp_admin.types import comp, func
+from aiohttp_admin.types import comp, func, permission_re_key, state_key
 
 
 def test_path() -> None:
@@ -26,7 +26,7 @@ def test_js_module() -> None:
                                     "resources": (), "js_module": "/custom_js.js"}
     admin = aiohttp_admin.setup(app, schema)
 
-    assert admin["state"]["js_module"] == "/custom_js.js"
+    assert admin[state_key]["js_module"] == "/custom_js.js"
 
 
 def test_no_js_module() -> None:
@@ -35,7 +35,7 @@ def test_no_js_module() -> None:
                                     "resources": ()}
     admin = aiohttp_admin.setup(app, schema)
 
-    assert admin["state"]["js_module"] is None
+    assert admin[state_key]["js_module"] is None
 
 
 def test_validators() -> None:
@@ -51,7 +51,7 @@ def test_validators() -> None:
         "security": {"check_credentials": check_credentials},
         "resources": ({"model": dummy, "validators": {"id": (func("minValue", (3,)),)}},)}
     admin = aiohttp_admin.setup(app, schema)
-    validators = admin["state"]["resources"]["dummy"]["inputs"]["id"]["props"]["validate"]
+    validators = admin[state_key]["resources"]["dummy"]["inputs"]["id"]["props"]["validate"]
     assert validators == (func("required", ()), func("minValue", (3,)))
     assert ("minValue", 3) not in dummy.inputs["id"]["props"]["validate"]  # type: ignore[operator]
 
@@ -64,7 +64,7 @@ def test_re() -> None:
     schema: aiohttp_admin.Schema = {"security": {"check_credentials": check_credentials},
                                     "resources": ({"model": test_re},)}
     admin = aiohttp_admin.setup(app, schema)
-    r = admin["permission_re"]
+    r = admin[permission_re_key]
 
     assert r.fullmatch("admin.*")
     assert r.fullmatch("admin.view")
@@ -102,7 +102,7 @@ def test_display() -> None:
 
     admin = aiohttp_admin.setup(app, schema)
 
-    test_state = admin["state"]["resources"]["test"]
+    test_state = admin[state_key]["resources"]["test"]
     assert test_state["list_omit"] == ("id",)
     assert test_state["inputs"]["id"]["props"] == {"validate": (func("required", ()),)}
     assert test_state["inputs"]["foo"]["props"] == {"alwaysOn": "alwaysOn"}
@@ -136,7 +136,7 @@ def test_extra_props() -> None:
 
     admin = aiohttp_admin.setup(app, schema)
 
-    test_state = admin["state"]["resources"]["test"]
+    test_state = admin[state_key]["resources"]["test"]
     assert test_state["fields"]["id"]["props"] == {"textAlign": "left", "placeholder": "foo",
                                                    "label": "Spam"}
     assert test_state["inputs"]["id"]["props"] == {"alwaysOn": "alwaysOn", "type": "email",
