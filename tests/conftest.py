@@ -6,7 +6,7 @@ import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column
 
 import aiohttp_admin
 from _auth import check_credentials
@@ -14,7 +14,7 @@ from aiohttp_admin.backends.sqlalchemy import SAResource
 
 _IdentityCallback = Callable[[str], Awaitable[aiohttp_admin.UserDetails]]
 
-class Base(DeclarativeBase):
+class Base(DeclarativeBaseNoMeta):
     """Base model."""
 
 class DummyModel(Base):
