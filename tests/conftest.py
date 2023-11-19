@@ -42,8 +42,8 @@ def mock_engine() -> AsyncMock:
 @pytest.fixture
 def create_admin_client(
     aiohttp_client: Callable[[web.Application], Awaitable[TestClient]]
-) -> Callable[[Optional[_IdentityCallback]], Awaitable[TestClient]]:
-    async def admin_client(identity_callback: Optional[_IdentityCallback] = None) -> TestClient:
+) -> Callable[[Optional[IdentityCallback]], Awaitable[TestClient]]:
+    async def admin_client(identity_callback: Optional[IdentityCallback] = None) -> TestClient:
         app = web.Application()
         app[model] = DummyModel
         app[model2] = Dummy2Model
