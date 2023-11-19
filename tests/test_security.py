@@ -319,7 +319,7 @@ async def test_update_resource_filtered_permission(create_admin_client: _CreateC
         assert r.msg == "Test"
 
 
-async def test_update_many_resource_finegrained_permission(  # type: ignore[no-any-unimported]
+async def test_update_many_resource_finegrained_permission(
         create_admin_client: _CreateClient, login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -564,7 +564,7 @@ async def test_permission_filter_update2(create_admin_client: _CreateClient,
         assert resp.status == 200
 
 
-async def test_permission_filter_update_many(  # type: ignore[no-any-unimported]
+async def test_permission_filter_update_many(
     create_admin_client: _CreateClient, login: _Login
 ) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
@@ -586,7 +586,7 @@ async def test_permission_filter_update_many(  # type: ignore[no-any-unimported]
         assert resp.status == 200
 
 
-async def test_permission_filter_update_many2(  # type: ignore[no-any-unimported]
+async def test_permission_filter_update_many2(
     create_admin_client: _CreateClient, login: _Login
 ) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
@@ -896,7 +896,7 @@ async def test_permission_filter_field_update2(create_admin_client: _CreateClien
         assert r.msg == "Test"
 
 
-async def test_permission_filter_field_update_many(  # type: ignore[no-any-unimported]
+async def test_permission_filter_field_update_many(
     create_admin_client: _CreateClient, login: _Login
 ) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
@@ -916,7 +916,7 @@ async def test_permission_filter_field_update_many(  # type: ignore[no-any-unimp
         assert await resp.json() == {"data": ["1", "2"]}
 
 
-async def test_permission_filter_field_update_many2(  # type: ignore[no-any-unimported]
+async def test_permission_filter_field_update_many2(
     create_admin_client: _CreateClient, login: _Login
 ) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
