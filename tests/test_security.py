@@ -7,9 +7,9 @@ from aiohttp.test_utils import TestClient
 from aiohttp_security import AbstractAuthorizationPolicy
 
 from aiohttp_admin import Permissions, UserDetails
-from conftest import admin, db, model, model2
+from conftest import IdentityCallback, admin, db, model, model2
 
-_CreateClient = Callable[[AbstractAuthorizationPolicy], Awaitable[TestClient]]
+_CreateClient = Callable[[IdentityCallback], Awaitable[TestClient]]
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
 
 
@@ -102,7 +102,7 @@ async def test_login_invalid_payload(admin_client: TestClient) -> None:
         assert result[1]["input"] is None
 
 
-async def test_list_without_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_list_without_permission(create_admin_client: _CreateClient,
                                        login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -122,7 +122,7 @@ async def test_list_without_permission(create_admin_client: _CreateClient,  # ty
         # assert await resp.text() == expected
 
 
-async def test_get_resource_with_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_get_resource_with_permission(create_admin_client: _CreateClient,
                                             login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -138,7 +138,7 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient, 
         assert await resp.json() == {"data": {"id": "1"}}
 
 
-async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_get_resource_with_wildcard_permission(create_admin_client: _CreateClient,
                                                      login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -154,7 +154,7 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
         assert await resp.json() == {"data": {"id": "1"}}
 
 
-async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,
                                                      login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -184,7 +184,7 @@ async def test_get_resource_with_negative_permission(create_admin_client: _Creat
         # expected = "403: User does not have 'admin.dummy2.create' permission"
 
 
-async def test_list_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_list_resource_finegrained_permission(create_admin_client: _CreateClient,
                                                     login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -202,7 +202,7 @@ async def test_list_resource_finegrained_permission(create_admin_client: _Create
         assert await resp.json() == {"data": [{"id": "3"}, {"id": "2"}, {"id": "1"}], "total": 3}
 
 
-async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_get_resource_finegrained_permission(create_admin_client: _CreateClient,
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -218,7 +218,7 @@ async def test_get_resource_finegrained_permission(create_admin_client: _CreateC
         assert await resp.json() == {"data": {"id": "1"}}
 
 
-async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_get_many_resource_finegrained_permission(create_admin_client: _CreateClient,
                                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -234,7 +234,7 @@ async def test_get_many_resource_finegrained_permission(create_admin_client: _Cr
         assert await resp.json() == {"data": [{"id": "1"}]}
 
 
-async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_create_resource_finegrained_permission(create_admin_client: _CreateClient,
                                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -256,7 +256,7 @@ async def test_create_resource_finegrained_permission(create_admin_client: _Crea
         assert await resp.json() == {"data": {"id": "4", "msg": None}}
 
 
-async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_create_resource_filtered_permission(create_admin_client: _CreateClient,
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -278,7 +278,7 @@ async def test_create_resource_filtered_permission(create_admin_client: _CreateC
         assert await resp.json() == {"data": {"id": "4"}}
 
 
-async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_update_resource_finegrained_permission(create_admin_client: _CreateClient,
                                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -295,7 +295,7 @@ async def test_update_resource_finegrained_permission(create_admin_client: _Crea
         assert await resp.json() == {"data": {"id": "222", "msg": "Test"}}
 
 
-async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_update_resource_filtered_permission(create_admin_client: _CreateClient,
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -337,7 +337,7 @@ async def test_update_many_resource_finegrained_permission(  # type: ignore[no-a
         # expected = "403: User does not have 'admin.dummy2.msg.edit' permission"
 
 
-async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_delete_resource_filtered_permission(create_admin_client: _CreateClient,
                                                    login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
@@ -354,7 +354,7 @@ async def test_delete_resource_filtered_permission(create_admin_client: _CreateC
         assert await resp.json() == {"data": {"id": "1"}}
 
 
-async def test_permissions_cached(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permissions_cached(create_admin_client: _CreateClient,
                                   login: _Login) -> None:
     identity_callback = mock.AsyncMock(spec_set=(), return_value={"permissions": {"admin.*"}})
     admin_client = await create_admin_client(identity_callback)
@@ -373,7 +373,7 @@ async def test_permissions_cached(create_admin_client: _CreateClient,  # type: i
     identity_callback.assert_called_once()
 
 
-async def test_permission_filter_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_list(create_admin_client: _CreateClient,
                                       login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"|msg="Foo"')}
@@ -396,7 +396,7 @@ async def test_permission_filter_list(create_admin_client: _CreateClient,  # typ
             "total": 3}
 
 
-async def test_permission_filter_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_list2(create_admin_client: _CreateClient,
                                        login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
@@ -414,7 +414,7 @@ async def test_permission_filter_list2(create_admin_client: _CreateClient,  # ty
             "data": [{"id": "2", "msg": "Test"}, {"id": "1", "msg": "Test"}], "total": 2}
 
 
-async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_get_one(create_admin_client: _CreateClient,
                                          login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -431,7 +431,7 @@ async def test_permission_filter_get_one(create_admin_client: _CreateClient,  # 
         assert resp.status == 403
 
 
-async def test_permission_filter_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_get_one2(create_admin_client: _CreateClient,
                                           login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
@@ -448,7 +448,7 @@ async def test_permission_filter_get_one2(create_admin_client: _CreateClient,  #
         assert resp.status == 403
 
 
-async def test_permission_filter_get_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_get_many(create_admin_client: _CreateClient,
                                           login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -466,7 +466,7 @@ async def test_permission_filter_get_many(create_admin_client: _CreateClient,  #
         assert await resp.json() == {"data": []}
 
 
-async def test_permission_filter_get_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_get_many2(create_admin_client: _CreateClient,
                                            login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.view|msg="Test"')}
@@ -484,7 +484,7 @@ async def test_permission_filter_get_many2(create_admin_client: _CreateClient,  
         assert await resp.json() == {"data": []}
 
 
-async def test_permission_filter_create(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_create(create_admin_client: _CreateClient,
                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -503,7 +503,7 @@ async def test_permission_filter_create(create_admin_client: _CreateClient,  # t
         assert resp.status == 403
 
 
-async def test_permission_filter_create2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_create2(create_admin_client: _CreateClient,
                                          login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.add|msg="Test"')}
@@ -522,7 +522,7 @@ async def test_permission_filter_create2(create_admin_client: _CreateClient,  # 
         assert resp.status == 403
 
 
-async def test_permission_filter_update(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_update(create_admin_client: _CreateClient,
                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -543,7 +543,7 @@ async def test_permission_filter_update(create_admin_client: _CreateClient,  # t
         assert resp.status == 200
 
 
-async def test_permission_filter_update2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_update2(create_admin_client: _CreateClient,
                                          login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.edit|msg="Test"')}
@@ -608,7 +608,7 @@ async def test_permission_filter_update_many2(  # type: ignore[no-any-unimported
         assert resp.status == 200
 
 
-async def test_permission_filter_delete(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_delete(create_admin_client: _CreateClient,
                                         login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -626,7 +626,7 @@ async def test_permission_filter_delete(create_admin_client: _CreateClient,  # t
         assert resp.status == 200
 
 
-async def test_permission_filter_delete2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_delete2(create_admin_client: _CreateClient,
                                          login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.delete|msg="Test"')}
@@ -644,7 +644,7 @@ async def test_permission_filter_delete2(create_admin_client: _CreateClient,  # 
         assert resp.status == 200
 
 
-async def test_permission_filter_delete_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_delete_many(create_admin_client: _CreateClient,
                                              login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.*|msg="Test"')}
@@ -666,7 +666,7 @@ async def test_permission_filter_delete_many(create_admin_client: _CreateClient,
         assert await resp.json() == {"data": ["1", "2"]}
 
 
-async def test_permission_filter_delete_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_delete_many2(create_admin_client: _CreateClient,
                                               login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", 'admin.dummy2.delete|msg="Test"')}
@@ -688,7 +688,7 @@ async def test_permission_filter_delete_many2(create_admin_client: _CreateClient
         assert await resp.json() == {"data": ["1", "2"]}
 
 
-async def test_permission_filter_field_list(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_list(create_admin_client: _CreateClient,
                                             login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
@@ -707,7 +707,7 @@ async def test_permission_filter_field_list(create_admin_client: _CreateClient, 
             "total": 3}
 
 
-async def test_permission_filter_field_list2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_list2(create_admin_client: _CreateClient,
                                              login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=3")}
@@ -726,7 +726,7 @@ async def test_permission_filter_field_list2(create_admin_client: _CreateClient,
             "total": 3}
 
 
-async def test_permission_filter_field_get_one(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_get_one(create_admin_client: _CreateClient,
                                                login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
@@ -744,7 +744,7 @@ async def test_permission_filter_field_get_one(create_admin_client: _CreateClien
         assert await resp.json() == {"data": {"id": "3"}}
 
 
-async def test_permission_filter_field_get_one2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_get_one2(create_admin_client: _CreateClient,
                                                 login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=2")}
@@ -762,7 +762,7 @@ async def test_permission_filter_field_get_one2(create_admin_client: _CreateClie
         assert await resp.json() == {"data": {"id": "3"}}
 
 
-async def test_permission_filter_field_get_many(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_get_many(create_admin_client: _CreateClient,
                                                 login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
@@ -777,7 +777,7 @@ async def test_permission_filter_field_get_many(create_admin_client: _CreateClie
         assert await resp.json() == {"data": [{"id": "2", "msg": "Test"}, {"id": "3"}]}
 
 
-async def test_permission_filter_field_get_many2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_get_many2(create_admin_client: _CreateClient,
                                                  login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.view|id=1|id=2")}
@@ -792,7 +792,7 @@ async def test_permission_filter_field_get_many2(create_admin_client: _CreateCli
         assert await resp.json() == {"data": [{"id": "1", "msg": "Test"}, {"id": "3"}]}
 
 
-async def test_permission_filter_field_create(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_create(create_admin_client: _CreateClient,
                                               login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
@@ -814,7 +814,7 @@ async def test_permission_filter_field_create(create_admin_client: _CreateClient
         assert r.msg is None
 
 
-async def test_permission_filter_field_create2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_create2(create_admin_client: _CreateClient,
                                                login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.add|id=1|id=2")}
@@ -836,7 +836,7 @@ async def test_permission_filter_field_create2(create_admin_client: _CreateClien
         assert r.msg is None
 
 
-async def test_permission_filter_field_update(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_update(create_admin_client: _CreateClient,
                                               login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.*|id=1|id=2")}
@@ -866,7 +866,7 @@ async def test_permission_filter_field_update(create_admin_client: _CreateClient
         assert r.msg == "Test"
 
 
-async def test_permission_filter_field_update2(create_admin_client: _CreateClient,  # type: ignore[no-any-unimported] # noqa: B950
+async def test_permission_filter_field_update2(create_admin_client: _CreateClient,
                                                login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         return {"permissions": ("admin.*", "admin.dummy2.msg.edit|id=1|id=2")}
