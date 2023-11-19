@@ -12,7 +12,7 @@ import aiohttp_admin
 from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
-_IdentityCallback = Callable[[str], Awaitable[aiohttp_admin.UserDetails]]
+IdentityCallback = Callable[[Optional[str]], Awaitable[aiohttp_admin.UserDetails]]
 
 class Base(DeclarativeBaseNoMeta):
     """Base model."""
