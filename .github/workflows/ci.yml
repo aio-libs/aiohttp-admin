@@ -68,20 +68,22 @@ jobs:
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
-    - name: Yarn build
-      run: yarn build
-      working-directory: admin-js/
-    - name: Upload yarn generated files
-      uses: actions/upload-artifact@v3
+    - name: Cache output files
+      uses: actions/cache@v3
+      id: cache-admin-js
       with:
-        name: admin-js
+        key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
           aiohttp_admin/static/*.map
-        if-no-files-found: error
+    - name: Yarn build
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: yarn build
+      working-directory: admin-js/
 
   test:
     name: Test
+    needs: yarn_build
     strategy:
       matrix:
         pyver: ['3.9', '3.10', '3.11', '3.12']
@@ -99,10 +101,11 @@ jobs:
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
-    - name: Restore yarn generated files
-      uses: actions/download-artifact@v3
+    - name: Restore cached JS files
+      uses: actions/cache/restore@v3
       with:
-        name: admin-js
+        restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
+        fail-on-cache-miss: true
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
