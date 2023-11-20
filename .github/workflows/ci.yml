@@ -67,7 +67,9 @@ jobs:
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
-        path: ${{ env.yarn_cache }}
+        path: |
+          ${{ env.yarn_cache }}
+          admin-js/node_modules
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
