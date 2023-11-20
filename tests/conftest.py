@@ -1,5 +1,5 @@
 from collections.abc import Awaitable, Callable
-from typing import Optional, Type
+from typing import Optional
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
@@ -14,19 +14,23 @@ from aiohttp_admin.backends.sqlalchemy import SAResource
 
 IdentityCallback = Callable[[Optional[str]], Awaitable[aiohttp_admin.UserDetails]]
 
+
 class Base(DeclarativeBaseNoMeta):
     """Base model."""
+
 
 class DummyModel(Base):
     __tablename__ = "dummy"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+
 class Dummy2Model(Base):
     __tablename__ = "dummy2"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     msg: Mapped[Optional[str]]
+
 
 model = web.AppKey[type[DummyModel]]("model")
 model2 = web.AppKey[type[Dummy2Model]]("model2")
