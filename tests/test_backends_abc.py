@@ -2,6 +2,7 @@ import json
 from collections.abc import Awaitable, Callable
 
 from aiohttp.test_utils import TestClient
+
 from conftest import admin
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
