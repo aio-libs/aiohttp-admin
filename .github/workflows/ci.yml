@@ -107,6 +107,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v3
       with:
+        key: yarn-${{ hashFiles('admin-js/src/*') }}
         restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
     - name: Install dependencies
