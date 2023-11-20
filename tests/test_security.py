@@ -4,10 +4,9 @@ from typing import Optional
 from unittest import mock
 
 from aiohttp.test_utils import TestClient
-from aiohttp_security import AbstractAuthorizationPolicy
 
 from aiohttp_admin import Permissions, UserDetails
-from conftest import IdentityCallback, admin, db, model, model2
+from conftest import IdentityCallback, admin, db, model2
 
 _CreateClient = Callable[[IdentityCallback], Awaitable[TestClient]]
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
