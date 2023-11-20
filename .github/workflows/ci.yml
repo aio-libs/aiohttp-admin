@@ -59,13 +59,15 @@ jobs:
       uses: actions/checkout@v4
     - name: Install yarn
       run: sudo apt install yarn -y
+    - name: Get yarn cache dir
+      run: echo "yarn_cache=$(pip cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
       uses: actions/cache@v3
       id: cache-modules
       with:
         key: yarn-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: yarn-${{ hashFiles('admin-js/package.json') }}
-        path: $(pip cache dir)
+        path: $yarn_cache
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
