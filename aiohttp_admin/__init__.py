@@ -65,7 +65,8 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
 
         for res in schema["resources"]:
             m = res["model"]
-            admin[state_key]["resources"][m.name]["urls"].update((key(r), value(r)) for r in m.routes)
+            urls = admin[state_key]["resources"][m.name]["urls"]
+            urls.update((key(r), value(r)) for r in m.routes)
 
     schema = check(Schema, schema)
     if secret is None:
@@ -75,7 +76,8 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
     admin.middlewares.append(pydantic_middleware)
     admin.on_startup.append(on_startup)
     admin[check_credentials_key] = schema["security"]["check_credentials"]
-    admin[state_key] = State({"view": schema.get("view", {}), "js_module": schema.get("js_module"), "urls": {}, "resources": {}})
+    admin[state_key] = State({"view": schema.get("view", {}), "js_module": schema.get("js_module"),
+                              "urls": {}, "resources": {}})
 
     max_age = schema["security"].get("max_age")
     secure = schema["security"].get("secure", True)
