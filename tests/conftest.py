@@ -5,7 +5,8 @@ from unittest.mock import AsyncMock, create_autospec
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    async_sessionmaker, create_async_engine)
 from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column
 
 import aiohttp_admin

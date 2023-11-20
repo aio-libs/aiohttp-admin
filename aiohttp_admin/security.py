@@ -83,7 +83,8 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):
         self, identity: Optional[str], permission: Union[str, Enum],
         context: Optional[tuple[web.Request, Optional[Mapping[str, object]]]] = None
     ) -> bool:
-        assert context is not None
+        # TODO: https://github.com/aio-libs/aiohttp-security/issues/677
+        assert context is not None  # noqa: S101
         if identity is None:
             return False
 

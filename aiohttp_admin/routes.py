@@ -6,7 +6,7 @@ from pathlib import Path
 from aiohttp import web
 
 from . import views
-from .types import _ResourceState, Schema, resources_key, state_key
+from .types import Schema, _ResourceState, resources_key, state_key
 
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
