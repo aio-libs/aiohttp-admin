@@ -141,7 +141,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):
         # Send token that will be saved in local storage by the JS client.
         response.headers["X-Token"] = json.dumps(await self.user_identity_dict(request, identity))
         # Send httponly cookie, which will be invisible to JS.
-        await super().remember(request, response, identity, **kwargs)
+        await super().remember(request, response, identity, **kwargs)  # type: ignore[arg-type]
 
     async def forget(self, request: web.Request, response: web.StreamResponse) -> None:
         """Delete session cookie (JS client should choose to delete its token)."""
