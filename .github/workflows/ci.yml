@@ -71,14 +71,14 @@ jobs:
       working-directory: admin-js/
     - name: Cache output files
       uses: actions/cache@v3
-      id: cache-admin-js
+      id: cache_admin_js
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
           aiohttp_admin/static/*.map
     - name: Yarn build
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: steps.cache_admin_js.outputs.cache-hit != 'true'
       run: yarn build
       working-directory: admin-js/
 
