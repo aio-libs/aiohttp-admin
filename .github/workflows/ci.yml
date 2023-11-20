@@ -63,7 +63,6 @@ jobs:
       run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
       uses: actions/cache@v3
-      id: cache-modules
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
