@@ -16,7 +16,7 @@ per-file-ignores =
     examples/*:I900,S105
 
 # flake8-import-order
-application-import-names = aiohttp_admin, _auth, _auth_helpers, _models, _resources
+application-import-names = aiohttp_admin, conftest, _auth, _auth_helpers, _models, _resources
 import-order-style = pycharm
 
 # flake8-quotes

@@ -16,8 +16,17 @@ import aiohttp_admin
 from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permission_for
 from aiohttp_admin.types import comp, func, regex
+from conftest import admin
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+
+
+@pytest.fixture
+def base() -> type[DeclarativeBase]:
+    class Base(DeclarativeBase):
+        """Base model."""
+
+    return Base
 
 
 def test_no_subtypes() -> None:
@@ -109,13 +118,13 @@ async def test_binary(
         },
         "resources": ({"model": SAResource(engine, TestModel)},)
     }
-    app["admin"] = aiohttp_admin.setup(app, schema)
+    app[admin] = aiohttp_admin.setup(app, schema)
 
     admin_client = await aiohttp_client(app)
     assert admin_client.app
     h = await login(admin_client)
 
-    url = app["admin"].router["test_get_one"].url_for()
+    url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": "1", "binary": "foo"}}
@@ -178,13 +187,13 @@ async def test_fk_output(
         "resources": ({"model": SAResource(engine, TestModel)},
                       {"model": SAResource(engine, TestModelParent)})
     }
-    app["admin"] = aiohttp_admin.setup(app, schema)
+    app[admin] = aiohttp_admin.setup(app, schema)
 
     admin_client = await aiohttp_client(app)
     assert admin_client.app
     h = await login(admin_client)
 
-    url = app["admin"].router["parent_get_one"].url_for()
+    url = app[admin].router["parent_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         # child_id must be converted to str ID.
@@ -376,13 +385,13 @@ async def test_nonid_pk_api(
         },
         "resources": ({"model": SAResource(engine, TestModel)},)
     }
-    app["admin"] = aiohttp_admin.setup(app, schema)
+    app[admin] = aiohttp_admin.setup(app, schema)
 
     admin_client = await aiohttp_client(app)
     assert admin_client.app
     h = await login(admin_client)
 
-    url = app["admin"].router["test_get_list"].url_for()
+    url = app[admin].router["test_get_list"].url_for()
     p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
@@ -390,24 +399,24 @@ async def test_nonid_pk_api(
         assert await resp.json() == {"data": [{"id": "8", "num": 8, "other": "bar"},
                                               {"id": "5", "num": 5, "other": "foo"}], "total": 2}
 
-    url = app["admin"].router["test_get_one"].url_for()
+    url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 8}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": "8", "num": 8, "other": "bar"}}
 
-    url = app["admin"].router["test_get_many"].url_for()
+    url = app[admin].router["test_get_many"].url_for()
     async with admin_client.get(url, params={"ids": '["5", "8"]'}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": [{"id": "5", "num": 5, "other": "foo"},
                                               {"id": "8", "num": 8, "other": "bar"}]}
 
-    url = app["admin"].router["test_create"].url_for()
+    url = app[admin].router["test_create"].url_for()
     p = {"data": json.dumps({"num": 12, "other": "this"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": "12", "num": 12, "other": "this"}}
 
-    url = app["admin"].router["test_update"].url_for()
+    url = app[admin].router["test_update"].url_for()
     p1 = {"id": 5, "data": json.dumps({"id": 5, "other": "that"}), "previousData": "{}"}
     async with admin_client.put(url, params=p1, headers=h) as resp:
         assert resp.status == 200
@@ -439,19 +448,19 @@ async def test_datetime(
         },
         "resources": ({"model": SAResource(engine, TestModel)},)
     }
-    app["admin"] = aiohttp_admin.setup(app, schema)
+    app[admin] = aiohttp_admin.setup(app, schema)
 
     admin_client = await aiohttp_client(app)
     assert admin_client.app
     h = await login(admin_client)
 
-    url = app["admin"].router["test_get_one"].url_for()
+    url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": "1", "date": "2023-04-23",
                                               "time": "2023-01-02 03:04:00"}}
 
-    url = app["admin"].router["test_create"].url_for()
+    url = app[admin].router["test_create"].url_for()
     p = {"data": json.dumps({"date": "2024-05-09", "time": "2020-11-12 03:04:05"})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
@@ -515,13 +524,13 @@ async def test_record_type(
         },
         "resources": ({"model": SAResource(engine, TestModel)},)
     }
-    app["admin"] = aiohttp_admin.setup(app, schema)
+    app[admin] = aiohttp_admin.setup(app, schema)
 
     admin_client = await aiohttp_client(app)
     assert admin_client.app
     h = await login(admin_client)
 
-    url = app["admin"].router["test_create"].url_for()
+    url = app[admin].router["test_create"].url_for()
     p = {"data": json.dumps({"foo": True, "bar": 5})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
