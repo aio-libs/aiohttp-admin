@@ -79,8 +79,11 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def authorized_userid(self, identity: str) -> str:
         return identity
 
-    async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                      context: tuple[web.Request, Optional[Mapping[str, object]]]) -> bool:
+    async def permits(
+        self, identity: Optional[str], permission: Union[str, Enum],
+        context: Optional[tuple[web.Request, Optional[Mapping[str, object]]]] = None
+    ) -> bool:
+        assert context is not None
         if identity is None:
             return False
 
