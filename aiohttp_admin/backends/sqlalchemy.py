@@ -26,6 +26,7 @@ _T = TypeVar("_T")
 _FValues = Union[bool, int, str]
 _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
+_ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +156,7 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
 
 # ID is based on PK, which we can't infer from types, so must use Any here.
 class SAResource(AbstractAdminResource[Any]):
-    def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]):
+    def __init__(self, db: AsyncEngine, model_or_table: _ModelOrTable):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
         else:
@@ -222,7 +223,8 @@ class SAResource(AbstractAdminResource[Any]):
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
             # Mypy doesn't handle union well here.
-            mapper = cast(Union[Mapper[DeclarativeBase], Mapper[DeclarativeBaseNoMeta]], sa.inspect(model_or_table))
+            mapper = cast(Union[Mapper[DeclarativeBase], Mapper[DeclarativeBaseNoMeta]],
+                          sa.inspect(model_or_table))
             assert mapper is not None  # noqa: S101
             for name, relationship in mapper.relationships.items():
                 # https://github.com/sqlalchemy/sqlalchemy/discussions/10161#discussioncomment-6583442
