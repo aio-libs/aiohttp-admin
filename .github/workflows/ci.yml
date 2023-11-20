@@ -65,8 +65,8 @@ jobs:
       uses: actions/cache@v3
       id: cache-modules
       with:
-        key: yarn-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
-        restore-keys: yarn-${{ hashFiles('admin-js/package.json') }}
+        key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        restore-keys: node-${{ hashFiles('admin-js/package.json') }}
         path: ${{ env.yarn_cache }}
     - name: Yarn install
       run: yarn install
@@ -108,8 +108,10 @@ jobs:
       uses: actions/cache/restore@v3
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}
-        restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
+        path: |
+          aiohttp_admin/static/admin.js
+          aiohttp_admin/static/*.map
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
