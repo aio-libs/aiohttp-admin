@@ -46,6 +46,40 @@ jobs:
     - name: Run twine checker
       run: |
         twine check dist/*
+
+  yarn_build:
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+
+    name: Build JS with Yarn
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Cache node modules
+      uses: actions/cache@v3
+      id: cache-modules
+      with:
+        key: yarn-${{ hashFiles('admin-js/package.json') }}
+        path: admin-js/node_modules
+    - name: Install yarn
+      run: sudo apt install yarn -y
+    - name: Yarn install
+      run: yarn install
+      working-directory: admin-js/
+    - name: Yarn build
+      run: yarn build
+      working-directory: admin-js/
+    - name: Upload yarn generated files
+      uses: actions/upload-artifact@v3
+      with:
+        name: admin-js
+        path: |
+          aiohttp_admin/static/admin.js
+          aiohttp_admin/static/*.map
+        if-no-files-found: error
+
   test:
     name: Test
     strategy:
@@ -65,14 +99,10 @@ jobs:
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
-    - name: Install yarn
-      run: sudo apt install yarn -y
-    - name: Yarn install
-      run: yarn install
-      working-directory: admin-js/
-    - name: Yarn build
-      run: yarn build
-      working-directory: admin-js/
+    - name: Restore yarn generated files
+      uses: actions/download-artifact@v3
+      with:
+        name: admin-js
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
