@@ -223,7 +223,7 @@ class SAResource(AbstractAdminResource[Any]):
             props_input = props.copy()
             p_field, p_inp = get_props_from_type(c.type)
             props.update(p_field)
-            props.update(p_inp)
+            props_input.update(p_inp)
 
             self.fields[c.name] = comp(field, props)
             if c.computed is None:
