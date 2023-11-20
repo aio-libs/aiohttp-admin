@@ -11,12 +11,14 @@ from functools import partial
 
 import sqlalchemy as sa
 from aiohttp import web
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 import aiohttp_admin
-from aiohttp_admin import Permissions, UserDetails
+from aiohttp_admin import Permissions, UserDetails, permission_re_key
 from aiohttp_admin.backends.sqlalchemy import SAResource, permission_for as p
+
+db = web.AppKey("db", async_sessionmaker[AsyncSession])
 
 
 class Base(DeclarativeBase):
@@ -49,14 +51,16 @@ class User(Base):
 
 async def check_credentials(app: web.Application, username: str, password: str) -> bool:
     """Allow login to any user account regardless of password."""
-    async with app["db"]() as sess:
+    async with app[db]() as sess:
         user = await sess.get(User, username.lower())
         return user is not None
 
 
 async def identity_callback(app: web.Application, identity: str) -> UserDetails:
-    async with app["db"]() as sess:
+    async with app[db]() as sess:
         user = await sess.get(User, identity)
+        if not user:
+            raise ValueError("No user found for given identity")
         return {"permissions": json.loads(user.permissions), "fullName": user.username.title()}
 
 
@@ -79,7 +83,7 @@ async def create_app() -> web.Application:
         sess.add(SimpleParent(id=p_simple.id, date=datetime(2023, 2, 13, 19, 4)))
 
     app = web.Application()
-    app["db"] = session
+    app[db] = session
 
     # This is the setup required for aiohttp-admin.
     schema: aiohttp_admin.Schema = {
@@ -123,7 +127,7 @@ async def create_app() -> web.Application:
                                                      filters={Simple.num: 5}))
         }
         for name, permissions in users.items():
-            if any(admin["permission_re"].fullmatch(p) is None for p in permissions):
+            if any(admin[permission_re_key].fullmatch(p) is None for p in permissions):
                 raise ValueError("Not a valid permission.")
             sess.add(User(username=name, permissions=json.dumps(permissions)))
 

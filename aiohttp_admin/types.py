@@ -1,6 +1,9 @@
+import re
 import sys
 from collections.abc import Callable, Collection, Sequence
 from typing import Any, Awaitable, Literal, Mapping, Optional
+
+from aiohttp.web import AppKey
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
@@ -110,7 +113,6 @@ class Schema(_Schema):
 
 
 class _ResourceState(TypedDict):
-    display: Sequence[str]
     fields: dict[str, ComponentState]
     inputs: dict[str, InputState]
     show_actions: Sequence[ComponentState]
@@ -118,6 +120,8 @@ class _ResourceState(TypedDict):
     icon: Optional[str]
     urls: dict[str, tuple[str, str]]  # (method, url)
     bulk_update: dict[str, dict[str, Any]]
+    list_omit: tuple[str, ...]
+    label: Optional[str]
 
 
 class State(TypedDict):
@@ -146,3 +150,9 @@ def func(name: str, args: Optional[Sequence[object]] = None) -> FunctionState:
 def regex(value: str) -> RegexState:
     """Convert value to a RegExp object on the frontend."""
     return {"__type__": "regexp", "value": value}
+
+
+check_credentials_key = AppKey[Callable[[str, str], Awaitable[bool]]]("check_credentials")
+permission_re_key = AppKey("permission_re", re.Pattern[str])
+resources_key = AppKey("resources", list[Any])  # TODO(pydantic): AbstractAdminResource
+state_key = AppKey("state", State)

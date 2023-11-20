@@ -14,14 +14,14 @@ from .types import IdentityDict, Schema, UserDetails
 _T = TypeVar("_T", bound=Hashable)
 
 
-@lru_cache
-def _get_schema(t: Type[_T]) -> TypeAdapter[_T]:
+@lru_cache  # https://github.com/python/typeshed/issues/6347
+def _get_schema(t: Type[_T]) -> TypeAdapter[_T]:  # type: ignore[misc]
     return TypeAdapter(t)
 
 
 def check(t: Type[_T], value: object) -> _T:
     """Validate value is of static type t."""
-    return _get_schema(t).validate_python(value)
+    return _get_schema(t).validate_python(value)  # type: ignore[no-any-return]
 
 
 class Permissions(str, Enum):
@@ -71,7 +71,7 @@ def permissions_as_dict(permissions: Collection[str]) -> dict[str, dict[str, lis
     return p_dict
 
 
-class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[misc,no-any-unimported]
+class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):
     def __init__(self, schema: Schema):
         super().__init__()
         self._identity_callback = schema["security"].get("identity_callback")
@@ -79,8 +79,12 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
     async def authorized_userid(self, identity: str) -> str:
         return identity
 
-    async def permits(self, identity: Optional[str], permission: Union[str, Enum],
-                      context: tuple[web.Request, Optional[Mapping[str, object]]]) -> bool:
+    async def permits(
+        self, identity: Optional[str], permission: Union[str, Enum],
+        context: Optional[tuple[web.Request, Optional[Mapping[str, object]]]] = None
+    ) -> bool:
+        # TODO: https://github.com/aio-libs/aiohttp-security/issues/677
+        assert context is not None  # noqa: S101
         if identity is None:
             return False
 
@@ -101,7 +105,7 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):  # type: ignore[mis
         return has_permission(permission, permissions_as_dict(permissions), record)
 
 
-class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-unimported]
+class TokenIdentityPolicy(SessionIdentityPolicy):
     def __init__(self, fernet: Fernet, schema: Schema):
         super().__init__()
         self._fernet = fernet
@@ -130,7 +134,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         # Both identites must match.
         return token_identity if token_identity == cookie_identity else None
 
-    async def remember(self, request: web.Request, response: web.Response,
+    async def remember(self, request: web.Request, response: web.StreamResponse,
                        identity: str, **kwargs: object) -> None:
         """Send auth tokens to client for authentication."""
         # For proper security we send a token for JS to store and an HTTP only cookie:
@@ -138,9 +142,9 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
         # Send token that will be saved in local storage by the JS client.
         response.headers["X-Token"] = json.dumps(await self.user_identity_dict(request, identity))
         # Send httponly cookie, which will be invisible to JS.
-        await super().remember(request, response, identity, **kwargs)
+        await super().remember(request, response, identity, **kwargs)  # type: ignore[arg-type]
 
-    async def forget(self, request: web.Request, response: web.Response) -> None:
+    async def forget(self, request: web.Request, response: web.StreamResponse) -> None:
         """Delete session cookie (JS client should choose to delete its token)."""
         await super().forget(request, response)
 
@@ -164,7 +168,7 @@ class TokenIdentityPolicy(SessionIdentityPolicy):  # type: ignore[misc,no-any-un
 
         auth = self._fernet.encrypt(identity.encode("utf-8")).decode("utf-8")
         identity_dict: IdentityDict = {"auth": auth, "fullName": "Admin user", "permissions": {}}
-        # https://github.com/python/mypy/issues/6462
+        # We change type of permissions below, so need to ignore this type error.
         identity_dict.update(user_details)  # type: ignore[typeddict-item]
         identity_dict["permissions"] = permissions_as_dict(user_details["permissions"])
 

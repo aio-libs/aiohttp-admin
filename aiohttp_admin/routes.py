@@ -6,16 +6,15 @@ from pathlib import Path
 from aiohttp import web
 
 from . import views
-from .types import Schema
+from .types import Schema, _ResourceState, resources_key, state_key
 
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
-    admin["resources"] = []
-    admin["state"]["resources"] = {}
+    admin[resources_key] = []
 
     for r in schema["resources"]:
         m = r["model"]
-        admin["resources"].append(m)
+        admin[resources_key].append(m)
         admin.router.add_routes(m.routes)
 
         try:
@@ -47,11 +46,12 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         for name, props in r.get("field_props", {}).items():
             fields[name]["props"].update(props)
 
-        state = {"fields": fields, "inputs": inputs, "list_omit": tuple(omit_fields),
-                 "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
-                 "bulk_update": r.get("bulk_update", {}),
-                 "show_actions": r.get("show_actions", ())}
-        admin["state"]["resources"][m.name] = state
+        state: _ResourceState = {
+            "fields": fields, "inputs": inputs, "list_omit": tuple(omit_fields),
+            "repr": repr_field, "label": r.get("label"), "icon": r.get("icon"),
+            "bulk_update": r.get("bulk_update", {}), "urls": {},
+            "show_actions": r.get("show_actions", ())}
+        admin[state_key]["resources"][m.name] = state
 
 
 def setup_routes(admin: web.Application) -> None:

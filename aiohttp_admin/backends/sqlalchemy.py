@@ -5,12 +5,12 @@ import operator
 import sys
 from collections.abc import Callable, Coroutine, Iterator, Sequence
 from types import MappingProxyType as MPT
-from typing import Any, Literal, Optional, TypeVar, Union
+from typing import Any, Literal, Optional, TypeVar, Union, cast
 
 import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase, QueryableAttribute
+from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, QueryableAttribute
 from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import AbstractAdminResource, GetListParams, Meta, Record
@@ -26,6 +26,7 @@ _T = TypeVar("_T")
 _FValues = Union[bool, int, str]
 _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
+_ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +156,7 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
 
 # ID is based on PK, which we can't infer from types, so must use Any here.
 class SAResource(AbstractAdminResource[Any]):
-    def __init__(self, db: AsyncEngine, model_or_table: Union[sa.Table, type[DeclarativeBase]]):
+    def __init__(self, db: AsyncEngine, model_or_table: _ModelOrTable):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
         else:
@@ -180,6 +181,9 @@ class SAResource(AbstractAdminResource[Any]):
             else:
                 field, inp, props = get_components(c.type)
 
+            if inp == "BooleanInput" and c.nullable:
+                inp = "NullableBooleanInput"
+
             props["source"] = c.name
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
@@ -203,6 +207,12 @@ class SAResource(AbstractAdminResource[Any]):
                 props = props.copy()
                 show = c is not table.autoincrement_column
                 props["validate"] = self._get_validators(table, c)
+                if inp == "NumberInput":
+                    for v in props["validate"]:
+                        if v["name"] == "minValue":
+                            props["min"] = v["args"][0]
+                        elif v["name"] == "maxValue":
+                            props["max"] = v["args"][0]
                 self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
                 field_type: Any = c.type.python_type
@@ -212,7 +222,9 @@ class SAResource(AbstractAdminResource[Any]):
 
         if not isinstance(model_or_table, sa.Table):
             # Append fields to represent ORM relationships.
-            mapper = sa.inspect(model_or_table)
+            # Mypy doesn't handle union well here.
+            mapper = cast(Union[Mapper[DeclarativeBase], Mapper[DeclarativeBaseNoMeta]],
+                          sa.inspect(model_or_table))
             assert mapper is not None  # noqa: S101
             for name, relationship in mapper.relationships.items():
                 # https://github.com/sqlalchemy/sqlalchemy/discussions/10161#discussioncomment-6583442
@@ -272,20 +284,25 @@ class SAResource(AbstractAdminResource[Any]):
         offset = (params["pagination"]["page"] - 1) * per_page
 
         filters = params["filter"]
-        async with self._db.connect() as conn:
-            query = sa.select(self._table)
-            if filters:
-                query = query.where(*create_filters(self._table.c, filters))
+        query = sa.select(self._table)
+        if filters:
+            query = query.where(*create_filters(self._table.c, filters))
 
-            count_t = conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
+        async def get_count() -> int:
+            async with self._db.connect() as conn:
+                count = await conn.scalar(sa.select(sa.func.count()).select_from(query.subquery()))
+                if count is None:
+                    raise RuntimeError("Failed to get count.")
+                return count
 
-            sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
-            order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
-            stmt = query.offset(offset).limit(per_page).order_by(order_by)
-            result, count = await asyncio.gather(conn.execute(stmt), count_t)
-            entities = [r._asdict() for r in result]
+        async def get_entities() -> list[Record]:
+            async with self._db.connect() as conn:
+                sort_dir = sa.asc if params["sort"]["order"] == "ASC" else sa.desc
+                order_by: sa.UnaryExpression[object] = sort_dir(params["sort"]["field"])
+                stmt = query.offset(offset).limit(per_page).order_by(order_by)
+                return [r._asdict() for r in await conn.execute(stmt)]
 
-        return entities, count
+        return await asyncio.gather(get_entities(), get_count())
 
     @handle_errors
     async def get_one(self, record_id: Any, meta: Meta) -> Record:
@@ -353,38 +370,47 @@ class SAResource(AbstractAdminResource[Any]):
         for constr in table.constraints:
             if not isinstance(constr, sa.CheckConstraint):
                 continue
-            if isinstance(constr.sqltext, sa.BinaryExpression):
-                left = constr.sqltext.left
-                right = constr.sqltext.right
-                op = constr.sqltext.operator
-                if left.expression is c:
-                    if not isinstance(right, sa.BindParameter) or right.value is None:
-                        continue
-                    if op is operator.ge:  # type: ignore[comparison-overlap]
-                        validators.append(func("minValue", (right.value,)))
-                    elif op is operator.gt:  # type: ignore[comparison-overlap]
-                        validators.append(func("minValue", (right.value + 1,)))
-                    elif op is operator.le:  # type: ignore[comparison-overlap]
-                        validators.append(func("maxValue", (right.value,)))
-                    elif op is operator.lt:  # type: ignore[comparison-overlap]
-                        validators.append(func("maxValue", (right.value - 1,)))
-                elif isinstance(left, sa.Function):
-                    if left.name == "char_length":
-                        if next(iter(left.clauses)) is not c:
-                            continue
+
+            if isinstance(constr.sqltext, sa.BooleanClauseList):
+                if constr.sqltext.operator is not operator.and_:  # type: ignore[comparison-overlap]
+                    continue
+                exprs = constr.sqltext.clauses
+            else:
+                exprs = (constr.sqltext,)
+
+            for expr in exprs:
+                if isinstance(expr, sa.BinaryExpression):
+                    left = expr.left
+                    right = expr.right
+                    op = expr.operator
+                    if left.expression is c:
                         if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
                         if op is operator.ge:  # type: ignore[comparison-overlap]
-                            validators.append(func("minLength", (right.value,)))
+                            validators.append(func("minValue", (right.value,)))
                         elif op is operator.gt:  # type: ignore[comparison-overlap]
-                            validators.append(func("minLength", (right.value + 1,)))
-            elif isinstance(constr.sqltext, sa.Function):
-                if constr.sqltext.name in ("regexp", "regexp_like"):
-                    clauses = tuple(constr.sqltext.clauses)
-                    if clauses[0] is not c or not isinstance(clauses[1], sa.BindParameter):
-                        continue
-                    if clauses[1].value is None:
-                        continue
-                    validators.append(func("regex", (regex(clauses[1].value),)))
+                            validators.append(func("minValue", (right.value + 1,)))
+                        elif op is operator.le:  # type: ignore[comparison-overlap]
+                            validators.append(func("maxValue", (right.value,)))
+                        elif op is operator.lt:  # type: ignore[comparison-overlap]
+                            validators.append(func("maxValue", (right.value - 1,)))
+                    elif isinstance(left, sa.Function):
+                        if left.name == "char_length":
+                            if next(iter(left.clauses)) is not c:
+                                continue
+                            if not isinstance(right, sa.BindParameter) or right.value is None:
+                                continue
+                            if op is operator.ge:  # type: ignore[comparison-overlap]
+                                validators.append(func("minLength", (right.value,)))
+                            elif op is operator.gt:  # type: ignore[comparison-overlap]
+                                validators.append(func("minLength", (right.value + 1,)))
+                elif isinstance(expr, sa.Function):
+                    if expr.name in ("regexp", "regexp_like"):
+                        clauses = tuple(expr.clauses)
+                        if clauses[0] is not c or not isinstance(clauses[1], sa.BindParameter):
+                            continue
+                        if clauses[1].value is None:
+                            continue
+                        validators.append(func("regex", (regex(clauses[1].value),)))
 
         return validators
