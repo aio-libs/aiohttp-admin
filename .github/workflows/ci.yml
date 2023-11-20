@@ -46,8 +46,49 @@ jobs:
     - name: Run twine checker
       run: |
         twine check dist/*
+
+  yarn_build:
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+
+    name: Build JS with Yarn
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install yarn
+      run: sudo apt install yarn -y
+    - name: Get yarn cache dir
+      run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
+    - name: Cache node modules
+      uses: actions/cache@v3
+      id: cache-modules
+      with:
+        key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        restore-keys: node-${{ hashFiles('admin-js/package.json') }}
+        path: |
+          ${{ env.yarn_cache }}
+          admin-js/node_modules
+    - name: Yarn install
+      run: yarn install
+      working-directory: admin-js/
+    - name: Cache output files
+      uses: actions/cache@v3
+      id: cache_admin_js
+      with:
+        key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
+        path: |
+          aiohttp_admin/static/admin.js
+          aiohttp_admin/static/*.map
+    - name: Yarn build
+      if: steps.cache_admin_js.outputs.cache-hit != 'true'
+      run: yarn build
+      working-directory: admin-js/
+
   test:
     name: Test
+    needs: yarn_build
     strategy:
       matrix:
         pyver: ['3.9', '3.10', '3.11', '3.12']
@@ -65,14 +106,14 @@ jobs:
         python-version: ${{ matrix.pyver }}
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
-    - name: Install yarn
-      run: sudo apt install yarn -y
-    - name: Yarn install
-      run: yarn install
-      working-directory: admin-js/
-    - name: Yarn build
-      run: yarn build
-      working-directory: admin-js/
+    - name: Restore cached JS files
+      uses: actions/cache/restore@v3
+      with:
+        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        fail-on-cache-miss: true
+        path: |
+          aiohttp_admin/static/admin.js
+          aiohttp_admin/static/*.map
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v4
       with:
