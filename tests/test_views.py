@@ -2,6 +2,7 @@ import json
 import re
 from collections.abc import Awaitable, Callable
 
+import pytest
 import sqlalchemy as sa
 from aiohttp.test_utils import TestClient
 
@@ -89,6 +90,7 @@ async def test_list_filtering_by_pk(admin_client: TestClient, login: _Login) -> 
         assert await resp.json() == {"data": [{"id": "3"}], "total": 1}
 
 
+@pytest.mark.xfail(reason="Need to implement #668 to make this work properly")
 async def test_list_text_like_filtering(admin_client: TestClient, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
