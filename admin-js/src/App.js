@@ -1,49 +1,66 @@
 import {
-    // App
-    Admin, AppBar, InspectorButton, Layout, Resource, TitlePortal,
-    // Create/Edit
-    Create, DeleteButton, Edit, SaveButton, SimpleForm, Toolbar,
-    // List
-    Datagrid, DatagridConfigurable, List,
-    // Show
-    SimpleShowLayout, Show,
-    // Actions
-    BulkDeleteButton, BulkExportButton, BulkUpdateButton, CloneButton, CreateButton,
-    ExportButton, FilterButton, ListButton, SelectColumnsButton, ShowButton, TopToolbar,
-    // Fields
-    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, SelectField, TextField,
-    // Inputs
-    BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
-    SelectInput, TextInput,
-    TimeInput as _TimeInput, ReferenceInput as _ReferenceInput,
-    // Filters
+    Admin, AppBar, AutocompleteInput,
+    BooleanField, BooleanInput, BulkDeleteButton, Button, BulkExportButton, BulkUpdateButton,
+    CloneButton, Create, CreateButton,
+    Datagrid, DatagridConfigurable, DateField, DateInput, DateTimeInput, DeleteButton,
+    Edit, EditButton, ExportButton,
+    FilterButton, HttpError, InspectorButton,
+    Layout, List, ListButton,
+    NullableBooleanInput, NumberInput, NumberField,
+    ReferenceField, ReferenceInput, ReferenceManyField, ReferenceOneField, Resource,
+    SaveButton, SelectColumnsButton, SelectField, SelectInput, Show, ShowButton,
+    SimpleForm, SimpleShowLayout,
+    TextField, TextInput, TimeInput, TitlePortal, Toolbar, TopToolbar,
+    WithRecord,
     email, maxLength, maxValue, minLength, minValue, regex, required,
-    // Misc
-    AutocompleteInput, EditButton, HttpError, WithRecord
+    useCreate, useCreatePath, useDelete, useDeleteMany, useGetList, useGetMany,
+    useGetOne, useInfiniteGetList, useGetRecordId, useInput, useNotify,
+    useRecordContext, useRedirect, useRefresh, useResourceContext, useUnselect,
+    useUnselectAll, useUpdate, useUpdateMany,
 } from "react-admin";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
+window.ReactAdmin = {
+    Admin, AppBar, AutocompleteInput,
+    BooleanField, BooleanInput, BulkDeleteButton, Button, BulkExportButton, BulkUpdateButton,
+    CloneButton, Create, CreateButton,
+    Datagrid, DatagridConfigurable, DateField, DateInput, DateTimeInput, DeleteButton,
+    Edit, EditButton, ExportButton,
+    FilterButton, HttpError, InspectorButton,
+    Layout, List, ListButton,
+    NullableBooleanInput, NumberInput, NumberField,
+    ReferenceField, ReferenceInput, ReferenceManyField, ReferenceOneField, Resource,
+    SaveButton, SelectColumnsButton, SelectField, SelectInput, Show, ShowButton,
+    SimpleForm, SimpleShowLayout,
+    TextField, TextInput, TimeInput, TitlePortal, Toolbar, TopToolbar,
+    WithRecord,
+    email, maxLength, maxValue, minLength, minValue, regex, required,
+    useCreate, useCreatePath, useDelete, useDeleteMany, useGetList, useGetMany,
+    useGetOne, useInfiniteGetList, useGetRecordId, useInput, useNotify,
+    useRecordContext, useRedirect, useRefresh, useResourceContext, useUnselect,
+    useUnselectAll, useUpdate, useUpdateMany,
+};
 
 // Hacked TimeField/TimeInput to actually work with times.
 // TODO: Replace once new components are introduced using Temporal API.
 
-const TimeField = (props) => (
+const _TimeField = (props) => (
     <WithRecord {...props} render={
         (record) => <DateField {...props} showDate={false} showTime={true}
                      record={{...record, [props["source"]]: record[props["source"]] === null ? null : "2020-01-01T" + record[props["source"]]}} />
     } />
 );
 
-const TimeInput = (props) => (<_TimeInput format={(v) => v} parse={(v) => v} {...props} />);
+const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
 /** Reconfigure ReferenceInput to filter by the displayed repr field. */
-const ReferenceInput = (props) => {
+const _ReferenceInput = (props) => {
     const ref = props["reference"];
     const repr = STATE["resources"][ref]["repr"];
     return (
-        <_ReferenceInput sort={{"field": repr, "order": "ASC"}} {...props}>
+        <ReferenceInput sort={{"field": repr, "order": "ASC"}} {...props}>
             <AutocompleteInput filterToQuery={s => ({[repr]: s})} />
-        </_ReferenceInput>
+        </ReferenceInput>
     );
 };
 
@@ -64,10 +81,10 @@ const COMPONENTS = {
     ExportButton, FilterButton, ListButton, ShowButton,
 
     BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, SelectField, TextField, TimeField,
+    ReferenceOneField, SelectField, TextField, TimeField: _TimeField,
 
     BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
-    ReferenceInput, SelectInput, TextInput, TimeInput
+    ReferenceInput: _ReferenceInput, SelectInput, TextInput, TimeInput: _TimeInput
 };
 const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
 const _body = document.querySelector("body");

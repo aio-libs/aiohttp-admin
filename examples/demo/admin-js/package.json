@@ -1,0 +1,47 @@
+{
+  "name": "admin-js",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@craco/craco": "^7.1.0",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.14",
+    "@mui/material": "^5.14.14",
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^13.0.0",
+    "@testing-library/user-event": "^13.2.1",
+    "query-string": "file:./shim/query-string",
+    "react": "file:./shim/react",
+    "react-admin": "file:./shim/react-admin",
+    "react-dom": "file:./shim/react-dom",
+    "react-router-dom": "file:./shim/react-router-dom",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.0"
+  },
+  "resolutions": {
+    "react": "file:./shim/react",
+    "react-admin": "file:./shim/react-admin",
+    "react-dom": "file:./shim/react-dom",
+    "react-router-dom": "file:./shim/react-router-dom",
+    "query-string": "file:./shim/query-string"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build && (rm ../static/*.js.map || true) && mv build/static/js/main.*.js ../static/admin.js && mv build/static/js/main.*.js.map ../static/ && rm -rf build/",
+    "test": "craco test",
+    "eject": "craco eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
