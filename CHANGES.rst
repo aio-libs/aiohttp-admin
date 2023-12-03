@@ -4,6 +4,14 @@ CHANGES
 
 .. towncrier release notes start
 
+0.1.0a3 (2023-12-03)
+====================
+
+- Used ``AppKey`` with aiohttp 3.9.
+- Added Python 3.12 support.
+- Added support for dynamically loaded components.
+- Reverted a change which broke relationship fields.
+
 0.1.0a2 (2023-10-02)
 ====================
 
