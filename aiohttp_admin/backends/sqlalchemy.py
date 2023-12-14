@@ -45,7 +45,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]
     # sa.types._Binary: (),
     # sa.types.PickleType: (),
 
-    # sa.ARRAY: (),
+    sa.ARRAY: ("ArrayField", "ArrayInput", MPT({})),
     # sa.JSON: (),
 
     # sa.dialects.postgresql.AbstractRange: (),
@@ -76,6 +76,34 @@ def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, 
             return (field, inp, props.copy())
 
     return ("TextField", "TextInput", {})
+
+
+def get_props_from_type(t: sa.types.TypeEngine[Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    props: dict[str, object] = {}
+    length = getattr(t, "length", 0)
+    if length is None or length > 31:
+        props["fullWidth"] = True
+        if length is None or length > 127:
+            props["multiline"] = True
+
+    if isinstance(t, sa.Enum):
+        props["choices"] = tuple({"id": e.value, "name": e.name} for e in t.python_type)
+
+    props_field = props
+    props_input = props.copy()
+    if isinstance(t, sa.ARRAY):
+        c_field, c_inp, c_props = get_components(t.item_type)
+        c_props_inp = c_props.copy()
+        c_f, c_i = get_props_from_type(t.item_type)
+        c_props.update(c_f)
+        c_props_inp.update(c_i)
+
+        field_list = comp("SingleFieldList", {"children": (comp(c_field, c_props),)})
+        props_field["children"] = (field_list,)
+        form_iterator = comp("SimpleFormIterator", {"children": (comp(c_inp, c_props_inp),)})
+        props_input["children"] = (form_iterator,)
+
+    return props_field, props_input
 
 
 def handle_errors(
@@ -185,15 +213,6 @@ class SAResource(AbstractAdminResource[Any]):
                 inp = "NullableBooleanInput"
 
             props["source"] = c.name
-            if isinstance(c.type, sa.Enum):
-                props["choices"] = tuple({"id": e.value, "name": e.name}
-                                         for e in c.type.python_type)
-
-            length = getattr(c.type, "length", 0)
-            if length is None or length > 31:
-                props["fullWidth"] = True
-                if length is None or length > 127:
-                    props["multiline"] = True
 
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
@@ -201,19 +220,23 @@ class SAResource(AbstractAdminResource[Any]):
             if c.comment:
                 props["helperText"] = c.comment
 
+            props_input = props.copy()
+            p_field, p_inp = get_props_from_type(c.type)
+            props.update(p_field)
+            props_input.update(p_inp)
+
             self.fields[c.name] = comp(field, props)
             if c.computed is None:
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
-                props = props.copy()
                 show = c is not table.autoincrement_column
-                props["validate"] = self._get_validators(table, c)
+                props_input["validate"] = self._get_validators(table, c)
                 if inp == "NumberInput":
-                    for v in props["validate"]:
+                    for v in props_input["validate"]:
                         if v["name"] == "minValue":
-                            props["min"] = v["args"][0]
+                            props_input["min"] = v["args"][0]
                         elif v["name"] == "maxValue":
-                            props["max"] = v["args"][0]
-                self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
+                            props_input["max"] = v["args"][0]
+                self.inputs[c.name] = comp(inp, props_input)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
                 field_type: Any = c.type.python_type
                 if c.nullable:
