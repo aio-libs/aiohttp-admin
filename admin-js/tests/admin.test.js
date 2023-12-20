@@ -1,11 +1,8 @@
 const http = require("http")
 const {spawn} = require("child_process");
-import {configure, render, screen, waitFor} from "@testing-library/react";
+import {render, screen, waitFor} from "@testing-library/react";
 
 const {App} = require("../src/App");
-
-jest.setTimeout(300000);  // 5 mins
-configure({"asyncUtilTimeout": 10000})
 
 let pythonProcess;
 let STATE;
