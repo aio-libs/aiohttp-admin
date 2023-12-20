@@ -8,10 +8,18 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
   },
+  "devDependencies": {
+    "@babel/preset-env": "^7.23.6",
+    "@babel/preset-react": "^7.23.3",
+    "@testing-library/react": "^14.1.2",
+    "babel-jest": "^29.7",
+    "jest": "^29.7",
+    "jest-environment-jsdom": "^29.7"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
-    "test": "react-scripts test",
+    "test": "jest",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

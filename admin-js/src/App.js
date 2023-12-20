@@ -41,6 +41,8 @@ window.ReactAdmin = {
     useUnselectAll, useUpdate, useUpdateMany,
 };
 
+let STATE;
+
 // Hacked TimeField/TimeInput to actually work with times.
 // TODO: Replace once new components are introduced using Temporal API.
 
@@ -87,20 +89,6 @@ const COMPONENTS = {
     ReferenceInput: _ReferenceInput, SelectInput, TextInput, TimeInput: _TimeInput
 };
 const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
-const _body = document.querySelector("body");
-const STATE = Object.freeze(JSON.parse(_body.dataset.state));
-
-let MODULE_LOADER;
-if (STATE["js_module"]) {
-    // The inline comment skips the webpack import() and allows us to use the native
-    // browser's import() function. Needed to dynamically import a module.
-    MODULE_LOADER = import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
-        Object.assign(COMPONENTS, mod.components);
-        Object.assign(FUNCTIONS, mod.functions);
-    });
-} else {
-    MODULE_LOADER = Promise.resolve();
-}
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
@@ -436,11 +424,14 @@ const AiohttpAppBar = () => (
     </AppBar>
 );
 
-const App = () => (
-    <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
-           layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
-        {permissions => createResources(STATE["resources"], permissions)}
-    </Admin>
-);
+const App = (props) => {
+    STATE = props["aiohttp-state"];
+    return (
+        <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+               layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
+            {permissions => createResources(STATE["resources"], permissions)}
+        </Admin>
+    );
+};
 
-export {App, MODULE_LOADER};
+export {COMPONENTS, FUNCTIONS, App};
