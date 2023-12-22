@@ -39,7 +39,6 @@ beforeAll(async() => {
         return;
 
     pythonProcess = spawn("python3", ["-u", global.pythonProcessPath], {"cwd": ".."});
-    //pythonProcess.stdout.on("data", (data) => {console.log(`stdout: ${data}`);});
     pythonProcess.stderr.on("data", (data) => {console.error(`stderr: ${data}`);});
 
     await new Promise(resolve => setTimeout(resolve, 2500));
