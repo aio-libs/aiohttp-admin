@@ -1,6 +1,6 @@
 module.exports = {
   clearMocks: true,
-  collectCoverageFrom: ["**/src/**", "**/tests/**"],
+  collectCoverageFrom: ["src/**", "tests/**"],
   errorOnDeprecated: true,
   resetMocks: true,
   restoreMocks: true,
