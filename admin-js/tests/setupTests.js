@@ -38,7 +38,11 @@ beforeAll(async() => {
     if (!global.pythonProcessPath)
         return;
 
-    pythonProcess = spawn("python3", ["-u", global.pythonProcessPath], {"cwd": ".."});
+    if (global.__coverage__)
+        pythonProcess = spawn("coverage", ["run", global.pythonProcessPath], {"cwd": ".."});
+    else
+        pythonProcess = spawn("python3", ["-u", global.pythonProcessPath], {"cwd": ".."});
+
     pythonProcess.stderr.on("data", (data) => {console.error(`stderr: ${data}`);});
 
     await new Promise(resolve => setTimeout(resolve, 2500));
