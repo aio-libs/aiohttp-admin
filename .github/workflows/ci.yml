@@ -193,7 +193,7 @@ jobs:
   check:  # This job does nothing and is only used for the branch protection
     if: always()
 
-    needs: [lint, test]
+    needs: [lint, test, test-integration]
 
     runs-on: ubuntu-latest
 
