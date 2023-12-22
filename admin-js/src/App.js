@@ -55,6 +55,49 @@ const _TimeField = (props) => (
 
 const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
+/** Reconfigure all reference fields to allow source to be a function. */
+const _ReferenceField = (props) => {
+    const {source, ...innerProps} = props;
+    //console.log(source);
+    if (source instanceof Function) {
+        console.log("HERE");
+        console.log(innerProps);
+        return (
+            <WithRecord {...innerProps} render={
+                (record) => <ReferenceField {...innerProps} source={source(record)} />
+            } />
+        );
+    } else {
+        return <ReferenceField {...props} />;
+    }
+};
+const _ReferenceManyField = (props) => {
+    const {source, ...innerProps} = props;
+    if (source instanceof Function) {
+        console.log("THERE");
+        console.log(innerProps);
+        return (
+            <WithRecord {...innerProps} render={
+                (record) => <ReferenceManyField {...innerProps} source={source(record)} />
+            } />
+        );
+    } else {
+        return <ReferenceManyField {...props} />;
+    }
+};
+const _ReferenceOneField = (props) => {
+    const {source, ...innerProps} = props;
+    if (source instanceof Function) {
+        return (
+            <WithRecord {...innerProps} render={
+                (record) => <ReferenceOneField {...innerProps} source={source(record)} />
+            } />
+        );
+    } else {
+        return <ReferenceOneField {...props} />;
+    }
+};
+
 /** Reconfigure ReferenceInput to filter by the displayed repr field. */
 const _ReferenceInput = (props) => {
     const ref = props["reference"];
@@ -75,6 +118,14 @@ const DatagridSingle = (props) => (
     } />
 );
 
+const create_id = (...names) => {
+    return (record) => {
+        const r = names.map((n) => record[n]).join(":");
+        console.log(r);
+        return r;
+    };
+};
+
 // Create a mapping of components, so we can reference them by name later.
 const COMPONENTS = {
     Datagrid, DatagridSingle,
@@ -82,13 +133,14 @@ const COMPONENTS = {
     BulkDeleteButton, BulkExportButton, BulkUpdateButton, CloneButton, CreateButton,
     ExportButton, FilterButton, ListButton, ShowButton,
 
-    BooleanField, DateField, NumberField, ReferenceField, ReferenceManyField,
-    ReferenceOneField, SelectField, TextField, TimeField: _TimeField,
+    BooleanField, DateField, NumberField, ReferenceField: _ReferenceField,
+    ReferenceManyField: _ReferenceManyField, ReferenceOneField: _ReferenceOneField,
+    SelectField, TextField, TimeField: _TimeField,
 
     BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
     ReferenceInput: _ReferenceInput, SelectInput, TextInput, TimeInput: _TimeInput
 };
-const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
+const FUNCTIONS = {create_id, email, maxLength, maxValue, minLength, minValue, regex, required};
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
