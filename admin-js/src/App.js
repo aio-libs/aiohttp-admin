@@ -55,6 +55,17 @@ const _TimeField = (props) => (
 
 const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
+/** Reconfigure ReferenceInput to filter by the displayed repr field. */
+const _ReferenceInput = (props) => {
+    const ref = props["reference"];
+    const repr = STATE["resources"][ref]["repr"];
+    return (
+        <ReferenceInput sort={{"field": repr, "order": "ASC"}} {...props}>
+            <AutocompleteInput filterToQuery={s => ({[repr]: s})} />
+        </ReferenceInput>
+    );
+};
+
 /** Display a single record in a Datagrid-like view (e.g. for ReferenceField). */
 const DatagridSingle = (props) => (
     <WithRecord {...props} render={
