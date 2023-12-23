@@ -3,7 +3,7 @@
 branch = True
 include =
     aiohttp_admin/**/*.py
-    test/**/*.py
+    tests/**/*.py
     admin-js/src/**/*.js
     admin-js/tests/**/*.js
     examples/**/*.py
