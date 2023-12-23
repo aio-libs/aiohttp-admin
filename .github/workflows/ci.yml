@@ -126,13 +126,73 @@ jobs:
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
-        file: ./coverage.xml
+        fail_ci_if_error: true
+        files: ./coverage.xml
         flags: unit
+
+  test-integration:
+    name: Integration Test
+    needs: yarn_build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install yarn
+      run: sudo apt install yarn -y
+    - name: Get yarn cache dir
+      run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        restore-keys: node-${{ hashFiles('admin-js/package.json') }}
+        path: |
+          ${{ env.yarn_cache }}
+          admin-js/node_modules
+    - name: Yarn install
+      run: yarn install
+      working-directory: admin-js/
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+        cache: 'pip'
+        cache-dependency-path: '**/requirements*.txt'
+    - name: Restore cached JS files
+      uses: actions/cache/restore@v3
+      with:
+        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        fail-on-cache-miss: true
+        path: |
+          aiohttp_admin/static/admin.js
+          aiohttp_admin/static/*.map
+    - name: Install dependencies
+      uses: py-actions/py-dependency-install@v4
+      with:
+        path: requirements.txt
+    - name: Run tests
+      run: yarn test --coverage
+      working-directory: admin-js/
+    - name: Upload JS coverage
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: true
+        directory: admin-js/coverage/
+        flags: js, integration
+    - name: Generate Python coverage
+      run: python -m coverage xml
+    - name: Upload Python coverage
+      uses: codecov/codecov-action@v3
+      with:
+        fail_ci_if_error: true
+        files: ./coverage.xml
+        flags: integration
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
 
-    needs: [lint, test]
+    needs: [lint, test, test-integration]
 
     runs-on: ubuntu-latest
 
