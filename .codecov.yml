@@ -1,19 +1,15 @@
 codecov:
   notify:
     after_n_builds: 3
-  status:
-    project:
-      unit:
-        flags: 
-          - unit
-        paths: 
-          - "aiohttp_admin/"
-          - "tests/"
-      integration:
-        flags: 
-          - integration
-        paths: 
-          - "admin-js/src/"
-          - "admin-js/tests/"
-          - "aiohttp_admin/"
-          - "examples/"
+flag_management:
+  individual_flags:
+    - name: unit
+      paths: 
+        - "aiohttp_admin/"
+        - "tests/"
+    - name: integration
+      paths: 
+        - "admin-js/src/"
+        - "admin-js/tests/"
+        - "aiohttp_admin/"
+        - "examples/"
