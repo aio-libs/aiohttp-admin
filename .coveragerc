@@ -2,8 +2,8 @@
 [run]
 branch = True
 include =
-    aiohttp_admin/**.py
-    test/**.py
-    admin-js/src/**.js
-    admin-js/tests/**.js
-    examples/**.py
+    aiohttp_admin/**/*.py
+    test/**/*.py
+    admin-js/src/**/*.js
+    admin-js/tests/**/*.js
+    examples/**/*.py
