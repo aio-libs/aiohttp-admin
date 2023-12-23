@@ -39,7 +39,7 @@ beforeAll(async() => {
         return;
 
     if (global.__coverage__)
-        pythonProcess = spawn("coverage", ["run", global.pythonProcessPath], {"cwd": ".."});
+        pythonProcess = spawn("coverage", ["run", "--source=examples/", global.pythonProcessPath], {"cwd": ".."});
     else
         pythonProcess = spawn("python3", ["-u", global.pythonProcessPath], {"cwd": ".."});
 
