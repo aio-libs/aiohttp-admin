@@ -176,6 +176,7 @@ function evaluate(obj) {
 
         let {children, ...props} = obj["props"];
         props = Object.fromEntries(Object.entries(props).map(([k, v]) => [k, evaluate(v)]));
+        props["key"] = props["source"];
         if (children)
             return <C {...props}>{evaluate(children)}</C>;
         return <C {...props} />;
@@ -205,7 +206,7 @@ function createFields(fields, name, permissions) {
         const withRecordProps = Object.fromEntries(withRecordPropNames.map(
             (k) => [k, evaluate(state["props"][k])]));
         // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord source={field} {...withRecordProps} render={
+        components.push(<WithRecord source={field} key={c.key} {...withRecordProps} render={
             (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
         } />);
     }
@@ -232,7 +233,7 @@ function createInputs(resource, name, perm_type, permissions) {
             for (let v of fvalues)
                 choices.push({"id": v, "name": v});
             components.push(
-                <SelectInput source={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
+                <SelectInput source={field} key={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
                     validate={nullable < 0 && required()} disabled={disabled} />);
         } else {
             if (perm_type === "view") {
@@ -242,7 +243,7 @@ function createInputs(resource, name, perm_type, permissions) {
             const c = evaluate(state);
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
-                components.push(<WithRecord source={field} render={
+                components.push(<WithRecord source={field} key={field} render={
                     (record) => hasPermission(`${name}.${field}.${perm_type}`, permissions, record) && c
                 } />);
             else
