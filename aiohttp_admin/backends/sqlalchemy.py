@@ -23,6 +23,7 @@ else:
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
+_FieldInputProps = tuple[str, str, MPT[str, bool], MPT[str, bool]]
 _FValues = Union[bool, int, str]
 _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
@@ -30,10 +31,11 @@ _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMet
 
 logger = logging.getLogger(__name__)
 
-FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool], MPT[str, bool]]] = MPT({
+FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldInputProps] = MPT({
     sa.Boolean: ("BooleanField", "BooleanInput", MPT({}), MPT({})),
     sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False}), MPT({})),
-    sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True}), MPT({})),
+    sa.DateTime: ("DateField", "DateTimeInput",
+                  MPT({"showDate": True, "showTime": True}), MPT({})),
     sa.Enum: ("SelectField", "SelectInput", MPT({}), MPT({})),
     sa.Integer: ("NumberField", "NumberInput", MPT({}), MPT({})),
     sa.Numeric: ("NumberField", "NumberInput", MPT({}), MPT({})),
@@ -70,7 +72,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool],
 })
 
 
-def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, bool], dict[str, bool]]:
+def get_components(t: sa.types.TypeEngine[object]) -> _FieldInputProps:
     for key, (field, inp, field_props, input_props) in FIELD_TYPES.items():
         if isinstance(t, key):
             return (field, inp, field_props.copy(), input_props.copy())
