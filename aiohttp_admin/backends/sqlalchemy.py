@@ -75,7 +75,7 @@ def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, 
         if isinstance(t, key):
             return (field, inp, field_props.copy(), input_props.copy())
 
-    return ("TextField", "TextInput", {})
+    return ("TextField", "TextInput", {}, {})
 
 
 def handle_errors(
@@ -185,7 +185,7 @@ class SAResource(AbstractAdminResource[Any]):
             if inp == "BooleanInput" and c.nullable:
                 inp = "NullableBooleanInput"
 
-            props = {"source": c.name}
+            props: dict[str, Any] = {"source": c.name}
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
                                          for e in c.type.python_type)
@@ -253,9 +253,9 @@ class SAResource(AbstractAdminResource[Any]):
                 for kc in relationship.target.c.values():
                     if kc is remote:  # Skip the foreign key
                         continue
-                    field, inp, c_props = get_components(kc.type)
-                    c_props["source"] = kc.name
-                    children.append(comp(field, c_props))
+                    field, _inp, c_fprops, _inp_props = get_components(kc.type)
+                    c_fprops["source"] = kc.name
+                    children.append(comp(field, c_fprops))
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
                 datagrid = comp(container, {"children": children, "rowClick": "show"})
                 if t == "ReferenceManyField":
