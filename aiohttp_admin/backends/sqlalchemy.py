@@ -72,7 +72,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldTypesValues] = MPT({
 })
 
 
-_Components = tuple[str, str, dict[str, bool], dict[str, bool]
+_Components = tuple[str, str, dict[str, bool], dict[str, bool]]
 def get_components(t: sa.types.TypeEngine[object]) -> _Components:
     for key, (field, inp, field_props, input_props) in FIELD_TYPES.items():
         if isinstance(t, key):
