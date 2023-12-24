@@ -30,7 +30,7 @@ _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMet
 
 logger = logging.getLogger(__name__)
 
-FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]] = MPT({
+FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool], MPT[str, bool]]] = MPT({
     sa.Boolean: ("BooleanField", "BooleanInput", MPT({}), MPT({})),
     sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False}), MPT({})),
     sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True}), MPT({})),
