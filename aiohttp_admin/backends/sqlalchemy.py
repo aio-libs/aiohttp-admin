@@ -31,15 +31,15 @@ _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMet
 logger = logging.getLogger(__name__)
 
 FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]] = MPT({
-    sa.Boolean: ("BooleanField", "BooleanInput", MPT({})),
-    sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False})),
-    sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True})),
-    sa.Enum: ("SelectField", "SelectInput", MPT({})),
-    sa.Integer: ("NumberField", "NumberInput", MPT({})),
-    sa.Numeric: ("NumberField", "NumberInput", MPT({})),
-    sa.String: ("TextField", "TextInput", MPT({})),
-    sa.Time: ("TimeField", "TimeInput", MPT({})),
-    sa.Uuid: ("TextField", "TextInput", MPT({})),  # TODO: validators
+    sa.Boolean: ("BooleanField", "BooleanInput", MPT({}), MPT({})),
+    sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False}), MPT({})),
+    sa.DateTime: ("DateField", "DateTimeInput", MPT({"showDate": True, "showTime": True}), MPT({})),
+    sa.Enum: ("SelectField", "SelectInput", MPT({}), MPT({})),
+    sa.Integer: ("NumberField", "NumberInput", MPT({}), MPT({})),
+    sa.Numeric: ("NumberField", "NumberInput", MPT({}), MPT({})),
+    sa.String: ("TextField", "TextInput", MPT({}), MPT({})),
+    sa.Time: ("TimeField", "TimeInput", MPT({}), MPT({})),
+    sa.Uuid: ("TextField", "TextInput", MPT({}), MPT({})),  # TODO: validators
     # TODO: Set fields for below types.
     # sa.sql.sqltypes._AbstractInterval: (),
     # sa.types._Binary: (),
@@ -70,10 +70,10 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], tuple[str, str, MPT[str, bool]]
 })
 
 
-def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, bool]]:
-    for key, (field, inp, props) in FIELD_TYPES.items():
+def get_components(t: sa.types.TypeEngine[object]) -> tuple[str, str, dict[str, bool], dict[str, bool]]:
+    for key, (field, inp, field_props, input_props) in FIELD_TYPES.items():
         if isinstance(t, key):
-            return (field, inp, props.copy())
+            return (field, inp, field_props.copy(), input_props.copy())
 
     return ("TextField", "TextInput", {})
 
@@ -176,15 +176,16 @@ class SAResource(AbstractAdminResource[Any]):
                 inp = "ReferenceInput"
                 key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
                 self._foreign_rows.add(c.name)
-                props: dict[str, Any] = {"reference": key.column.table.name,
-                                         "target": key.column.name}
+                field_props: dict[str, Any] = {"reference": key.column.table.name,
+                                               "target": key.column.name}
+                inp_props = field_props.copy()
             else:
-                field, inp, props = get_components(c.type)
+                field, inp, field_props, inp_props = get_components(c.type)
 
             if inp == "BooleanInput" and c.nullable:
                 inp = "NullableBooleanInput"
 
-            props["source"] = c.name
+            props = {"source": c.name}
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
                                          for e in c.type.python_type)
@@ -193,7 +194,7 @@ class SAResource(AbstractAdminResource[Any]):
             if length is None or length > 31:
                 props["fullWidth"] = True
                 if length is None or length > 127:
-                    props["multiline"] = True
+                    inp_props["multiline"] = True
 
             if isinstance(c.default, sa.ColumnDefault):
                 props["placeholder"] = c.default.arg
@@ -201,19 +202,20 @@ class SAResource(AbstractAdminResource[Any]):
             if c.comment:
                 props["helperText"] = c.comment
 
-            self.fields[c.name] = comp(field, props)
+            field_props.update(props)
+            self.fields[c.name] = comp(field, field_props)
             if c.computed is None:
                 # TODO: Allow custom props (e.g. disabled, multiline, rows etc.)
-                props = props.copy()
+                inp_props.update(props)
                 show = c is not table.autoincrement_column
-                props["validate"] = self._get_validators(table, c)
+                inp_props["validate"] = self._get_validators(table, c)
                 if inp == "NumberInput":
-                    for v in props["validate"]:
+                    for v in inp_props["validate"]:
                         if v["name"] == "minValue":
-                            props["min"] = v["args"][0]
+                            inp_props["min"] = v["args"][0]
                         elif v["name"] == "maxValue":
-                            props["max"] = v["args"][0]
-                self.inputs[c.name] = comp(inp, props)  # type: ignore[assignment]
+                            inp_props["max"] = v["args"][0]
+                self.inputs[c.name] = comp(inp, inp_props)  # type: ignore[assignment]
                 self.inputs[c.name]["show_create"] = show
                 field_type: Any = c.type.python_type
                 if c.nullable:

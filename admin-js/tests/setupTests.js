@@ -2,6 +2,7 @@ const http = require("http");
 const {spawn} = require("child_process");
 import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 import "@testing-library/jest-dom";
+import failOnConsole from "jest-fail-on-console";
 import {configure, render} from "@testing-library/react";
 import * as structuredClone from "@ungap/structured-clone";
 
@@ -26,13 +27,12 @@ window.matchMedia = (query) => ({
 // Ignore not implemented errors
 window.scrollTo = jest.fn();
 
-// Suppress act() warnings, because there's too many async changes happening.
-const realError = console.error;
-console.error = (...args) => {
-    if (typeof args[0] === "string" && args[0].includes("inside a test was not wrapped in act(...)."))
-        return;
-    realError(...args);
-};
+failOnConsole({
+    silenceMessage: (msg) => {
+        // Suppress act() warnings, because there's too many async changes happening.
+        return msg.includes("inside a test was not wrapped in act(...).");
+    }
+});
 
 beforeAll(async() => {
     if (!global.pythonProcessPath)
@@ -48,7 +48,7 @@ beforeAll(async() => {
     await new Promise(resolve => setTimeout(resolve, 2500));
 
     await new Promise(resolve => {
-        http.get("http://localhost:8080/admin", resp => {
+        http.get("http://localhost:8080/admin", {"timeout": 2000}, resp => {
             if (resp.statusCode !== 200)
                 throw new Error("Request failed");
 
