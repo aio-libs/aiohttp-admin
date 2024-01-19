@@ -147,8 +147,9 @@ def comp(t: str, props: Optional[Mapping[str, object]] = None) -> ComponentState
     props = dict(props or {})
     # Set default label, otherwise react-admin will use a label with the prefix.
     if "label" not in props and "source" in props:
-        assert isinstance(props["source"], str)
-        props["label"] = props["source"].removeprefix("fk_").removeprefix("data.").replace("_", " ").title()
+        s = props["source"]
+        assert isinstance(s, str)  # noqa: S101
+        props["label"] = s.removeprefix("fk_").removeprefix("data.").replace("_", " ").title()
 
     return {"__type__": "component", "type": t, "props": props}
 

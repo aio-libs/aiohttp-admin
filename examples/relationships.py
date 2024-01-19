@@ -130,7 +130,8 @@ class CompositeForeignKeyParent(Base):
     @classmethod
     def __table_args__(cls) -> tuple[sa.schema.SchemaItem, ...]:
         return (sa.ForeignKeyConstraint(
-            ["child_id", "ref_num"], ["composite_foreign_key_child.num", "composite_foreign_key_child.ref_num"]
+            ["child_id", "ref_num"],
+            ["composite_foreign_key_child.num", "composite_foreign_key_child.ref_num"]
         ),)
 
 
@@ -200,7 +201,8 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, OneToOneChild)},
             # {"model": SAResource(engine, ManyToManyParent)},
             # {"model": SAResource(engine, ManyToManyChild)},
-            {"model": SAResource(engine, CompositeForeignKeyChild), "repr": aiohttp_admin.data("description")},
+            {"model": SAResource(engine, CompositeForeignKeyChild),
+             "repr": aiohttp_admin.data("description")},
             {"model": SAResource(engine, CompositeForeignKeyParent)}
         )
     }

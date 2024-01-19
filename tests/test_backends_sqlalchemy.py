@@ -44,10 +44,12 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.name == "dummy"
     assert r.primary_key == ("id",)
     assert r.fields == {"id": comp("NumberField", {"source": "data.id", "key": "id"}),
-                        "num": comp("TextField", {"source": "data.num", "key": "num", "fullWidth": True})}
+                        "num": comp("TextField", {"source": "data.num", "key": "num",
+                                                  "fullWidth": True})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": "data.id", "key": "id", "validate": [func("required", ())]})
+        "id": comp("NumberInput", {"source": "data.id", "key": "id",
+                                   "validate": [func("required", ())]})
         | {"show_create": False},
         "num": comp("TextInput", {
             "source": "data.num", "fullWidth": True, "multiline": True, "key": "num",
@@ -70,9 +72,11 @@ def test_table(mock_engine: AsyncEngine) -> None:
     }
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": "data.id", "key": "id", "validate": [func("required", ())]})
+        "id": comp("NumberInput", {"source": "data.id", "key": "id",
+                                   "validate": [func("required", ())]})
         | {"show_create": False},
-        "num": comp("TextInput", {"source": "data.num", "key": "num", "validate": [func("maxLength", (30,))]})
+        "num": comp("TextInput", {"source": "data.num", "key": "num",
+                                  "validate": [func("maxLength", (30,))]})
         | {"show_create": True}
     }
 
@@ -85,9 +89,11 @@ def test_extra_props(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> N
 
     r = SAResource(mock_engine, TestModel)
     assert r.fields["num"]["props"] == {
-        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True, "placeholder": "Bar", "helperText": "Foo"}
+        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True,
+        "placeholder": "Bar", "helperText": "Foo"}
     assert r.inputs["num"]["props"] == {
-        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True,
+        "multiline": True, "placeholder": "Bar",
         "helperText": "Foo", "validate": [func("maxLength", (128,))]}
 
 
@@ -145,7 +151,8 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     assert r.name == "child"
     assert r.primary_key == ("id",)
     assert r.fields == {"id": comp("ReferenceField",
-                                   {"reference": "dummy", "source": fk("id"), "key": "id", "label": "Id", "target": "id"})}
+                                   {"reference": "dummy", "source": fk("id"), "key": "id",
+                                    "label": "Id", "target": "id"})}
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": comp(
         "ReferenceInput",
@@ -196,7 +203,8 @@ async def test_fk_output(
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         # child_id must be converted to str ID.
-        assert await resp.json() == {"data": {"id": "1", "fk_child_id": "1", "data": {"id": 1, "child_id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_child_id": "1",
+                                              "data": {"id": 1, "child_id": 1}}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -331,7 +339,8 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
         "other": comp("TextField", {"source": data("other"), "key": "other", "fullWidth": True})
     }
     assert r.inputs == {
-        "num": comp("NumberInput", {"source": data("num"), "key": "num", "validate": [func("required", ())]})
+        "num": comp("NumberInput", {"source": data("num"), "key": "num",
+                                    "validate": [func("required", ())]})
         | {"show_create": False},
         "other": comp("TextInput", {
             "fullWidth": True, "source": data("other"), "key": "other",
@@ -359,7 +368,8 @@ async def test_id_nonpk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
         "other": comp("NumberField", {"source": data("other"), "key": "other"})
     }
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": data("id"), "key": "id", "validate": [func("required", ())]})
+        "id": comp("NumberInput", {"source": data("id"), "key": "id",
+                                   "validate": [func("required", ())]})
         | {"show_create": True},
         "other": comp("NumberInput", {
             "source": data("other"), "key": "other",
@@ -404,8 +414,9 @@ async def test_nonid_pk_api(
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "8", "data": {"num": 8, "other": "bar"}},
-                                              {"id": "5", "data": {"num": 5, "other": "foo"}}], "total": 2}
+        assert await resp.json() == {"data": [
+            {"id": "8", "data": {"num": 8, "other": "bar"}},
+            {"id": "5", "data": {"num": 5, "other": "foo"}}], "total": 2}
 
     url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 8}, headers=h) as resp:
@@ -543,11 +554,13 @@ async def test_record_type(
     p = {"data": json.dumps({"data": {"foo": True, "bar": 5}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1, "foo": True, "bar": 5}}}
+        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1, "foo": True,
+                                                                  "bar": 5}}}
     p = {"data": json.dumps({"data": {"foo": None, "bar": -1}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2, "foo": None, "bar": -1}}}
+        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2, "foo": None,
+                                                                  "bar": -1}}}
 
     p = {"data": json.dumps({"data": {"foo": 5, "bar": "foo"}})}
     async with admin_client.post(url, params=p, headers=h) as resp:

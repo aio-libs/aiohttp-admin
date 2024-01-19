@@ -27,6 +27,7 @@ _FValues = Union[bool, int, str]
 _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
 _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]
+_SABoolExpression = sa.sql.roles.ExpressionElementRole[bool]
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +154,7 @@ def permission_for(sa_obj: Union[sa.Table, type[DeclarativeBase],
 
 
 def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
-                   filters: dict[str, object]) -> Iterator[ExpressionElementRole[Any]]:
+                   filters: dict[str, object]) -> Iterator[_SABoolExpression]:
     return (columns[k].in_(v) if isinstance(v, list)
             else columns[k].ilike(f"%{v}%") if isinstance(v, str) else columns[k] == v
             for k, v in filters.items())
@@ -179,7 +180,8 @@ class SAResource(AbstractAdminResource[Any]):
             if c.foreign_keys:
                 field = "ReferenceField"
                 inp = "ReferenceInput"
-                constraint = next(cn for cn in table.foreign_key_constraints if cn.contains_column(c))
+                constraint = next(cn for cn in table.foreign_key_constraints
+                                  if cn.contains_column(c))
                 key = next(iter(c.foreign_keys))
                 label = c.name.replace("_", " ").title()
                 field_props: dict[str, Any] = {"reference": key.column.table.name,
@@ -352,7 +354,8 @@ class SAResource(AbstractAdminResource[Any]):
             return row.one()._asdict()
 
     @handle_errors
-    async def update_many(self, record_ids: Sequence[tuple[Any]], data: Record, meta: Meta) -> list[Any]:
+    async def update_many(self, record_ids: Sequence[tuple[Any]], data: Record,
+                          meta: Meta) -> list[Any]:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._cmp_pk_many(record_ids))
             stmt = stmt.values(data).returning(*(self._table.c[pk] for pk in self.primary_key))
@@ -372,10 +375,10 @@ class SAResource(AbstractAdminResource[Any]):
             r = await conn.scalars(stmt.returning(*(self._table.c[pk] for pk in self.primary_key)))
             return list(r)
 
-    def _cmp_pk(self, record_id: tuple[Any]) -> Iterator[sa.sql.roles.ExpressionElementRole[bool]]:
+    def _cmp_pk(self, record_id: tuple[Any]) -> Iterator[_SABoolExpression]:
         return (self._table.c[pk] == r_id for pk, r_id in zip(self.primary_key, record_id))
 
-    def _cmp_pk_many(self, record_ids: Sequence[tuple[Any]]) -> sa.sql.roles.ExpressionElementRole[bool]:
+    def _cmp_pk_many(self, record_ids: Sequence[tuple[Any]]) -> _SABoolExpression:
         return sa.tuple_(*(self._table.c[pk] for pk in self.primary_key)).in_(record_ids)
 
     def _get_validators(self, table: sa.Table, c: sa.Column[object]) -> list[FunctionState]:

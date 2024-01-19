@@ -104,7 +104,8 @@ def test_display() -> None:
 
     test_state = admin[state_key]["resources"]["test"]
     assert test_state["list_omit"] == ("id",)
-    assert test_state["inputs"]["id"]["props"] == {"key": "id", "validate": (func("required", ()),)}
+    assert test_state["inputs"]["id"]["props"] == {"key": "id",
+                                                   "validate": (func("required", ()),)}
     assert test_state["inputs"]["foo"]["props"] == {"key": "foo", "alwaysOn": "alwaysOn"}
 
 

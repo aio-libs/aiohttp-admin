@@ -357,7 +357,8 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         """Convert record to correct output format."""
         record = await self.filter_by_permissions(request, "view", record)
 
-        foreign_keys = {fk(*keys): None if any(record[k] is None for k in keys) else "|".join(str(record[k]) for k in keys)
+        foreign_keys = {fk(*keys): None if any(record[k] is None for k in keys)
+                        else "|".join(str(record[k]) for k in keys)
                         for keys in self._foreign_rows if all(k in record for k in keys)}
         return {
             "id": "|".join(str(record[pk]) for pk in self.primary_key),
