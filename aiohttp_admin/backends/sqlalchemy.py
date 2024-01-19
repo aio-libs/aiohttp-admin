@@ -11,7 +11,6 @@ import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, QueryableAttribute
-from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import AbstractAdminResource, GetListParams, Meta, Record
 from ..types import FunctionState, comp, data, fk, func, regex
