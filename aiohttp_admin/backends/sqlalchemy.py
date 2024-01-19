@@ -247,14 +247,14 @@ class SAResource(AbstractAdminResource[Any]):
                 if not isinstance(relationship.entity.persist_selectable, sa.Table):
                     continue
                 local, remotes = zip(*relationship.local_remote_pairs)
-                remotes = tuple(remote for l, remote in relationship.local_remote_pairs)
+                remotes = tuple(remote for _l, remote in relationship.local_remote_pairs)
 
-                self._foreign_rows.add(tuple(l.name for l in local))
+                self._foreign_rows.add(tuple(c.name for c in local))
 
                 props = {"reference": relationship.entity.persist_selectable.name,
-                         "label": name.title(), "source": fk(*(l.name for l in local)),
+                         "label": name.title(), "source": fk(*(c.name for c in local)),
                          "target": fk(*(r.name for r in remotes)), "sortable": False}
-                if any(l.foreign_keys for l in local):
+                if any(c.foreign_keys for c in local):
                     t = "ReferenceField"
                     props["link"] = "show"
                 elif relationship.uselist:

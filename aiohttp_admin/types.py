@@ -13,8 +13,10 @@ else:
 Data = NewType("Data", str)
 FK = NewType("FK", str)
 
+
 def data(key: str) -> Data:
-    return Data("data.{}".format(key))
+    return Data(f"data.{key}")
+
 
 def fk(*keys: str) -> FK:
     return FK("fk_{}".format("__".join(sorted(keys))))

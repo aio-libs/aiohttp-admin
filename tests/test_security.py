@@ -137,8 +137,7 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient,
         assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
 
 
-async def test_get_fk_with_permission(create_admin_client: _CreateClient,
-                                            login: _Login) -> None:
+async def test_get_fk_with_permission(create_admin_client: _CreateClient, login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
         return {"permissions": {"admin.foreign.view"}}
@@ -154,8 +153,7 @@ async def test_get_fk_with_permission(create_admin_client: _CreateClient,
         assert await resp.json() == {"data": expected}
 
 
-async def test_get_fk_without_permission(create_admin_client: _CreateClient,
-                                            login: _Login) -> None:
+async def test_get_fk_without_permission(create_admin_client: _CreateClient, login: _Login) -> None:
     async def identity_callback(identity: Optional[str]) -> UserDetails:
         assert identity == "admin"
         return {"permissions": {"admin.foreign.view", "~admin.foreign.dummy.*"}}

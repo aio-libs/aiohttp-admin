@@ -1,7 +1,6 @@
 import asyncio
 import json
 import sys
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from datetime import date, datetime, time
@@ -15,7 +14,7 @@ from aiohttp_security import check_permission, permits
 from pydantic import Json
 
 from ..security import check, permissions_as_dict
-from ..types import ComponentState, InputState, data, fk
+from ..types import ComponentState, InputState, fk
 
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
@@ -191,7 +190,6 @@ class AbstractAdminResource(ABC, Generic[_ID]):
             query["sort"]["field"] = query["sort"]["field"].removeprefix("data.")
 
         query["filter"].update(check(dict[str, object], query["filter"].pop("data", {})))  # type: ignore[type-var]
-
 
         merged_filter = {}
         for k, v in query["filter"].items():
