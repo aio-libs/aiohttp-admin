@@ -106,6 +106,34 @@ class ManyToManyChild(Base):
                                                            back_populates="children")
 
 
+class CompositeForeignKeyChild(Base):
+    __tablename__ = "composite_foreign_key_child"
+
+    num: Mapped[int] = mapped_column(primary_key=True)
+    ref_num: Mapped[int] = mapped_column(primary_key=True)
+    description: Mapped[str] = mapped_column(sa.String(64))
+
+    parents: Mapped[list["CompositeForeignKeyParent"]] = relationship(back_populates="child")
+
+
+class CompositeForeignKeyParent(Base):
+    __tablename__ = "composite_foreign_key_parent"
+
+    item_id: Mapped[int] = mapped_column(primary_key=True)
+    item_name: Mapped[str] = mapped_column(sa.String(64))
+    child_id: Mapped[int]
+    ref_num: Mapped[int]
+
+    child: Mapped[CompositeForeignKeyChild] = relationship(back_populates="parents")
+
+    @sa.orm.declared_attr.directive
+    @classmethod
+    def __table_args__(cls) -> tuple[sa.schema.SchemaItem, ...]:
+        return (sa.ForeignKeyConstraint(
+            ["child_id", "ref_num"], ["composite_foreign_key_child.num", "composite_foreign_key_child.ref_num"]
+        ),)
+
+
 async def check_credentials(username: str, password: str) -> bool:
     return username == "admin" and password == "admin"
 
@@ -139,6 +167,14 @@ async def create_app() -> web.Application:
         sess.add(manytomany_p2)
         sess.add(manytomany_c1)
         sess.add(manytomany_c2)
+        composite_child_1 = CompositeForeignKeyChild(num=0, ref_num=0, description="A")
+        composite_child_2 = CompositeForeignKeyChild(num=0, ref_num=1, description="B")
+        composite_child_3 = CompositeForeignKeyChild(num=1, ref_num=0, description="C")
+        sess.add(composite_child_1)
+        sess.add(composite_child_2)
+        sess.add(composite_child_3)
+        sess.add(CompositeForeignKeyParent(item_name="Foo", child_id=0, ref_num=1))
+        sess.add(CompositeForeignKeyParent(item_name="Bar", child_id=1, ref_num=0))
     async with session.begin() as sess:
         sess.add(OneToManyChild(name="Child Foo", value=1, parent_id=onetomany_1.id))
         sess.add(OneToManyChild(name="Child Bar", value=5, parent_id=onetomany_1.id))
@@ -156,14 +192,16 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, OneToManyParent), "repr": "name"},
+            {"model": SAResource(engine, OneToManyParent), "repr": aiohttp_admin.data("name")},
             {"model": SAResource(engine, OneToManyChild)},
-            {"model": SAResource(engine, ManyToOneParent), "repr": "name"},
+            {"model": SAResource(engine, ManyToOneParent), "repr": aiohttp_admin.data("name")},
             {"model": SAResource(engine, ManyToOneChild)},
-            {"model": SAResource(engine, OneToOneParent), "repr": "name"},
+            {"model": SAResource(engine, OneToOneParent), "repr": aiohttp_admin.data("name")},
             {"model": SAResource(engine, OneToOneChild)},
             # {"model": SAResource(engine, ManyToManyParent)},
-            # {"model": SAResource(engine, ManyToManyChild)}
+            # {"model": SAResource(engine, ManyToManyChild)},
+            {"model": SAResource(engine, CompositeForeignKeyChild), "repr": aiohttp_admin.data("description")},
+            {"model": SAResource(engine, CompositeForeignKeyParent)}
         )
     }
     aiohttp_admin.setup(app, schema)

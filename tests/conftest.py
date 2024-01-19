@@ -3,6 +3,7 @@ from typing import Optional
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
+import sqlalchemy as sa
 from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
@@ -33,6 +34,13 @@ class Dummy2Model(Base):
     msg: Mapped[Optional[str]]
 
 
+class ForeignModel(Base):
+    __tablename__ = "foreign"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dummy: Mapped[int] = mapped_column(sa.ForeignKey(DummyModel.id))
+
+
 model = web.AppKey[type[DummyModel]]("model")
 model2 = web.AppKey[type[Dummy2Model]]("model2")
 db = web.AppKey("db", async_sessionmaker[AsyncSession])
@@ -57,10 +65,13 @@ def create_admin_client(
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         async with app[db].begin() as sess:
-            sess.add(DummyModel())
+            dummy = DummyModel()
+            sess.add(dummy)
             sess.add(Dummy2Model(msg="Test"))
             sess.add(Dummy2Model(msg="Test"))
             sess.add(Dummy2Model(msg="Other"))
+        async with app[db].begin() as sess:
+            sess.add(ForeignModel(dummy=dummy.id))
 
         schema: aiohttp_admin.Schema = {
             "security": {
@@ -69,7 +80,8 @@ def create_admin_client(
             },
             "resources": (
                 {"model": SAResource(engine, DummyModel)},
-                {"model": SAResource(engine, Dummy2Model)}
+                {"model": SAResource(engine, Dummy2Model)},
+                {"model": SAResource(engine, ForeignModel)}
             )
         }
         if identity_callback:

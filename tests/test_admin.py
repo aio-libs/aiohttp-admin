@@ -93,7 +93,7 @@ def test_display() -> None:
     app = web.Application()
     model = DummyResource(
         "test",
-        {"id": comp("TextField"), "foo": comp("TextField")},
+        {"id": comp("TextField", {"source": "id"}), "foo": comp("TextField", {"source": "foo"})},
         {"id": comp("TextInput", {"validate": (func("required", ()),)}) | {"show_create": False},  # type: ignore[dict-item]
          "foo": comp("TextInput") | {"show_create": True}},  # type: ignore[dict-item]
         "id")
@@ -104,8 +104,8 @@ def test_display() -> None:
 
     test_state = admin[state_key]["resources"]["test"]
     assert test_state["list_omit"] == ("id",)
-    assert test_state["inputs"]["id"]["props"] == {"validate": (func("required", ()),)}
-    assert test_state["inputs"]["foo"]["props"] == {"alwaysOn": "alwaysOn"}
+    assert test_state["inputs"]["id"]["props"] == {"key": "id", "validate": (func("required", ()),)}
+    assert test_state["inputs"]["foo"]["props"] == {"key": "foo", "alwaysOn": "alwaysOn"}
 
 
 def test_display_invalid() -> None:
@@ -138,9 +138,10 @@ def test_extra_props() -> None:
 
     test_state = admin[state_key]["resources"]["test"]
     assert test_state["fields"]["id"]["props"] == {"textAlign": "left", "placeholder": "foo",
-                                                   "label": "Spam"}
+                                                   "label": "Spam", "key": "id"}
     assert test_state["inputs"]["id"]["props"] == {"alwaysOn": "alwaysOn", "type": "email",
-                                                   "multiline": True, "resettable": False}
+                                                   "multiline": True, "resettable": False,
+                                                   "key": "id"}
 
 
 def test_invalid_repr() -> None:

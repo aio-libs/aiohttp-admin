@@ -72,7 +72,7 @@ async def create_app() -> web.Application:
             "secure": False
         },
         "resources": (
-            {"model": SAResource(engine, Simple)},
+            {"model": SAResource(engine, Simple), "repr": aiohttp_admin.data("value")},
             {"model": SAResource(engine, SimpleParent)}
         )
     }

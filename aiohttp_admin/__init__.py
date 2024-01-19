@@ -11,9 +11,9 @@ from pydantic import ValidationError
 
 from .routes import setup_resources, setup_routes
 from .security import AdminAuthorizationPolicy, Permissions, TokenIdentityPolicy, check
-from .types import Schema, State, UserDetails, check_credentials_key, permission_re_key, state_key
+from .types import Schema, State, UserDetails, check_credentials_key, data, fk, permission_re_key, state_key
 
-__all__ = ("Permissions", "Schema", "UserDetails", "permission_re_key", "setup")
+__all__ = ("Permissions", "Schema", "UserDetails", "data", "fk", "permission_re_key", "setup")
 __version__ = "0.1.0a3"
 
 
@@ -92,7 +92,7 @@ def setup(app: web.Application, schema: Schema, *, path: str = "/admin",
 
     resource_patterns = []
     for r, state in admin[state_key]["resources"].items():
-        fields = state["fields"].keys()
+        fields = (f.removeprefix("data.") for f in state["fields"].keys())
         resource_patterns.append(
             r"(?#Resource name){r}"
             r"(?#Optional field name)(\.({f}))?"

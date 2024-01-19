@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy as sa
 from aiohttp.test_utils import TestClient
 
-from aiohttp_admin.types import comp, func
+from aiohttp_admin.types import comp, data, func
 from conftest import admin, db, model, model2
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
@@ -33,12 +33,13 @@ async def test_admin_view(admin_client: TestClient) -> None:
 
     r = state["resources"]["dummy"]
     assert r["list_omit"] == []
-    assert r["fields"] == {"id": comp("NumberField", {"source": "id"})}
+    assert r["fields"] == {"id": comp("NumberField", {"source": data("id"), "key": "id"})}
     assert r["inputs"] == {
         "id": comp("NumberInput",
-                   {"source": "id", "alwaysOn": "alwaysOn", "validate": [func("required", [])]})
+                   {"source": data("id"), "key": "id", "alwaysOn": "alwaysOn",
+                    "validate": [func("required", [])]})
         | {"show_create": False}}
-    assert r["repr"] == "id"
+    assert r["repr"] == data("id")
     assert state["urls"] == {"token": "/admin/token", "logout": "/admin/logout"}
 
 
@@ -87,7 +88,7 @@ async def test_list_filtering_by_pk(admin_client: TestClient, login: _Login) -> 
          "sort": '{"field": "id", "order": "ASC"}', "filter": '{"id": 3}'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3"}], "total": 1}
+        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}}], "total": 1}
 
 
 @pytest.mark.xfail(reason="Need to implement #668 to make this work properly")
@@ -113,7 +114,7 @@ async def test_get_one(admin_client: TestClient, login: _Login) -> None:
 
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1"}}
+        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
 
 
 async def test_get_one_not_exists(admin_client: TestClient, login: _Login) -> None:
@@ -136,7 +137,9 @@ async def test_get_many(admin_client: TestClient, login: _Login) -> None:
     p = {"ids": '["3", "7", "12"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3"}, {"id": "7"}, {"id": "12"}]}
+        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}},
+                                              {"id": "7", "data": {"id": 7}},
+                                              {"id": "12", "data": {"id": 12}}]}
 
 
 async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> None:
@@ -150,7 +153,8 @@ async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> N
     p = {"ids": '["3", "4", "8"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3"}, {"id": "4"}]}
+        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}},
+                                              {"id": "4", "data": {"id": 4}}]}
 
     p = {"ids": '["9", "10", "11"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
@@ -161,10 +165,10 @@ async def test_create(admin_client: TestClient, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_create"].url_for()
-    p = {"data": "{}"}
+    p = {"data": json.dumps({"data": {}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2"}}
+        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2}}}
 
     async with admin_client.app[db]() as sess:
         r = await sess.get(admin_client.app[model], 2)
@@ -185,10 +189,11 @@ async def test_update(admin_client: TestClient, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
-    p = {"id": 1, "data": '{"id": 4}', "previousData": '{"id": 1}'}
+    p = {"id": 1, "data": json.dumps({"id": "4", "data": {"id": 4}}),
+         "previousData": json.dumps({"id": "1", "data": {"id": 1}})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "4"}}
+        assert await resp.json() == {"data": {"id": "4", "data": {"id": 4}}}
 
     async with admin_client.app[db]() as sess:
         r = await sess.get(admin_client.app[model], 4)
@@ -203,7 +208,8 @@ async def test_update_deleted_entity(admin_client: TestClient, login: _Login) ->
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
-    p = {"id": 2, "data": '{"id": 4}', "previousData": '{"id": 2}'}
+    p = {"id": "2", "data": '{"id": "4", "data": {"id": 4}}',
+         "previousData": '{"id": "2", "data": {"id": 2}}'}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 404
 
@@ -212,7 +218,8 @@ async def test_update_invalid_attributes(admin_client: TestClient, login: _Login
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
-    p = {"id": 1, "data": '{"id": 4, "foo": "invalid"}', "previousData": '{"id": 1}'}
+    p = {"id": "1", "data": '{"id": "4", "data": {"foo": "invalid"}}',
+         "previousData": '{"id": "1", "data": {"id": 1}}'}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 400
         assert "foo" in await resp.text()
@@ -259,10 +266,10 @@ async def test_delete(admin_client: TestClient, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_delete"].url_for()
-    p = {"id": 1, "previousData": '{"id": 1}'}
+    p = {"id": "1", "previousData": '{"id": "1", "data": {"id": 1}}'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1"}}
+        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
 
     async with admin_client.app[db]() as sess:
         assert await sess.get(admin_client.app[model], 1) is None
@@ -274,7 +281,7 @@ async def test_delete_entity_not_exists(admin_client: TestClient, login: _Login)
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_delete"].url_for()
-    p = {"id": 5, "previousData": '{"id": 5}'}
+    p = {"id": "5", "previousData": '{"id": "5", "data": {"id": 5}}'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 404
 

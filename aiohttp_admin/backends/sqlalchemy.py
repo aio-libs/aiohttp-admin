@@ -14,7 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, Query
 from sqlalchemy.sql.roles import ExpressionElementRole
 
 from .abc import AbstractAdminResource, GetListParams, Meta, Record
-from ..types import FunctionState, comp, func, regex
+from ..types import FunctionState, comp, data, fk, func, regex
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -30,7 +30,7 @@ _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMet
 
 logger = logging.getLogger(__name__)
 
-_FieldTypesValues = tuple[str, str, MPT[str, bool], MPT[str, bool]]
+_FieldTypesValues = tuple[str, str, MPT[str, object], MPT[str, object]]
 FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldTypesValues] = MPT({
     sa.Boolean: ("BooleanField", "BooleanInput", MPT({}), MPT({})),
     sa.Date: ("DateField", "DateInput", MPT({"showDate": True, "showTime": False}), MPT({})),
@@ -72,7 +72,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldTypesValues] = MPT({
 })
 
 
-_Components = tuple[str, str, dict[str, bool], dict[str, bool]]
+_Components = tuple[str, str, dict[str, object], dict[str, object]]
 
 
 def get_components(t: sa.types.TypeEngine[object]) -> _Components:
@@ -173,24 +173,32 @@ class SAResource(AbstractAdminResource[Any]):
         self.fields = {}
         self.inputs = {}
         self.omit_fields = set()
-        self._foreign_rows = set()
+        self._foreign_rows = {tuple(c.column_keys) for c in table.foreign_key_constraints}
         record_type = {}
         for c in table.c.values():
             if c.foreign_keys:
                 field = "ReferenceField"
                 inp = "ReferenceInput"
-                key = next(iter(c.foreign_keys))  # TODO: Test composite foreign keys.
-                self._foreign_rows.add(c.name)
+                constraint = next(cn for cn in table.foreign_key_constraints if cn.contains_column(c))
+                key = next(iter(c.foreign_keys))
+                label = c.name.replace("_", " ").title()
                 field_props: dict[str, Any] = {"reference": key.column.table.name,
-                                               "target": key.column.name}
+                                               "target": key.column.name,
+                                               "source": fk(*constraint.column_keys),
+                                               "label": label}
                 inp_props = field_props.copy()
+                keys = tuple((col.name, next(iter(col.foreign_keys)).column.name)
+                             for col in constraint.columns)
+                inp_props.update({"source": field_props["source"], "label": label,
+                                  "referenceKeys": keys})
+                props: dict[str, Any] = {}
             else:
                 field, inp, field_props, inp_props = get_components(c.type)
+                props = {"source": data(c.name)}
 
             if inp == "BooleanInput" and c.nullable:
                 inp = "NullableBooleanInput"
 
-            props: dict[str, Any] = {"source": c.name}
             if isinstance(c.type, sa.Enum):
                 props["choices"] = tuple({"id": e.value, "name": e.name}
                                          for e in c.type.python_type)
@@ -236,16 +244,17 @@ class SAResource(AbstractAdminResource[Any]):
             for name, relationship in mapper.relationships.items():
                 # https://github.com/sqlalchemy/sqlalchemy/discussions/10161#discussioncomment-6583442
                 assert relationship.local_remote_pairs  # noqa: S101
-                if len(relationship.local_remote_pairs) > 1:
-                    raise NotImplementedError("Composite foreign keys not supported yet.")
                 if not isinstance(relationship.entity.persist_selectable, sa.Table):
                     continue
-                local, remote = relationship.local_remote_pairs[0]
+                local, remotes = zip(*relationship.local_remote_pairs)
+                remotes = tuple(remote for l, remote in relationship.local_remote_pairs)
+
+                self._foreign_rows.add(tuple(l.name for l in local))
 
                 props = {"reference": relationship.entity.persist_selectable.name,
-                         "label": name.title(), "source": local.name,
-                         "target": remote.name, "sortable": False}
-                if local.foreign_keys:
+                         "label": name.title(), "source": fk(*(l.name for l in local)),
+                         "target": fk(*(r.name for r in remotes)), "sortable": False}
+                if any(l.foreign_keys for l in local):
                     t = "ReferenceField"
                     props["link"] = "show"
                 elif relationship.uselist:
@@ -256,17 +265,17 @@ class SAResource(AbstractAdminResource[Any]):
 
                 children = []
                 for kc in relationship.target.c.values():
-                    if kc is remote:  # Skip the foreign key
+                    if kc in remotes:  # Skip the foreign key
                         continue
                     field, _inp, c_fprops, _inp_props = get_components(kc.type)
-                    c_fprops["source"] = kc.name
+                    c_fprops["source"] = data(kc.name)
                     children.append(comp(field, c_fprops))
                 container = "Datagrid" if t == "ReferenceManyField" else "DatagridSingle"
                 datagrid = comp(container, {"children": children, "rowClick": "show"})
                 if t == "ReferenceManyField":
                     datagrid["props"]["bulkActionButtons"] = comp(
                         "BulkDeleteButton", {"mutationMode": "pessimistic"})
-                props["children"] = (datagrid,)
+                props["children"] = datagrid
 
                 self.fields[name] = comp(t, props)
                 self.omit_fields.add(name)
@@ -274,14 +283,11 @@ class SAResource(AbstractAdminResource[Any]):
         self._db = db
         self._table = table
 
-        pk = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
-        if not pk:
+        self.primary_key = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
+        if not self.primary_key:
             raise ValueError("No primary key found.")
-        if len(pk) > 1:
-            # TODO: Test composite primary key
-            raise NotImplementedError("Composite keys not supported yet.")
-        self.primary_key = pk[0]
-        self._id_type = table.c[pk[0]].type.python_type
+        pk_types = tuple(table.c[pk].type.python_type for pk in self.primary_key)
+        self._id_type = tuple.__class_getitem__(pk_types)  # type: ignore[assignment]
 
         super().__init__(record_type)
 
@@ -312,16 +318,16 @@ class SAResource(AbstractAdminResource[Any]):
         return await asyncio.gather(get_entities(), get_count())
 
     @handle_errors
-    async def get_one(self, record_id: Any, meta: Meta) -> Record:
+    async def get_one(self, record_id: tuple[Any], meta: Meta) -> Record:
         async with self._db.connect() as conn:
-            stmt = sa.select(self._table).where(self._table.c[self.primary_key] == record_id)
+            stmt = sa.select(self._table).where(*self._cmp_pk(record_id))
             result = await conn.execute(stmt)
             return result.one()._asdict()
 
     @handle_errors
-    async def get_many(self, record_ids: Sequence[Any], meta: Meta) -> list[Record]:
+    async def get_many(self, record_ids: Sequence[tuple[Any]], meta: Meta) -> list[Record]:
         async with self._db.connect() as conn:
-            stmt = sa.select(self._table).where(self._table.c[self.primary_key].in_(record_ids))
+            stmt = sa.select(self._table).where(self._cmp_pk_many(record_ids))
             result = await conn.execute(stmt)
             return [r._asdict() for r in result]
 
@@ -337,34 +343,40 @@ class SAResource(AbstractAdminResource[Any]):
             return row.one()._asdict()
 
     @handle_errors
-    async def update(self, record_id: Any, data: Record, previous_data: Record,
+    async def update(self, record_id: tuple[Any], data: Record, previous_data: Record,
                      meta: Meta) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c[self.primary_key] == record_id)
+            stmt = sa.update(self._table).where(*self._cmp_pk(record_id))
             stmt = stmt.values(data).returning(*self._table.c)
             row = await conn.execute(stmt)
             return row.one()._asdict()
 
     @handle_errors
-    async def update_many(self, record_ids: Sequence[Any], data: Record, meta: Meta) -> list[Any]:
+    async def update_many(self, record_ids: Sequence[tuple[Any]], data: Record, meta: Meta) -> list[Any]:
         async with self._db.begin() as conn:
-            stmt = sa.update(self._table).where(self._table.c[self.primary_key].in_(record_ids))
-            stmt = stmt.values(data).returning(self._table.c[self.primary_key])
+            stmt = sa.update(self._table).where(self._cmp_pk_many(record_ids))
+            stmt = stmt.values(data).returning(*(self._table.c[pk] for pk in self.primary_key))
             return list(await conn.scalars(stmt))
 
     @handle_errors
-    async def delete(self, record_id: Any, previous_data: Record, meta: Meta) -> Record:
+    async def delete(self, record_id: tuple[Any], previous_data: Record, meta: Meta) -> Record:
         async with self._db.begin() as conn:
-            stmt = sa.delete(self._table).where(self._table.c[self.primary_key] == record_id)
+            stmt = sa.delete(self._table).where(*self._cmp_pk(record_id))
             row = await conn.execute(stmt.returning(*self._table.c))
             return row.one()._asdict()
 
     @handle_errors
-    async def delete_many(self, record_ids: Sequence[Any], meta: Meta) -> list[Any]:
+    async def delete_many(self, record_ids: Sequence[tuple[Any]], meta: Meta) -> list[Any]:
         async with self._db.begin() as conn:
-            stmt = sa.delete(self._table).where(self._table.c[self.primary_key].in_(record_ids))
-            r = await conn.scalars(stmt.returning(self._table.c[self.primary_key]))
+            stmt = sa.delete(self._table).where(self._cmp_pk_many(record_ids))
+            r = await conn.scalars(stmt.returning(*(self._table.c[pk] for pk in self.primary_key)))
             return list(r)
+
+    def _cmp_pk(self, record_id: tuple[Any]) -> Iterator[sa.sql.roles.ExpressionElementRole[bool]]:
+        return (self._table.c[pk] == r_id for pk, r_id in zip(self.primary_key, record_id))
+
+    def _cmp_pk_many(self, record_ids: Sequence[tuple[Any]]) -> sa.sql.roles.ExpressionElementRole[bool]:
+        return sa.tuple_(*(self._table.c[pk] for pk in self.primary_key)).in_(record_ids)
 
     def _get_validators(self, table: sa.Table, c: sa.Column[object]) -> list[FunctionState]:
         validators: list[FunctionState] = []

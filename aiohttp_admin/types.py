@@ -1,7 +1,7 @@
 import re
 import sys
 from collections.abc import Callable, Collection, Sequence
-from typing import Any, Awaitable, Literal, Mapping, Optional
+from typing import Any, Awaitable, Literal, Mapping, NewType, Optional
 
 from aiohttp.web import AppKey
 
@@ -9,6 +9,15 @@ if sys.version_info >= (3, 12):
     from typing import TypedDict
 else:
     from typing_extensions import TypedDict
+
+Data = NewType("Data", str)
+FK = NewType("FK", str)
+
+def data(key: str) -> Data:
+    return Data("data.{}".format(key))
+
+def fk(*keys: str) -> FK:
+    return FK("fk_{}".format("__".join(sorted(keys))))
 
 
 class ComponentState(TypedDict):
@@ -133,7 +142,13 @@ class State(TypedDict):
 
 def comp(t: str, props: Optional[Mapping[str, object]] = None) -> ComponentState:
     """Use a component of type t with the given props."""
-    return {"__type__": "component", "type": t, "props": dict(props or {})}
+    props = dict(props or {})
+    # Set default label, otherwise react-admin will use a label with the prefix.
+    if "label" not in props and "source" in props:
+        assert isinstance(props["source"], str)
+        props["label"] = props["source"].removeprefix("fk_").removeprefix("data.").replace("_", " ").title()
+
+    return {"__type__": "component", "type": t, "props": props}
 
 
 def func(name: str, args: Optional[Sequence[object]] = None) -> FunctionState:
