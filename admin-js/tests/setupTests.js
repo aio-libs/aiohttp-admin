@@ -56,7 +56,7 @@ beforeAll(async() => {
         return;
 
     if (global.__coverage__)
-        pythonProcess = spawn("coverage", ["run", "--source=examples/,aiohttp_admin/", global.pythonProcessPath], {"cwd": ".."});
+        pythonProcess = spawn("coverage", ["run", "--append", "--source=examples/,aiohttp_admin/", global.pythonProcessPath], {"cwd": ".."});
     else
         pythonProcess = spawn("python3", ["-u", global.pythonProcessPath], {"cwd": ".."});
 
