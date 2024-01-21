@@ -6,7 +6,7 @@ updates:
       interval: daily
 
   - package-ecosystem: npm
-    directory: "/"
+    directory: "/admin-js/"
     schedule:
       interval: daily
 
