@@ -30,7 +30,7 @@ INDEX_TEMPLATE = """<!doctype html>
 </head>
 <body data-state='{state}'>
     <noscript>You need to enable JavaScript to access this page.</noscript>
-    <div id="root"></div>
+    <div id="root"><progress></progress></div>
 </body>
 </html>"""
 

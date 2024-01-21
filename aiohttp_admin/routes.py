@@ -6,7 +6,7 @@ from pathlib import Path
 from aiohttp import web
 
 from . import views
-from .types import Schema, _ResourceState, resources_key, state_key
+from .types import Schema, _ResourceState, data, resources_key, state_key
 
 
 def setup_resources(admin: web.Application, schema: Schema) -> None:
@@ -24,9 +24,10 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         else:
             if not all(f in m.fields for f in r["display"]):
                 raise ValueError(f"Display includes non-existent field {r['display']}")
+        omit_fields = tuple(m.fields[f]["props"].get("source") for f in omit_fields)
 
-        repr_field = r.get("repr", m.primary_key)
-        if repr_field not in m.fields:
+        repr_field = r.get("repr", data(m.primary_key[0]))
+        if repr_field.removeprefix("data.") not in m.fields:
             raise ValueError(f"repr not a valid field name: {repr_field}")
 
         # Don't modify the resource.
@@ -36,6 +37,7 @@ def setup_resources(admin: web.Application, schema: Schema) -> None:
         validators = r.get("validators", {})
         input_props = r.get("input_props", {})
         for k, v in inputs.items():
+            k = k.removeprefix("data.")
             if k not in omit_fields:
                 v["props"]["alwaysOn"] = "alwaysOn"  # Always display filter
             if k in validators:

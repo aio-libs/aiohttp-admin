@@ -15,7 +15,7 @@ from sqlalchemy.types import TypeDecorator
 import aiohttp_admin
 from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permission_for
-from aiohttp_admin.types import comp, func, regex
+from aiohttp_admin.types import comp, data, fk, func, regex
 from conftest import admin
 
 _Login = Callable[[TestClient], Awaitable[dict[str, str]]]
@@ -42,15 +42,17 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
 
     r = SAResource(mock_engine, TestModel)
     assert r.name == "dummy"
-    assert r.primary_key == "id"
-    assert r.fields == {"id": comp("NumberField", {"source": "id"}),
-                        "num": comp("TextField", {"source": "num", "fullWidth": True})}
+    assert r.primary_key == ("id",)
+    assert r.fields == {"id": comp("NumberField", {"source": "data.id", "key": "id"}),
+                        "num": comp("TextField", {"source": "data.num", "key": "num",
+                                                  "fullWidth": True})}
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
+        "id": comp("NumberInput", {"source": "data.id", "key": "id",
+                                   "validate": [func("required", ())]})
         | {"show_create": False},
         "num": comp("TextInput", {
-            "source": "num", "fullWidth": True, "multiline": True,
+            "source": "data.num", "fullWidth": True, "multiline": True, "key": "num",
             "validate": [func("required", ())]})
         | {"show_create": True}
     }
@@ -63,16 +65,18 @@ def test_table(mock_engine: AsyncEngine) -> None:
 
     r = SAResource(mock_engine, dummy_table)
     assert r.name == "dummy"
-    assert r.primary_key == "id"
+    assert r.primary_key == ("id",)
     assert r.fields == {
-        "id": comp("NumberField", {"source": "id"}),
-        "num": comp("TextField", {"source": "num"})
+        "id": comp("NumberField", {"source": "data.id", "key": "id"}),
+        "num": comp("TextField", {"source": "data.num", "key": "num"})
     }
     # Autoincremented PK should not be in create form
     assert r.inputs == {
-        "id": comp("NumberInput", {"source": "id", "validate": [func("required", ())]})
+        "id": comp("NumberInput", {"source": "data.id", "key": "id",
+                                   "validate": [func("required", ())]})
         | {"show_create": False},
-        "num": comp("TextInput", {"source": "num", "validate": [func("maxLength", (30,))]})
+        "num": comp("TextInput", {"source": "data.num", "key": "num",
+                                  "validate": [func("maxLength", (30,))]})
         | {"show_create": True}
     }
 
@@ -85,9 +89,11 @@ def test_extra_props(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> N
 
     r = SAResource(mock_engine, TestModel)
     assert r.fields["num"]["props"] == {
-        "source": "num", "fullWidth": True, "placeholder": "Bar", "helperText": "Foo"}
+        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True,
+        "placeholder": "Bar", "helperText": "Foo"}
     assert r.inputs["num"]["props"] == {
-        "source": "num", "fullWidth": True, "multiline": True, "placeholder": "Bar",
+        "source": "data.num", "key": "num", "label": "Num", "fullWidth": True,
+        "multiline": True, "placeholder": "Bar",
         "helperText": "Foo", "validate": [func("maxLength", (128,))]}
 
 
@@ -125,11 +131,11 @@ async def test_binary(
     url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "binary": "foo"}}
+        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1, "binary": "foo"}}}
 
     async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2", "binary": "\x01�\x02"}}
+        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2, "binary": "\x01�\x02"}}}
 
 
 def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -143,14 +149,16 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
 
     r = SAResource(mock_engine, TestChildModel)
     assert r.name == "child"
-    assert r.primary_key == "id"
+    assert r.primary_key == ("id",)
     assert r.fields == {"id": comp("ReferenceField",
-                                   {"reference": "dummy", "source": "id", "target": "id"})}
+                                   {"reference": "dummy", "source": fk("id"), "key": "id",
+                                    "label": "Id", "target": "id"})}
     # PK with FK constraint should be shown in create form.
     assert r.inputs == {"id": comp(
         "ReferenceInput",
-        {"validate": [func("required", ())], "reference": "dummy",
-         "source": "id", "target": "id"}) | {"show_create": True}}
+        {"validate": [func("required", ())], "reference": "dummy", "key": "id",
+         "source": fk("id"), "target": "id", "label": "Id",
+         "referenceKeys": (("id", "id"),)}) | {"show_create": True}}
 
 
 async def test_fk_output(
@@ -195,7 +203,8 @@ async def test_fk_output(
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
         # child_id must be converted to str ID.
-        assert await resp.json() == {"data": {"id": "1", "child_id": "1"}}
+        assert await resp.json() == {"data": {"id": "1", "fk_child_id": "1",
+                                              "data": {"id": 1, "child_id": 1}}}
 
 
 def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
@@ -215,21 +224,21 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
     assert r.name == "many"
     assert r.fields["ones"] == comp(
         "ReferenceManyField",
-        {"children": (comp("Datagrid", {
-            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})],
-            "bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"})}),),
-         "label": "Ones", "reference": "one", "source": "id", "target": "many_id",
-         "sortable": False})
+        {"children": comp("Datagrid", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": data("id")})],
+            "bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"})}),
+         "label": "Ones", "reference": "one", "source": fk("id"), "target": fk("many_id"),
+         "sortable": False, "key": "ones"})
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
     assert r.name == "one"
     assert r.fields["many"] == comp(
         "ReferenceField",
-        {"children": (comp("DatagridSingle", {
-            "rowClick": "show", "children": [comp("NumberField", {"source": "foo"})]}),),
-         "label": "Many", "reference": "many", "source": "many_id", "target": "id",
-         "sortable": False, "link": "show"})
+        {"children": comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": data("foo")})]}),
+         "label": "Many", "reference": "many", "source": fk("many_id"), "target": fk("id"),
+         "sortable": False, "link": "show", "key": "many"})
     assert "many" not in r.inputs
 
 
@@ -250,20 +259,20 @@ def test_relationship_onetoone(base: type[DeclarativeBase], mock_engine: AsyncEn
     assert r.name == "test_a"
     assert r.fields["other"] == comp(
         "ReferenceOneField",
-        {"children": (comp("DatagridSingle", {
-            "rowClick": "show", "children": [comp("NumberField", {"source": "id"})]}),),
-         "label": "Other", "reference": "test_b", "source": "id", "target": "a_id",
-         "sortable": False, "link": "show"})
+        {"children": comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("NumberField", {"source": data("id")})]}),
+         "label": "Other", "reference": "test_b", "source": fk("id"), "target": fk("a_id"),
+         "sortable": False, "link": "show", "key": "other"})
     assert "other" not in r.inputs
 
     r = SAResource(mock_engine, TestB)
     assert r.name == "test_b"
     assert r.fields["linked"] == comp(
         "ReferenceField",
-        {"children": (comp("DatagridSingle", {
-            "rowClick": "show", "children": [comp("TextField", {"source": "str"})]}),),
-         "label": "Linked", "reference": "test_a", "source": "a_id", "target": "id",
-         "sortable": False, "link": "show"})
+        {"children": comp("DatagridSingle", {
+            "rowClick": "show", "children": [comp("TextField", {"source": data("str")})]}),
+         "label": "Linked", "reference": "test_a", "source": fk("a_id"), "target": fk("id"),
+         "sortable": False, "link": "show", "key": "linked"})
     assert "linked" not in r.inputs
 
 
@@ -324,16 +333,17 @@ async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
 
     r = SAResource(mock_engine, TestModel)
     assert r.name == "test"
-    assert r.primary_key == "num"
+    assert r.primary_key == ("num",)
     assert r.fields == {
-        "num": comp("NumberField", {"source": "num"}),
-        "other": comp("TextField", {"source": "other", "fullWidth": True})
+        "num": comp("NumberField", {"source": data("num"), "key": "num"}),
+        "other": comp("TextField", {"source": data("other"), "key": "other", "fullWidth": True})
     }
     assert r.inputs == {
-        "num": comp("NumberInput", {"source": "num", "validate": [func("required", ())]})
+        "num": comp("NumberInput", {"source": data("num"), "key": "num",
+                                    "validate": [func("required", ())]})
         | {"show_create": False},
         "other": comp("TextInput", {
-            "fullWidth": True, "source": "other",
+            "fullWidth": True, "source": data("other"), "key": "other",
             "validate": [func("required", ()), func("maxLength", (64,))]})
         | {"show_create": True}
     }
@@ -350,12 +360,22 @@ async def test_id_nonpk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
         id: Mapped[int] = mapped_column(primary_key=True)
         other: Mapped[int] = mapped_column(primary_key=True)
 
-    with pytest.warns(UserWarning, match="A non-PK 'id' column is likely to break the admin."):
-        SAResource(mock_engine, NotPK)
-    # TODO: Support composite PK.
-    # with pytest.warns(UserWarning, match="'id' column in a composite PK is likely to"
-    #                   + " break the admin"):
-    #     SAResource(mock_engine, CompositePK)
+    r = SAResource(mock_engine, CompositePK)
+    assert r.name == "compound"
+    assert r.primary_key == ("id", "other")
+    assert r.fields == {
+        "id": comp("NumberField", {"source": data("id"), "key": "id"}),
+        "other": comp("NumberField", {"source": data("other"), "key": "other"})
+    }
+    assert r.inputs == {
+        "id": comp("NumberInput", {"source": data("id"), "key": "id",
+                                   "validate": [func("required", ())]})
+        | {"show_create": True},
+        "other": comp("NumberInput", {
+            "source": data("other"), "key": "other",
+            "validate": [func("required", ())]})
+        | {"show_create": True}
+    }
 
 
 async def test_nonid_pk_api(
@@ -394,31 +414,33 @@ async def test_nonid_pk_api(
          "sort": json.dumps({"field": "id", "order": "DESC"}), "filter": "{}"}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "8", "num": 8, "other": "bar"},
-                                              {"id": "5", "num": 5, "other": "foo"}], "total": 2}
+        assert await resp.json() == {"data": [
+            {"id": "8", "data": {"num": 8, "other": "bar"}},
+            {"id": "5", "data": {"num": 5, "other": "foo"}}], "total": 2}
 
     url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 8}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "8", "num": 8, "other": "bar"}}
+        assert await resp.json() == {"data": {"id": "8", "data": {"num": 8, "other": "bar"}}}
 
     url = app[admin].router["test_get_many"].url_for()
     async with admin_client.get(url, params={"ids": '["5", "8"]'}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "5", "num": 5, "other": "foo"},
-                                              {"id": "8", "num": 8, "other": "bar"}]}
+        assert await resp.json() == {"data": [{"id": "5", "data": {"num": 5, "other": "foo"}},
+                                              {"id": "8", "data": {"num": 8, "other": "bar"}}]}
 
     url = app[admin].router["test_create"].url_for()
-    p = {"data": json.dumps({"num": 12, "other": "this"})}
+    p = {"data": json.dumps({"data": {"num": 12, "other": "this"}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "12", "num": 12, "other": "this"}}
+        assert await resp.json() == {"data": {"id": "12", "data": {"num": 12, "other": "this"}}}
 
     url = app[admin].router["test_update"].url_for()
-    p1 = {"id": 5, "data": json.dumps({"id": 5, "other": "that"}), "previousData": "{}"}
+    p1 = {"id": "5", "data": json.dumps({"id": "5", "data": {"other": "that"}}),
+          "previousData": json.dumps({"id": "5", "data": {}})}
     async with admin_client.put(url, params=p1, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "5", "num": 5, "other": "that"}}
+        assert await resp.json() == {"data": {"id": "5", "data": {"num": 5, "other": "that"}}}
 
 
 async def test_datetime(
@@ -455,15 +477,15 @@ async def test_datetime(
     url = app[admin].router["test_get_one"].url_for()
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "date": "2023-04-23",
-                                              "time": "2023-01-02 03:04:00"}}
+        assert await resp.json() == {"data": {"id": "1", "data": {
+            "id": 1, "date": "2023-04-23", "time": "2023-01-02 03:04:00"}}}
 
     url = app[admin].router["test_create"].url_for()
-    p = {"data": json.dumps({"date": "2024-05-09", "time": "2020-11-12 03:04:05"})}
+    p = {"data": json.dumps({"data": {"date": "2024-05-09", "time": "2020-11-12 03:04:05"}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2", "date": "2024-05-09",
-                                              "time": "2020-11-12 03:04:05"}}
+        assert await resp.json() == {"data": {"id": "2", "data": {
+            "id": 2, "date": "2024-05-09", "time": "2020-11-12 03:04:05"}}}
 
 
 def test_permission_for(base: type[DeclarativeBase]) -> None:
@@ -529,23 +551,25 @@ async def test_record_type(
     h = await login(admin_client)
 
     url = app[admin].router["test_create"].url_for()
-    p = {"data": json.dumps({"foo": True, "bar": 5})}
+    p = {"data": json.dumps({"data": {"foo": True, "bar": 5}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "foo": True, "bar": 5}}
-    p = {"data": json.dumps({"foo": None, "bar": -1})}
+        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1, "foo": True,
+                                                                  "bar": 5}}}
+    p = {"data": json.dumps({"data": {"foo": None, "bar": -1}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2", "foo": None, "bar": -1}}
+        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2, "foo": None,
+                                                                  "bar": -1}}}
 
-    p = {"data": json.dumps({"foo": 5, "bar": "foo"})}
+    p = {"data": json.dumps({"data": {"foo": 5, "bar": "foo"}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 400
         errors = await resp.json()
         assert any(e["loc"] == ["foo"] and e["type"] == "bool_parsing" for e in errors)
         assert any(e["loc"] == ["bar"] and e["type"] == "int_parsing" for e in errors)
 
-    p = {"data": json.dumps({"foo": "foo", "bar": None})}
+    p = {"data": json.dumps({"data": {"foo": "foo", "bar": None}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 400
         errors = await resp.json()

@@ -1,3 +1,4 @@
+import {useState} from "react";
 import {
     Admin, AppBar, AutocompleteInput,
     BooleanField, BooleanInput, BulkDeleteButton, Button, BulkExportButton, BulkUpdateButton,
@@ -12,12 +13,15 @@ import {
     SimpleForm, SimpleShowLayout,
     TextField, TextInput, TimeInput, TitlePortal, Toolbar, TopToolbar,
     WithRecord,
-    email, maxLength, maxValue, minLength, minValue, regex, required,
-    useCreate, useCreatePath, useDelete, useDeleteMany, useGetList, useGetMany,
-    useGetOne, useInfiniteGetList, useGetRecordId, useInput, useNotify,
+    downloadCSV, email, maxLength, maxValue, minLength, minValue, regex, required,
+    useCreate, useCreatePath, useDataProvider, useDelete, useDeleteMany,
+    useGetList, useGetMany, useGetOne, useGetRecordId,
+    useInfiniteGetList, useInput, useNotify,
     useRecordContext, useRedirect, useRefresh, useResourceContext, useUnselect,
     useUnselectAll, useUpdate, useUpdateMany,
 } from "react-admin";
+import {useFormContext} from "react-hook-form";
+import jsonExport from "jsonexport/dist";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 window.ReactAdmin = {
@@ -34,9 +38,10 @@ window.ReactAdmin = {
     SimpleForm, SimpleShowLayout,
     TextField, TextInput, TimeInput, TitlePortal, Toolbar, TopToolbar,
     WithRecord,
-    email, maxLength, maxValue, minLength, minValue, regex, required,
-    useCreate, useCreatePath, useDelete, useDeleteMany, useGetList, useGetMany,
-    useGetOne, useInfiniteGetList, useGetRecordId, useInput, useNotify,
+    downloadCSV, email, maxLength, maxValue, minLength, minValue, regex, required,
+    useCreate, useCreatePath, useDelete, useDataProvider, useDeleteMany,
+    useGetList, useGetMany, useGetOne, useGetRecordId,
+    useInfiniteGetList, useInput, useNotify,
     useRecordContext, useRedirect, useRefresh, useResourceContext, useUnselect,
     useUnselectAll, useUpdate, useUpdateMany,
 };
@@ -55,13 +60,21 @@ const _TimeField = (props) => (
 
 const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
-/** Reconfigure ReferenceInput to filter by the displayed repr field. */
+/** Reconfigure ReferenceInput to filter by the displayed repr field.
+     Add referenceKeys prop to be able to update other fields for composite keys. */
 const _ReferenceInput = (props) => {
+    const {referenceKeys, ...innerProps} = props;
+    const {setValue} = useFormContext();
+    const change = (value, record) => {
+        for (let [this_k, foreign_k] of referenceKeys)
+            setValue(`data.${this_k}`, record ? record["data"][foreign_k] : null);
+    };
+
     const ref = props["reference"];
-    const repr = STATE["resources"][ref]["repr"];
+    const repr = STATE["resources"][ref]["repr"].replace(/^data\./, "");
     return (
-        <ReferenceInput sort={{"field": repr, "order": "ASC"}} {...props}>
-            <AutocompleteInput filterToQuery={s => ({[repr]: s})} />
+        <ReferenceInput sort={{"field": repr, "order": "ASC"}} {...innerProps}>
+            <AutocompleteInput filterToQuery={s => ({[repr]: s})} label={props["label"]} onChange={change} validate={props["validate"]} />
         </ReferenceInput>
     );
 };
@@ -70,10 +83,12 @@ const _ReferenceInput = (props) => {
 const DatagridSingle = (props) => (
     <WithRecord {...props} render={
         (record) => <Datagrid {...props} data={[record]} bulkActionButtons={false}
-                     hover={false} rowClick={false} setSort={false}
+                     hover={false} rowClick={false} setSort={null}
                      sort={{field: "id", order: "DESC"}} />
     } />
 );
+
+const exportRecords = (records) => records.map((record) => record.data);
 
 // Create a mapping of components, so we can reference them by name later.
 const COMPONENTS = {
@@ -88,7 +103,7 @@ const COMPONENTS = {
     BooleanInput, DateInput, DateTimeInput, NullableBooleanInput, NumberInput,
     ReferenceInput: _ReferenceInput, SelectInput, TextInput, TimeInput: _TimeInput
 };
-const FUNCTIONS = {email, maxLength, maxValue, minLength, minValue, regex, required};
+const FUNCTIONS = {exportRecords, email, maxLength, maxValue, minLength, minValue, regex, required};
 
 /** Make an authenticated API request and return the response object. */
 function apiRequest(url, options) {
@@ -176,7 +191,8 @@ function evaluate(obj) {
 
         let {children, ...props} = obj["props"];
         props = Object.fromEntries(Object.entries(props).map(([k, v]) => [k, evaluate(v)]));
-        props["key"] = props["source"];
+        if (!props["key"])
+            props["key"] = props["source"] || obj["type"];
         if (children)
             return <C {...props}>{evaluate(children)}</C>;
         return <C {...props} />;
@@ -197,16 +213,16 @@ function evaluate(obj) {
 
 function createFields(fields, name, permissions) {
     let components = [];
-    for (const [field, state] of Object.entries(fields)) {
+    for (const state of Object.values(fields)) {
+        const field = state["props"]["source"].replace(/^data\./, "");
         if (!hasPermission(`${name}.${field}.view`, permissions))
             continue;
 
         const c = evaluate(state);
-        const withRecordPropNames = ["label", "sortable", "sortBy", "sortByOrder"];
-        const withRecordProps = Object.fromEntries(withRecordPropNames.map(
-            (k) => [k, evaluate(state["props"][k])]));
+        const withRecordPropNames = ["label", "sortable", "sortBy", "sortByOrder", "source"];
+        const withRecordProps = Object.fromEntries(withRecordPropNames.map((k) => [k, c.props[k]]));
         // Show icon if user doesn't have permission to view this field (based on filters).
-        components.push(<WithRecord source={field} key={c.key} {...withRecordProps} render={
+        components.push(<WithRecord key={c.key} {...withRecordProps} render={
             (record) => hasPermission(`${name}.${field}.view`, permissions, record) ? c : <VisibilityOffIcon />
         } />);
     }
@@ -216,7 +232,8 @@ function createFields(fields, name, permissions) {
 function createInputs(resource, name, perm_type, permissions) {
     let components = [];
     const resource_filters = getFilters(name, perm_type, permissions);
-    for (let [field, state] of Object.entries(resource["inputs"])) {
+    for (let state of Object.values(resource["inputs"])) {
+        const field = state["props"]["source"].replace(/^data\./, "");
         if ((perm_type === "add" && !state["show_create"])
             || !hasPermission(`${name}.${field}.${perm_type}`, permissions))
             continue;
@@ -233,7 +250,7 @@ function createInputs(resource, name, perm_type, permissions) {
             for (let v of fvalues)
                 choices.push({"id": v, "name": v});
             components.push(
-                <SelectInput source={field} key={field} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
+                <SelectInput label={state["props"]["label"]} source={state["props"]["source"]} key={state["props"]["key"]} choices={choices} defaultValue={nullable < 0 && fvalues[0]}
                     validate={nullable < 0 && required()} disabled={disabled} />);
         } else {
             if (perm_type === "view") {
@@ -243,7 +260,7 @@ function createInputs(resource, name, perm_type, permissions) {
             const c = evaluate(state);
             if (perm_type === "edit")
                 // Don't render if filters disallow editing this field.
-                components.push(<WithRecord source={field} key={field} render={
+                components.push(<WithRecord label={c.props.label} source={c.props.source} key={c.key} render={
                     (record) => hasPermission(`${name}.${field}.${perm_type}`, permissions, record) && c
                 } />);
             else
@@ -264,12 +281,15 @@ function createBulkUpdates(resource, name, permissions) {
             }
         }
         if (allowed)
-            buttons.push(<BulkUpdateButton mutationMode="pessimistic" label={label} data={data} />);
+            buttons.push(<BulkUpdateButton mutationMode="pessimistic" key={label} label={label} data={data} />);
     }
     return buttons;
 }
 
 const AiohttpList = (resource, name, permissions) => {
+    const exporter = (records) => {
+        jsonExport(exportRecords(records), (err, csv) => downloadCSV(csv, name));
+    };
     const ListActions = () => (
         <TopToolbar>
             <SelectColumnsButton />
@@ -285,9 +305,12 @@ const AiohttpList = (resource, name, permissions) => {
             {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton mutationMode="pessimistic" />}
         </>
     );
+    const filters = createInputs(resource, name, "view", permissions);
+    // Remove inputs with duplicate sources.
+    const filterSources = filters.map(c => c["props"]["source"]);
 
     return (
-        <List actions={<ListActions />} filters={createInputs(resource, name, "view", permissions)}>
+        <List actions={<ListActions />} exporter={exporter} filters={filters.filter((v, i) => filterSources.indexOf(v["props"]["source"]) === i)}>
             <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
                 {createFields(resource["fields"], name, permissions)}
                 <WithRecord label="[Edit]" render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
@@ -385,7 +408,7 @@ function hasPermission(p, permissions, context=null) {
 
                 let filters = permissions[perm];
                 for (let attr of Object.keys(filters)) {
-                    if (!filters[attr].includes(context[attr]))
+                    if (!filters[attr].includes(context["data"][attr]))
                         return false;
                 }
                 return true;
@@ -426,13 +449,26 @@ const AiohttpAppBar = () => (
 );
 
 const App = (props) => {
-    STATE = props["aiohttp-state"];
+    const {aiohttpState, ...adminProps} = props;
+    STATE = aiohttpState;
+    const [loaded, setLoaded] = useState(STATE["js_module"] === null);
+    if (!loaded) {
+        // The inline comment skips the webpack import() and allows us to use the native
+        // browser's import() function. Needed to dynamically import a module.
+        import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
+            Object.assign(COMPONENTS, mod.components);
+            Object.assign(FUNCTIONS, mod.functions);
+            setLoaded(true);
+        });
+        return <progress></progress>;
+    }
+
     return (
-        <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+        <Admin {...adminProps} dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
                layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
             {permissions => createResources(STATE["resources"], permissions)}
         </Admin>
     );
 };
 
-export {COMPONENTS, FUNCTIONS, App};
+export {App};
