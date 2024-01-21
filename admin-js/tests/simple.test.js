@@ -129,7 +129,7 @@ test("reference input label", async () => {
     await userEvent.click(await screen.findByText("Parents"));
 
     await waitFor(() => screen.getByText("USD"));
-    await userEvent.click((screen.getAllByLabelText("Edit"))[0]);
+    await userEvent.click(screen.getAllByLabelText("Edit")[0]);
     await waitFor(() => screen.getByRole("link", {"name": "List"}));
 
     const main = screen.getByRole("main");
