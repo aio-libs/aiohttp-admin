@@ -304,9 +304,12 @@ const AiohttpList = (resource, name, permissions) => {
             {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton mutationMode="pessimistic" />}
         </>
     );
+    const filters = createInputs(resource, name, "view", permissions);
+    // Remove inputs with duplicate sources.
+    const filterSources = filters.map(c => c["props"]["source"]);
 
     return (
-        <List actions={<ListActions />} exporter={exporter} filters={createInputs(resource, name, "view", permissions)}>
+        <List actions={<ListActions />} exporter={exporter} filters={filters.filter((v, i) => filterSources.indexOf(v) === i)}>
             <DatagridConfigurable omit={resource["list_omit"]} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
                 {createFields(resource["fields"], name, permissions)}
                 <WithRecord label="[Edit]" render={(record) => hasPermission(`${name}.edit`, permissions, record) && <EditButton />} />
