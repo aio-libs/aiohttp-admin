@@ -183,10 +183,10 @@ class SAResource(AbstractAdminResource[Any]):
                                   if cn.contains_column(c))
                 key = next(iter(c.foreign_keys))
                 label = c.name.replace("_", " ").title()
-                field_props: dict[str, Any] = {}
-                inp_props: dict[str, Any] = {"referenceKeys": keys}
                 keys = tuple((col.name, next(iter(col.foreign_keys)).column.name)
                              for col in constraint.columns)
+                field_props: dict[str, Any] = {}
+                inp_props: dict[str, Any] = {"referenceKeys": keys}
                 props: dict[str, Any] = {"reference": key.column.table.name,
                                          "target": key.column.name, "label": label,
                                          "source": fk(*constraint.column_keys)}

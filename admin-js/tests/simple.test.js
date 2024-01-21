@@ -192,10 +192,10 @@ test("edit submit", async () => {
     await userEvent.click((await screen.findAllByLabelText("Edit"))[0]);
     await waitFor(() => screen.getByRole("link", {"name": "List"}));
     const form = screen.getByRole("main").querySelector("form");
-    expect(within(form).getByLabelText(/Id/)).toHaveValue(1);
+    expect(within(form).getByLabelText("Id")).toHaveValue(1);
 
-    await userEvent.type(within(form).getByLabelText(/Id/), "3");
-    await userEvent.type(within(form).getByLabelText(/Num/), "7");
+    await userEvent.type(within(form).getByLabelText("Id"), "3");
+    await userEvent.type(within(form).getByLabelText("Num *"), "7");
     await userEvent.click(within(form).getByRole("button", {"name": "Save"}));
 
     const table = await screen.findByRole("table");

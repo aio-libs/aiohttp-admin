@@ -49,6 +49,7 @@ describe("admin", () => {
         await userEvent.click(await screen.findByRole("button", {"name": "Set to 7"}));
         expect(await screen.findByText("Update 6 simples")).toBeInTheDocument();
         await userEvent.click(screen.getByRole("button", {"name": "Confirm"}));
+        await waitFor(() => screen.getAllByText("7"));
 
         const table = await screen.findByRole("table");
         const rows = within(table).getAllByRole("row");
