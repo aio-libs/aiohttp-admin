@@ -62,7 +62,7 @@ test("parent filter labels are correct", async () => {
     expect(Array.from(labels).map((e) => e.textContent)).toEqual(["Id", "Date", "Currency"]);
 });
 
-test("filters works", async () => {
+test("filters work", async () => {
     const main = await screen.findByRole("main");
     const quickSearch = main.querySelector("form");
     const table = await within(main).findByRole("table");
@@ -71,7 +71,7 @@ test("filters works", async () => {
     await userEvent.type(within(quickSearch).getByRole("spinbutton", {"name": "Id"}), "1");
 
     await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
-    await sleep(0.2);
+    await sleep(0.5);
     rows = within(table).getAllByRole("row");
     expect(rows.length).toBe(2);
     expect(within(rows[1]).getAllByRole("cell")[1]).toHaveTextContent("1");
