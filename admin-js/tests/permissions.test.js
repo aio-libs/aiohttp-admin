@@ -52,7 +52,7 @@ describe("admin", () => {
         await userEvent.click(screen.getByRole("button", {"name": "Confirm"}));
         await waitFor(() => screen.getAllByText("7"));
 
-        const table = screen.getByRole("table");
+        const table = await screen.findByRole("table");
         const rows = within(table).getAllByRole("row");
         const firstCells = within(rows[1]).getAllByRole("cell");
         const secondCells = within(rows[2]).getAllByRole("cell");
