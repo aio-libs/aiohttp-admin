@@ -82,9 +82,9 @@ test("enum filter works", async () => {
     await userEvent.click(await screen.findByText("Parents"));
     await waitFor(() => screen.getByText("USD"));
 
-    const main = await screen.findByRole("main");
+    const main = screen.getByRole("main");
     const quickSearch = main.querySelector("form");
-    const table = await within(main).findByRole("table");
+    const table = within(main).getByRole("table");
     const currencySelect = within(quickSearch).getByRole("combobox", {"name": "Currency"});
     expect(within(table).getAllByRole("row").length).toBe(2);
     const record = within(table).getAllByRole("row")[1];
@@ -129,7 +129,7 @@ test("reference input label", async () => {
     await userEvent.click(await screen.findByText("Parents"));
 
     await waitFor(() => screen.getByText("USD"));
-    await userEvent.click((await screen.findAllByLabelText("Edit"))[0]);
+    await userEvent.click((screen.getAllByLabelText("Edit"))[0]);
     await waitFor(() => screen.getByRole("link", {"name": "List"}));
 
     const main = screen.getByRole("main");
@@ -145,7 +145,7 @@ test("reference input filter", async () => {
     const main = screen.getByRole("main");
     const quickSearch = main.querySelector("form");
     const input = within(quickSearch).getByRole("combobox", {"name": "Id"});
-    const table = await within(main).findByRole("table");
+    const table = within(main).getByRole("table");
     expect(within(table).getAllByRole("row").length).toBe(2);
     await userEvent.click(within(input.parentElement).getByRole("button", {"name": "Open"}));
     const resultsInitial = await screen.findByRole("listbox", {"name": "Id"});
@@ -195,14 +195,14 @@ test("edit submit", async () => {
     expect(within(form).getByLabelText(/Id/)).toHaveValue(1);
 
     await userEvent.type(within(form).getByLabelText(/Id/), "3");
-    await userEvent.type(within(form).getByLabelText(/Num \*/), "7");
+    await userEvent.type(within(form).getByLabelText(/Num/), "7");
     await userEvent.click(within(form).getByRole("button", {"name": "Save"}));
 
     const table = await screen.findByRole("table");
     await sleep(0.2);
     const rows = within(table).getAllByRole("row");
-    const firstCells = within(rows.at(-1)).getAllByRole("cell").slice(1, -1);
-    expect(firstCells.map((e) => e.textContent)).toEqual(["13", "57", "", "first"]);
+    const cells = within(rows.at(-1)).getAllByRole("cell").slice(1, -1);
+    expect(cells.map((e) => e.textContent)).toEqual(["13", "57", "", "first"]);
 
     expect(within(table).queryByText("1")).not.toBeInTheDocument();
 });
@@ -212,7 +212,7 @@ test("reference input edit", async () => {
     await userEvent.click(await screen.findByText("Parents"));
     await waitFor(() => screen.getByText("USD"));
 
-    await userEvent.click((await screen.findAllByLabelText("Edit"))[0]);
+    await userEvent.click(screen.getAllByLabelText("Edit")[0]);
     await waitFor(() => screen.getByRole("link", {"name": "List"}));
     const form = screen.getByRole("main").querySelector("form");
     const idInput = within(form).getByLabelText(/Id/);

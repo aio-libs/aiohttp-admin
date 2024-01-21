@@ -60,7 +60,8 @@ const _TimeField = (props) => (
 
 const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {...props} />);
 
-/** Reconfigure ReferenceInput to filter by the displayed repr field. */
+/** Reconfigure ReferenceInput to filter by the displayed repr field.
+     Add referenceKeys prop to be able to update other fields for composite keys. */
 const _ReferenceInput = (props) => {
     const {referenceKeys, ...innerProps} = props;
     const {setValue} = useFormContext();
@@ -452,6 +453,8 @@ const App = (props) => {
     STATE = aiohttpState;
     const [loaded, setLoaded] = useState(STATE["js_module"] === null);
     if (!loaded) {
+        // The inline comment skips the webpack import() and allows us to use the native
+        // browser's import() function. Needed to dynamically import a module.
         import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
             Object.assign(COMPONENTS, mod.components);
             Object.assign(FUNCTIONS, mod.functions);

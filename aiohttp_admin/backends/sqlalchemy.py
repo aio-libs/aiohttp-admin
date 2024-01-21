@@ -190,8 +190,7 @@ class SAResource(AbstractAdminResource[Any]):
                 inp_props = field_props.copy()
                 keys = tuple((col.name, next(iter(col.foreign_keys)).column.name)
                              for col in constraint.columns)
-                inp_props.update({"source": field_props["source"], "label": label,
-                                  "referenceKeys": keys})
+                inp_props.update({"label": label, "referenceKeys": keys})
                 props: dict[str, Any] = {}
             else:
                 field, inp, field_props, inp_props = get_components(c.type)
@@ -248,7 +247,6 @@ class SAResource(AbstractAdminResource[Any]):
                 if not isinstance(relationship.entity.persist_selectable, sa.Table):
                     continue
                 local, remotes = zip(*relationship.local_remote_pairs)
-                remotes = tuple(remote for _l, remote in relationship.local_remote_pairs)
 
                 self._foreign_rows.add(tuple(c.name for c in local))
 
