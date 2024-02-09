@@ -129,6 +129,7 @@ jobs:
         fail_ci_if_error: true
         files: ./coverage.xml
         flags: unit
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   test-integration:
     name: Integration Test
@@ -180,6 +181,7 @@ jobs:
         fail_ci_if_error: true
         directory: admin-js/coverage/
         flags: js, integration
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Generate Python coverage
       run: python -m coverage xml
     - name: Upload Python coverage
@@ -188,6 +190,7 @@ jobs:
         fail_ci_if_error: true
         files: ./coverage.xml
         flags: integration
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
