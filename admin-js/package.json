@@ -31,7 +31,7 @@
     "ra-language-english": "4.16.7",
     "ra-language-french": "4.16.7",
     "ra-no-code": "4.16.7",
-    "ra-ui-materialui": "4.16.7",
+    "ra-ui-materialui": "4.16.7"
   },
   "scripts": {
     "start": "react-scripts start",
