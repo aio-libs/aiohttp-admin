@@ -36,7 +36,7 @@ jobs:
     - name: Mypy
       run: mypy
     - name: Pre-Commit hooks
-      uses: pre-commit/action@v3.0.0
+      uses: pre-commit/action@v3.0.1
     - name: Flake8
       run: flake8
     - name: Prepare twine checker
