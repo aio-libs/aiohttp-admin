@@ -124,11 +124,12 @@ jobs:
         pytest tests
         python -m coverage xml
     - name: Upload coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: true
         files: ./coverage.xml
         flags: unit
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   test-integration:
     name: Integration Test
@@ -175,19 +176,21 @@ jobs:
       run: yarn test --coverage
       working-directory: admin-js/
     - name: Upload JS coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: true
         directory: admin-js/coverage/
         flags: js, integration
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Generate Python coverage
       run: python -m coverage xml
     - name: Upload Python coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: true
         files: ./coverage.xml
         flags: integration
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
