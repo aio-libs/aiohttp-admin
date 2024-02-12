@@ -185,7 +185,7 @@ jobs:
     - name: Generate Python coverage
       run: python -m coverage xml
     - name: Upload Python coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: true
         files: ./coverage.xml
