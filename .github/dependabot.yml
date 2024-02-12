@@ -9,6 +9,12 @@ updates:
     directory: "/admin-js/"
     schedule:
       interval: daily
+    groups:
+      react-admin:
+        patterns:
+          - "create-react-admin"
+          - "ra-*"
+          - "react-admin"
 
   - package-ecosystem: "github-actions"
     directory: "/"
