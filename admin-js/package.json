@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
-    "react-admin": "4.16.6",
+    "react-admin": "4.16.10",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
@@ -14,6 +14,24 @@
     "@ungap/structured-clone": "^1.2",
     "jest-fail-on-console": "^3.1.2",
     "react-scripts": "^5.0.1"
+  },
+  "resolutions": {
+    "create-react-admin": "4.16.7",
+    "ra-core": "4.16.7",
+    "ra-data-fakerest": "4.16.7",
+    "ra-data-graphql-simple": "4.16.7",
+    "ra-data-graphql": "4.16.7",
+    "ra-data-json-server": "4.16.7",
+    "ra-data-local-forage": "4.16.7",
+    "ra-data-local-storage": "4.16.7",
+    "ra-data-simple-rest": "4.16.7",
+    "ra-i18n-i18next": "4.16.7",
+    "ra-i18n-polyglot": "4.16.7",
+    "ra-input-rich-text": "4.16.7",
+    "ra-language-english": "4.16.7",
+    "ra-language-french": "4.16.7",
+    "ra-no-code": "4.16.7",
+    "ra-ui-materialui": "4.16.7"
   },
   "scripts": {
     "start": "react-scripts start",
