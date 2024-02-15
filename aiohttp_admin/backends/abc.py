@@ -14,7 +14,7 @@ from aiohttp_security import check_permission, permits
 from pydantic import Json
 
 from ..security import check, permissions_as_dict
-from ..types import ComponentState, InputState, fk
+from ..types import ComponentState, InputState, fk, resources_key
 
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
@@ -26,7 +26,7 @@ if sys.version_info >= (3, 12):
 else:
     from typing_extensions import TypedDict
 
-_ID = TypeVar("_ID")
+_ID = TypeVar("_ID", bound=tuple[object, ...])
 Record = dict[str, object]
 Meta = Optional[dict[str, object]]
 
@@ -87,6 +87,22 @@ class GetManyParams(_Params):
     ids: Json[tuple[str, ...]]
 
 
+class GetManyRefAPIParams(_Params):
+    target: str
+    id: str
+    pagination: Json[_Pagination]
+    sort: Json[_Sort]
+    filter: Json[dict[str, object]]
+
+
+class GetManyRefParams(_Params):
+    target: tuple[str, ...]
+    id: tuple[object, ...]
+    pagination: Json[_Pagination]
+    sort: Json[_Sort]
+    filter: Json[dict[str, object]]
+
+
 class _CreateData(TypedDict):
     """Id will not be included for create calls."""
     data: Record
@@ -114,6 +130,11 @@ class DeleteParams(_Params):
 
 class DeleteManyParams(_Params):
     ids: Json[tuple[str, ...]]
+
+
+class _ListQuery(TypedDict):
+    sort: _Sort
+    filter: dict[str, object]
 
 
 class AbstractAdminResource(ABC, Generic[_ID]):
@@ -156,6 +177,10 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         """Return the matching records."""
 
     @abstractmethod
+    async def get_many_ref(self, params: GetManyRefParams) -> tuple[list[Record], int]:
+        """Return list of records and total count available (when not paginating)."""
+
+    @abstractmethod
     async def update(self, record_id: _ID, data: Record, previous_data: Record,
                      meta: Meta) -> Record:
         """Update the record and return the updated record."""
@@ -176,38 +201,30 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     async def delete_many(self, record_ids: Sequence[_ID], meta: Meta) -> list[_ID]:
         """Delete the matching records and return their IDs."""
 
+    async def get_many_ref_name(self, target: str, meta: Meta) -> str:
+        """Return the resource name for the reference.
+
+        This can be used to change which resource should be returned by get_many_ref().
+
+        For example, if we have an SQLAlchemy model called 'parent' with a relationship
+        called children, then a normal get_many_ref_name() call would go to the 'child'
+        model with the details from the parent, and the default behaviour would work.
+
+        However, the SQLAlchemy backend uses the meta to switch this and send the request
+        to the 'parent' model instead and then use the children ORM attribute to fetch
+        the referenced resources, thus requiring this method to return 'child'.
+        This allows the SQLAlchemy backend to support complex relationships (e.g.
+        many-to-many) without needing react-admin to know the details.
+        """
+        return self.name
+
     # https://marmelab.com/react-admin/DataProviderWriting.html
 
     @final
     async def _get_list(self, request: web.Request) -> web.Response:
         await check_permission(request, f"admin.{self.name}.view", context=(request, None))
         query = check(GetListParams, request.query)
-
-        # When sort order refers to "id", this should be translated to primary key.
-        if query["sort"]["field"] == "id":
-            query["sort"]["field"] = self.primary_key[0]
-        else:
-            query["sort"]["field"] = query["sort"]["field"].removeprefix("data.")
-
-        query["filter"].update(check(dict[str, object], query["filter"].pop("data", {})))  # type: ignore[type-var]
-
-        merged_filter = {}
-        for k, v in query["filter"].items():
-            if k.startswith("fk_"):
-                v = check(str, v)
-                for c, cv in zip(k.removeprefix("fk_").split("__"), v.split("|")):
-                    merged_filter[c] = check(self._raw_record_type[c], cv)
-            else:
-                merged_filter[k] = check(self._raw_record_type[k], v)
-        query["filter"] = merged_filter
-
-        # Add filters from advanced permissions.
-        # The permissions will be cached on the request from a previous permissions check.
-        permissions = permissions_as_dict(request["aiohttpadmin_permissions"])
-        filters = permissions.get(f"admin.{self.name}.view",
-                                  permissions.get(f"admin.{self.name}.*", {}))
-        for k, v in filters.items():
-            query["filter"][k] = v
+        self._process_list_query(query, request)
 
         raw_results, total = await self.get_list(query)
         results = [await self._convert_record(r, request) for r in raw_results
@@ -238,6 +255,32 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         results = [await self._convert_record(r, request) for r in raw_results
                    if await permits(request, f"admin.{self.name}.view", context=(request, r))]
         return json_response({"data": results})
+
+    @final
+    async def _get_many_ref(self, request: web.Request) -> web.Response:
+        query = check(GetManyRefAPIParams, request.query)
+        meta = query["filter"].pop("__meta__", None)
+        if meta is not None:
+            query["meta"] = check(dict[str, object], meta)
+        reference = await self.get_many_ref_name(query["target"], query.get("meta"))
+        ref_model = request.app[resources_key][reference]
+
+        await check_permission(request, f"admin.{ref_model.name}.view", context=(request, None))
+
+        ref_model._process_list_query(query, request)
+
+        if query["target"].startswith("fk_"):
+            target = tuple(query["target"].removeprefix("fk_").split("__"))
+            record_id = tuple(check(ref_model._raw_record_type[k], v) for k, v in zip(query["target"], query["id"].split("|")))
+        else:
+            target = (query["target"],)
+            record_id = check(ref_model._id_type, query["id"].split("|"))
+
+        raw_results, total = await self.get_many_ref({**query, "target": target, "id": record_id})
+
+        results = [await ref_model._convert_record(r, request) for r in raw_results
+                   if await permits(request, f"admin.{ref_model.name}.view", context=(request, r))]
+        return json_response({"data": results, "total": total})
 
     @final
     async def _create(self, request: web.Request) -> web.Response:
@@ -350,7 +393,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     @final
     def _check_record(self, record: Record) -> Record:
         """Check and convert input record."""
-        return check(self._record_type, record)  # type: ignore[no-any-return]
+        return check(self._record_type, record)
 
     @final
     async def _convert_record(self, record: Record, request: web.Request) -> APIRecord:
@@ -371,6 +414,33 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         """Convert IDs to correct output format."""
         return tuple(str(i) for i in ids)
 
+    def _process_list_query(self, query: _ListQuery, request: web.Request) -> None:
+        # When sort order refers to "id", this should be translated to primary key.
+        if query["sort"]["field"] == "id":
+            query["sort"]["field"] = self.primary_key[0]
+        else:
+            query["sort"]["field"] = query["sort"]["field"].removeprefix("data.")
+
+        query["filter"].update(check(dict[str, object], query["filter"].pop("data", {})))
+
+        merged_filter = {}
+        for k, v in query["filter"].items():
+            if k.startswith("fk_"):
+                v = check(str, v)
+                for c, cv in zip(k.removeprefix("fk_").split("__"), v.split("|")):
+                    merged_filter[c] = check(self._raw_record_type[c], cv)
+            else:
+                merged_filter[k] = check(self._raw_record_type[k], v)
+        query["filter"] = merged_filter
+
+        # Add filters from advanced permissions.
+        # The permissions will be cached on the request from a previous permissions check.
+        permissions = permissions_as_dict(request["aiohttpadmin_permissions"])
+        filters = permissions.get(f"admin.{self.name}.view",
+                                  permissions.get(f"admin.{self.name}.*", {}))
+        for k, v in filters.items():
+            query["filter"][k] = v
+
     @cached_property
     def routes(self) -> tuple[web.RouteDef, ...]:
         """Routes to act on this resource.
@@ -382,6 +452,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
             web.get(url + "/list", self._get_list, name=self.name + "_get_list"),
             web.get(url + "/one", self._get_one, name=self.name + "_get_one"),
             web.get(url, self._get_many, name=self.name + "_get_many"),
+            web.get(url + "/ref", self._get_many_ref, name=self.name + "_get_many_ref"),
             web.post(url, self._create, name=self.name + "_create"),
             web.put(url + "/update", self._update, name=self.name + "_update"),
             web.put(url + "/update_many", self._update_many, name=self.name + "_update_many"),

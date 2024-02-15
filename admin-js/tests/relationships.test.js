@@ -12,6 +12,7 @@ test("datagrid works", async () => {
     await userEvent.keyboard("[Escape]");
 
     const grid = await within(table).findByRole("table");
+    await sleep(0.1);
     const childHeaders = within(grid).getAllByRole("columnheader");
     expect(childHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
     const childRows = within(grid).getAllByRole("row");
@@ -59,6 +60,73 @@ test("onetomany child displays", async () => {
     expect(childRows.length).toBe(2);
     const childCells = within(childRows[1]).getAllByRole("cell");
     expect(childCells.map((e) => e.textContent)).toEqual(["Bar", "2"]);
+});
+
+test("onetoone parents display", async () => {
+    await userEvent.click(await screen.findByRole("button", {"name": "Open menu"}));
+    await userEvent.click(await screen.findByText("Onetoone parents"));
+
+    await waitFor(() => screen.getByRole("heading", {"name": "Onetoone parents"}));
+    await sleep(1);
+
+    const table = screen.getByRole("table");
+    await userEvent.click(within(table).getAllByRole("row")[1]);
+
+    await waitFor(() => screen.getByRole("heading", {"name": "Onetoone parent Foo"}));
+    const grid = await screen.findByRole("table");
+    const childHeaders = within(grid).getAllByRole("columnheader");
+    expect(childHeaders.map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
+    const childRows = within(grid).getAllByRole("row");
+    expect(childRows.length).toBe(2);
+    const childCells = within(childRows[1]).getAllByRole("cell");
+    expect(childCells.map((e) => e.textContent)).toEqual(["2", "Child Bar", "2"]);
+});
+
+test("manytomany left displays", async () => {
+    await userEvent.click(await screen.findByRole("button", {"name": "Open menu"}));
+    await userEvent.click(await screen.findByText("Manytomany lefts"));
+
+    await waitFor(() => screen.getByRole("heading", {"name": "Manytomany lefts"}));
+    await sleep(1);
+
+    await userEvent.click(screen.getByRole("button", {"name": "Columns"}));
+    // TODO: Remove when fixed: https://github.com/marmelab/react-admin/issues/9587
+    await userEvent.click(within(screen.getByRole("presentation")).getByLabelText("Children"));
+    await userEvent.keyboard("[Escape]");
+
+    const table = screen.getAllByRole("table")[0];
+    const headers = within(table.querySelector("thead")).getAllByRole("columnheader");
+    expect(headers.slice(1, -1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value", "Children"]);
+
+    const rows = within(table).getAllByRole("row").filter((e) => e.parentElement.parentElement === table);
+    const firstCells = within(rows[1]).getAllByRole("cell").filter((e) => e.parentElement === rows[1]);
+    expect(firstCells.slice(1, -2).map((e) => e.textContent)).toEqual(["1", "Foo", "2"]);
+    const secondCells = within(rows[2]).getAllByRole("cell").filter((e) => e.parentElement === rows[2]);
+    expect(secondCells.slice(1, -2).map((e) => e.textContent)).toEqual(["2", "Bar", "3"]);
+
+    const firstGrid = await within(firstCells.at(-2)).findByRole("table");
+    await sleep(0.1);
+    const firstHeaders = within(firstGrid).getAllByRole("columnheader");
+    expect(firstHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
+    const firstRows = within(firstGrid).getAllByRole("row");
+    expect(firstRows.length).toBe(3);
+    let cells = within(firstRows[1]).getAllByRole("cell");
+    expect(cells.slice(1).map((e) => e.textContent)).toEqual(["3", "Bar Child", "6"]);
+    cells = within(firstRows[2]).getAllByRole("cell");
+    expect(cells.slice(1).map((e) => e.textContent)).toEqual(["1", "Foo Child", "5"]);
+
+    const secondGrid = within(secondCells.at(-2)).getByRole("table");
+    await sleep(0.1);
+    const secondHeaders = within(secondGrid).getAllByRole("columnheader");
+    expect(secondHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
+    const secondRows = within(secondGrid).getAllByRole("row");
+    expect(secondRows.length).toBe(4);
+    cells = within(secondRows[1]).getAllByRole("cell");
+    expect(cells.slice(1).map((e) => e.textContent)).toEqual(["3", "Bar Child", "6"]);
+    cells = within(secondRows[2]).getAllByRole("cell");
+    expect(cells.slice(1).map((e) => e.textContent)).toEqual(["2", "Baz Child", "7"]);
+    cells = within(secondRows[3]).getAllByRole("cell");
+    expect(cells.slice(1).map((e) => e.textContent)).toEqual(["1", "Foo Child", "5"]);
 });
 
 test("composite foreign key child displays table", async () => {

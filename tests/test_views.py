@@ -32,11 +32,13 @@ async def test_admin_view(admin_client: TestClient) -> None:
     state = json.loads(m.group(1))
 
     r = state["resources"]["dummy"]
-    assert r["list_omit"] == []
-    assert r["fields"] == {"id": comp("NumberField", {"source": data("id"), "key": "id"})}
+    # TODO: https://github.com/marmelab/react-admin/issues/9587
+    assert r["list_omit"] == ["id"]
+    assert r["fields"].keys() == {"id", "foreigns"}
+    assert r["fields"]["id"] == comp("NumberField", {"source": data("id"), "key": "id"})
     assert r["inputs"] == {
         "id": comp("NumberInput",
-                   {"source": data("id"), "key": "id", "alwaysOn": "alwaysOn",
+                   {"source": data("id"), "key": "id", #  "alwaysOn": "alwaysOn",
                     "validate": [func("required", [])]})
         | {"show_create": False}}
     assert r["repr"] == data("id")
@@ -86,9 +88,10 @@ async def test_list_filtering_by_pk(admin_client: TestClient, login: _Login) -> 
     url = admin_client.app[admin].router["dummy_get_list"].url_for()
     p = {"pagination": '{"page": 1, "perPage": 10}',
          "sort": '{"field": "id", "order": "ASC"}', "filter": '{"id": 3}'}
+    exp_rec = {"id": "3", "fk_id": "3", "data": {"id": 3}}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}}], "total": 1}
+        assert await resp.json() == {"data": [exp_rec], "total": 1}
 
 
 @pytest.mark.xfail(reason="Need to implement #668 to make this work properly")
@@ -114,7 +117,7 @@ async def test_get_one(admin_client: TestClient, login: _Login) -> None:
 
     async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
 
 async def test_get_one_not_exists(admin_client: TestClient, login: _Login) -> None:
@@ -137,9 +140,9 @@ async def test_get_many(admin_client: TestClient, login: _Login) -> None:
     p = {"ids": '["3", "7", "12"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}},
-                                              {"id": "7", "data": {"id": 7}},
-                                              {"id": "12", "data": {"id": 12}}]}
+        assert await resp.json() == {"data": [{"id": "3", "fk_id": "3", "data": {"id": 3}},
+                                              {"id": "7", "fk_id": "7", "data": {"id": 7}},
+                                              {"id": "12", "fk_id": "12", "data": {"id": 12}}]}
 
 
 async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> None:
@@ -153,12 +156,41 @@ async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> N
     p = {"ids": '["3", "4", "8"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": [{"id": "3", "data": {"id": 3}},
-                                              {"id": "4", "data": {"id": 4}}]}
+        assert await resp.json() == {"data": [{"id": "3", "fk_id": "3", "data": {"id": 3}},
+                                              {"id": "4", "fk_id": "4", "data": {"id": 4}}]}
 
     p = {"ids": '["9", "10", "11"]'}
     async with admin_client.get(url, params=p, headers=h) as resp:
         assert resp.status == 404
+
+
+async def test_get_many_ref(admin_client: TestClient, login: _Login) -> None:
+    h = await login(admin_client)
+    assert admin_client.app
+
+    url = admin_client.app[admin].router["foreign_get_many_ref"].url_for()
+    page = json.dumps({"page": 1, "perPage": 10})
+    sort = json.dumps({"field": "id", "order": "DESC"})
+    p = {"target": "dummy", "id": "1", "pagination": page, "sort": sort, "filter": "{}"}
+    expected_record = {"id": "1", "fk_dummy": "1", "data": {"id": 1, "dummy": 1}}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200, await resp.text()
+        assert await resp.json() == {"data": [expected_record], "total": 1}
+
+
+async def test_get_many_ref_orm(admin_client: TestClient, login: _Login) -> None:
+    h = await login(admin_client)
+    assert admin_client.app
+
+    url = admin_client.app[admin].router["dummy_get_many_ref"].url_for()
+    page = json.dumps({"page": 1, "perPage": 10})
+    sort = json.dumps({"field": "id", "order": "DESC"})
+    f = json.dumps({"__meta__": {"orm": True}})
+    p = {"target": "foreigns", "id": "1", "pagination": page, "sort": sort, "filter": f}
+    expected_record = {"id": "1", "fk_dummy": "1", "data": {"id": 1, "dummy": 1}}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200, await resp.text()
+        assert await resp.json() == {"data": [expected_record], "total": 1}
 
 
 async def test_create(admin_client: TestClient, login: _Login) -> None:
@@ -168,7 +200,7 @@ async def test_create(admin_client: TestClient, login: _Login) -> None:
     p = {"data": json.dumps({"data": {}})}
     async with admin_client.post(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "2", "data": {"id": 2}}}
+        assert await resp.json() == {"data": {"id": "2", "fk_id": "2", "data": {"id": 2}}}
 
     async with admin_client.app[db]() as sess:
         r = await sess.get(admin_client.app[model], 2)
@@ -193,7 +225,7 @@ async def test_update(admin_client: TestClient, login: _Login) -> None:
          "previousData": json.dumps({"id": "1", "data": {"id": 1}})}
     async with admin_client.put(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "4", "data": {"id": 4}}}
+        assert await resp.json() == {"data": {"id": "4", "fk_id": "4", "data": {"id": 4}}}
 
     async with admin_client.app[db]() as sess:
         r = await sess.get(admin_client.app[model], 4)
@@ -269,7 +301,7 @@ async def test_delete(admin_client: TestClient, login: _Login) -> None:
     p = {"id": "1", "previousData": '{"id": "1", "data": {"id": 1}}'}
     async with admin_client.delete(url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
     async with admin_client.app[db]() as sess:
         assert await sess.get(admin_client.app[model], 1) is None

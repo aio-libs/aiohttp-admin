@@ -11,7 +11,7 @@ from pydantic import Json, TypeAdapter, ValidationError
 
 from .types import IdentityDict, Schema, UserDetails
 
-_T = TypeVar("_T", bound=Hashable)
+_T = TypeVar("_T")
 
 
 @lru_cache  # https://github.com/python/typeshed/issues/6347
@@ -21,7 +21,8 @@ def _get_schema(t: Type[_T]) -> TypeAdapter[_T]:  # type: ignore[misc]
 
 def check(t: Type[_T], value: object) -> _T:
     """Validate value is of static type t."""
-    return _get_schema(t).validate_python(value)  # type: ignore[no-any-return]
+    # https://github.com/python/mypy/issues/11470
+    return _get_schema(t).validate_python(value)  # type: ignore[arg-type,no-any-return]
 
 
 class Permissions(str, Enum):
