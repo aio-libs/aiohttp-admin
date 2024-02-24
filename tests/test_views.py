@@ -38,7 +38,7 @@ async def test_admin_view(admin_client: TestClient) -> None:
     assert r["fields"]["id"] == comp("NumberField", {"source": data("id"), "key": "id"})
     assert r["inputs"] == {
         "id": comp("NumberInput",
-                   {"source": data("id"), "key": "id", #  "alwaysOn": "alwaysOn",
+                   {"source": data("id"), "key": "id",  # "alwaysOn": "alwaysOn",
                     "validate": [func("required", [])]})
         | {"show_create": False}}
     assert r["repr"] == data("id")

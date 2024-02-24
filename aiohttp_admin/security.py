@@ -1,5 +1,5 @@
 import json
-from collections.abc import Collection, Hashable, Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from enum import Enum
 from functools import lru_cache
 from typing import Optional, Type, TypeVar, Union

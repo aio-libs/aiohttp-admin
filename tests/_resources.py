@@ -1,4 +1,4 @@
-from typing import Sequence, cast
+from typing import Sequence
 
 from aiohttp_admin.backends.abc import (AbstractAdminResource, GetListParams,
                                         GetManyRefParams, Meta, Record)

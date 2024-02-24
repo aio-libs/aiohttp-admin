@@ -16,6 +16,7 @@
     "react-scripts": "^5.0.1"
   },
   "resolutions": {
+    "react-hook-form": "7.48.2",
     "create-react-admin": "4.16.7",
     "ra-core": "4.16.7",
     "ra-data-fakerest": "4.16.7",
@@ -45,7 +46,12 @@
       "react-app/jest"
     ],
     "rules": {
-        "react/jsx-pascal-case": [1, {"allowLeadingUnderscore": true}]
+      "react/jsx-pascal-case": [
+        1,
+        {
+          "allowLeadingUnderscore": true
+        }
+      ]
     }
   },
   "browserslist": {

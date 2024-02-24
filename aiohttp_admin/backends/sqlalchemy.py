@@ -10,10 +10,9 @@ from typing import Any, Literal, Optional, TypeVar, Union, cast
 import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, InstrumentedAttribute, Mapper, QueryableAttribute, selectinload
+from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, QueryableAttribute, selectinload
 
 from .abc import AbstractAdminResource, GetListParams, GetManyRefParams, Meta, Record
-from ..security import check
 from ..types import FunctionState, comp, data, fk, func, regex
 
 if sys.version_info >= (3, 10):
@@ -28,7 +27,7 @@ _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
 _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]
 _SABoolExpression = sa.sql.roles.ExpressionElementRole[bool]
-#_RelationshipAttr = InstrumentedAttribute[Union[DeclarativeBase, DeclarativeBaseNoMeta]]
+# _RelationshipAttr = InstrumentedAttribute[Union[DeclarativeBase, DeclarativeBaseNoMeta]]
 
 logger = logging.getLogger(__name__)
 
@@ -353,7 +352,7 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
 
             # Use an ORM relationship to get the records (essentially the inverse of a
             # normal manyReference request). This makes it easy to support complex
-            # relationships (such as many-to-many) without react-admin needing the details.
+            # relationships (such as many-to-many) without react-admin needing the details
             target = params["target"][0]
             # TODO(pydantic): arbitrary_types_allowed=True  check(_RelationshipAttr, ...)
             relationship = getattr(self._model, target)
