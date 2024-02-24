@@ -105,7 +105,7 @@ test("manytomany left displays", async () => {
     expect(secondCells.slice(1, -2).map((e) => e.textContent)).toEqual(["2", "Bar", "3"]);
 
     const firstGrid = await within(firstCells.at(-2)).findByRole("table");
-    await sleep(0.1);
+    await sleep(0.3);
     const firstHeaders = within(firstGrid).getAllByRole("columnheader");
     expect(firstHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
     const firstRows = within(firstGrid).getAllByRole("row");
@@ -116,7 +116,6 @@ test("manytomany left displays", async () => {
     expect(cells.slice(1).map((e) => e.textContent)).toEqual(["1", "Foo Child", "5"]);
 
     const secondGrid = within(secondCells.at(-2)).getByRole("table");
-    await sleep(0.1);
     const secondHeaders = within(secondGrid).getAllByRole("columnheader");
     expect(secondHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
     const secondRows = within(secondGrid).getAllByRole("row");
