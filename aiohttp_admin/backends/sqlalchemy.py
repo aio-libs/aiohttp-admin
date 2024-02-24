@@ -349,7 +349,7 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
         meta = params.get("meta")
         if meta and meta.get("orm", False):
             if self._model is None:
-                raise web.HTTPBadRequest("Not an ORM model.")
+                raise web.HTTPBadRequest(reason="Not an ORM model.")
 
             # Use an ORM relationship to get the records (essentially the inverse of a
             # normal manyReference request). This makes it easy to support complex
