@@ -10,7 +10,8 @@ from typing import Any, Literal, Optional, TypeVar, Union, cast
 import sqlalchemy as sa
 from aiohttp import web
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, QueryableAttribute, selectinload
+from sqlalchemy.orm import (DeclarativeBase, DeclarativeBaseNoMeta, Mapper,
+                            QueryableAttribute, selectinload)
 
 from .abc import AbstractAdminResource, GetListParams, GetManyRefParams, Meta, Record
 from ..types import FunctionState, comp, data, fk, func, regex
@@ -354,12 +355,15 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
             # normal manyReference request). This makes it easy to support complex
             # relationships (such as many-to-many) without react-admin needing the details
             target = params["target"][0]
+            reverse = params["sort"]["order"] == "DESC"
             # TODO(pydantic): arbitrary_types_allowed=True  check(_RelationshipAttr, ...)
             relationship = getattr(self._model, target)
             async with AsyncSession(self._db) as sess:
-                result = await sess.get(self._model, params["id"], options=(selectinload(relationship),))
-                records = [{c.name: getattr(r, c.name) for c in r.__table__.c} for r in getattr(result, target)]
-                records.sort(key=lambda r: r[params["sort"]["field"]], reverse=params["sort"]["order"] == "DESC")
+                result = await sess.get(self._model, params["id"],
+                                        options=(selectinload(relationship),))
+                records = [{c.name: getattr(r, c.name) for c in r.__table__.c}
+                           for r in getattr(result, target)]
+                records.sort(key=lambda r: r[params["sort"]["field"]], reverse=reverse)
                 return records, len(records)
 
         for k, v in zip(params["target"], params["id"]):
@@ -395,14 +399,16 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
             return list(await conn.scalars(stmt))
 
     @handle_errors
-    async def delete(self, record_id: tuple[Any, ...], previous_data: Record, meta: Meta) -> Record:
+    async def delete(self, record_id: tuple[Any, ...], previous_data: Record,
+                     meta: Meta) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(*self._cmp_pk(record_id))
             row = await conn.execute(stmt.returning(*self._table.c))
             return row.one()._asdict()
 
     @handle_errors
-    async def delete_many(self, record_ids: Sequence[tuple[Any, ...]], meta: Meta) -> list[tuple[Any, ...]]:
+    async def delete_many(self, record_ids: Sequence[tuple[Any, ...]],
+                          meta: Meta) -> list[tuple[Any, ...]]:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._cmp_pk_many(record_ids))
             r = await conn.scalars(stmt.returning(*(self._table.c[pk] for pk in self.primary_key)))

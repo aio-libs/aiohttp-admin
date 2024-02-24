@@ -271,7 +271,8 @@ class AbstractAdminResource(ABC, Generic[_ID]):
 
         if query["target"].startswith("fk_"):
             target = tuple(query["target"].removeprefix("fk_").split("__"))
-            record_id = tuple(check(self._raw_record_type[k], v) for k, v in zip(target, query["id"].split("|")))
+            record_id = tuple(check(self._raw_record_type[k], v)
+                              for k, v in zip(target, query["id"].split("|")))
         else:
             target = (query["target"],)
             record_id = check(self._id_type, query["id"].split("|"))
