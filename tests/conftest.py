@@ -8,7 +8,7 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
-from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column, relationship
 
 import aiohttp_admin
 from _auth import check_credentials
@@ -25,6 +25,8 @@ class DummyModel(Base):
     __tablename__ = "dummy"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    foreigns: Mapped[list["ForeignModel"]] = relationship()
 
 
 class Dummy2Model(Base):

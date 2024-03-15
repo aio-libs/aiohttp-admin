@@ -142,11 +142,7 @@ const dataProvider = {
     deleteMany: (resource, params) => dataRequest(resource, "delete_many", params),
     getList: (resource, params) => dataRequest(resource, "get_list", params),
     getMany: (resource, params) => dataRequest(resource, "get_many", params),
-    getManyReference: (resource, params) => {
-        // filter object is reused across requests, so clone it before modifying.
-        params["filter"] = {...params["filter"], [params["target"]]: params["id"]};
-        return dataRequest(resource, "get_list", params);
-    },
+    getManyReference: (resource, params) => dataRequest(resource, "get_many_ref", params),
     getOne: (resource, params) => dataRequest(resource, "get_one", params),
     update: (resource, params) => dataRequest(resource, "update", params),
     updateMany: (resource, params) => dataRequest(resource, "update_many", params)

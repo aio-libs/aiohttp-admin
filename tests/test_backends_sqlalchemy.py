@@ -227,8 +227,8 @@ def test_relationship(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> 
         {"children": comp("Datagrid", {
             "rowClick": "show", "children": [comp("NumberField", {"source": data("id")})],
             "bulkActionButtons": comp("BulkDeleteButton", {"mutationMode": "pessimistic"})}),
-         "label": "Ones", "reference": "one", "source": fk("id"), "target": fk("many_id"),
-         "sortable": False, "key": "ones"})
+         "label": "Ones", "reference": "many", "source": "id", "target": "ones",
+         "sortable": False, "key": "ones", "filter": {"__meta__": {"orm": True}}})
     assert "ones" not in r.inputs
 
     r = SAResource(mock_engine, TestOne)
