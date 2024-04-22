@@ -9,10 +9,11 @@ from typing import Any, Literal, Optional, TypeVar, Union, cast
 
 import sqlalchemy as sa
 from aiohttp import web
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, Mapper, QueryableAttribute
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.orm import (DeclarativeBase, DeclarativeBaseNoMeta, Mapper,
+                            QueryableAttribute, selectinload)
 
-from .abc import AbstractAdminResource, GetListParams, Meta, Record
+from .abc import AbstractAdminResource, GetListParams, GetManyRefParams, Meta, Record
 from ..types import FunctionState, comp, data, fk, func, regex
 
 if sys.version_info >= (3, 10):
@@ -27,6 +28,7 @@ _Filters = dict[Union[sa.Column[object], QueryableAttribute[Any]],
                 Union[_FValues, Sequence[_FValues]]]
 _ModelOrTable = Union[sa.Table, type[DeclarativeBase], type[DeclarativeBaseNoMeta]]
 _SABoolExpression = sa.sql.roles.ExpressionElementRole[bool]
+# _RelationshipAttr = InstrumentedAttribute[Union[DeclarativeBase, DeclarativeBaseNoMeta]]
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,9 @@ def create_filters(columns: sa.ColumnCollection[str, sa.Column[object]],
 
 
 # ID is based on PK, which we can't infer from types, so must use Any here.
-class SAResource(AbstractAdminResource[Any]):
+class SAResource(AbstractAdminResource[tuple[Any, ...]]):
+    _model: Union[type[DeclarativeBase], type[DeclarativeBaseNoMeta], None] = None
+
     def __init__(self, db: AsyncEngine, model_or_table: _ModelOrTable):
         if isinstance(model_or_table, sa.Table):
             table = model_or_table
@@ -168,8 +172,17 @@ class SAResource(AbstractAdminResource[Any]):
             if not isinstance(model_or_table.__table__, sa.Table):
                 raise ValueError("Non-table mappings are not supported.")
             table = model_or_table.__table__
+            self._model = model_or_table
 
+        self._db = db
+        self._table = table
         self.name = table.name
+        self.primary_key = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
+        if not self.primary_key:
+            self.primary_key = tuple(self._table.c.keys())
+        pk_types = tuple(table.c[pk].type.python_type for pk in self.primary_key)
+        self._id_type = tuple.__class_getitem__(pk_types)  # type: ignore[assignment]
+
         self.fields = {}
         self.inputs = {}
         self.omit_fields = set()
@@ -256,6 +269,10 @@ class SAResource(AbstractAdminResource[Any]):
                     props["link"] = "show"
                 elif relationship.uselist:
                     t = "ReferenceManyField"
+                    props["reference"] = self.name
+                    props["target"] = name
+                    props["source"] = "id"
+                    props["filter"] = {"__meta__": {"orm": True}}
                 else:
                     t = "ReferenceOneField"
                     props["link"] = "show"
@@ -276,15 +293,6 @@ class SAResource(AbstractAdminResource[Any]):
 
                 self.fields[name] = comp(t, props)
                 self.omit_fields.add(name)
-
-        self._db = db
-        self._table = table
-
-        self.primary_key = tuple(filter(lambda c: table.c[c].primary_key, self._table.c.keys()))
-        if not self.primary_key:
-            raise ValueError("No primary key found.")
-        pk_types = tuple(table.c[pk].type.python_type for pk in self.primary_key)
-        self._id_type = tuple.__class_getitem__(pk_types)  # type: ignore[assignment]
 
         super().__init__(record_type)
 
@@ -315,18 +323,52 @@ class SAResource(AbstractAdminResource[Any]):
         return await asyncio.gather(get_entities(), get_count())
 
     @handle_errors
-    async def get_one(self, record_id: tuple[Any], meta: Meta) -> Record:
+    async def get_one(self, record_id: tuple[Any, ...], meta: Meta) -> Record:
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(*self._cmp_pk(record_id))
             result = await conn.execute(stmt)
             return result.one()._asdict()
 
     @handle_errors
-    async def get_many(self, record_ids: Sequence[tuple[Any]], meta: Meta) -> list[Record]:
+    async def get_many(self, record_ids: Sequence[tuple[Any, ...]], meta: Meta) -> list[Record]:
         async with self._db.connect() as conn:
             stmt = sa.select(self._table).where(self._cmp_pk_many(record_ids))
             result = await conn.execute(stmt)
             return [r._asdict() for r in result]
+
+    async def get_many_ref_name(self, target: str, meta: Meta) -> str:
+        if meta and meta.get("orm", False):
+            # TODO(pydantic): arbitrary_types_allowed=True  check(_RelationshipAttr, ...)
+            relationship = getattr(self._model, target)
+            return relationship.entity.persist_selectable.name  # type: ignore[no-any-return]
+
+        return self.name
+
+    @handle_errors
+    async def get_many_ref(self, params: GetManyRefParams) -> tuple[list[Record], int]:
+        meta = params.get("meta")
+        if meta and meta.get("orm", False):
+            if self._model is None:
+                raise web.HTTPBadRequest(reason="Not an ORM model.")
+
+            # Use an ORM relationship to get the records (essentially the inverse of a
+            # normal manyReference request). This makes it easy to support complex
+            # relationships (such as many-to-many) without react-admin needing the details
+            target = params["target"][0]
+            reverse = params["sort"]["order"] == "DESC"
+            # TODO(pydantic): arbitrary_types_allowed=True  check(_RelationshipAttr, ...)
+            relationship = getattr(self._model, target)
+            async with AsyncSession(self._db) as sess:
+                result = await sess.get(self._model, params["id"],
+                                        options=(selectinload(relationship),))
+                records = [{c.name: getattr(r, c.name) for c in r.__table__.c}
+                           for r in getattr(result, target)]
+                records.sort(key=lambda r: r[params["sort"]["field"]], reverse=reverse)
+                return records, len(records)
+
+        for k, v in zip(params["target"], params["id"]):
+            params["filter"][k] = v
+        return await self.get_list(params)
 
     @handle_errors
     async def create(self, data: Record, meta: Meta) -> Record:
@@ -340,7 +382,7 @@ class SAResource(AbstractAdminResource[Any]):
             return row.one()._asdict()
 
     @handle_errors
-    async def update(self, record_id: tuple[Any], data: Record, previous_data: Record,
+    async def update(self, record_id: tuple[Any, ...], data: Record, previous_data: Record,
                      meta: Meta) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(*self._cmp_pk(record_id))
@@ -349,31 +391,33 @@ class SAResource(AbstractAdminResource[Any]):
             return row.one()._asdict()
 
     @handle_errors
-    async def update_many(self, record_ids: Sequence[tuple[Any]], data: Record,
-                          meta: Meta) -> list[Any]:
+    async def update_many(self, record_ids: Sequence[tuple[Any, ...]], data: Record,
+                          meta: Meta) -> list[tuple[Any, ...]]:
         async with self._db.begin() as conn:
             stmt = sa.update(self._table).where(self._cmp_pk_many(record_ids))
             stmt = stmt.values(data).returning(*(self._table.c[pk] for pk in self.primary_key))
             return list(await conn.scalars(stmt))
 
     @handle_errors
-    async def delete(self, record_id: tuple[Any], previous_data: Record, meta: Meta) -> Record:
+    async def delete(self, record_id: tuple[Any, ...], previous_data: Record,
+                     meta: Meta) -> Record:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(*self._cmp_pk(record_id))
             row = await conn.execute(stmt.returning(*self._table.c))
             return row.one()._asdict()
 
     @handle_errors
-    async def delete_many(self, record_ids: Sequence[tuple[Any]], meta: Meta) -> list[Any]:
+    async def delete_many(self, record_ids: Sequence[tuple[Any, ...]],
+                          meta: Meta) -> list[tuple[Any, ...]]:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._cmp_pk_many(record_ids))
             r = await conn.scalars(stmt.returning(*(self._table.c[pk] for pk in self.primary_key)))
             return list(r)
 
-    def _cmp_pk(self, record_id: tuple[Any]) -> Iterator[_SABoolExpression]:
+    def _cmp_pk(self, record_id: tuple[Any, ...]) -> Iterator[_SABoolExpression]:
         return (self._table.c[pk] == r_id for pk, r_id in zip(self.primary_key, record_id))
 
-    def _cmp_pk_many(self, record_ids: Sequence[tuple[Any]]) -> _SABoolExpression:
+    def _cmp_pk_many(self, record_ids: Sequence[tuple[Any, ...]]) -> _SABoolExpression:
         return sa.tuple_(*(self._table.c[pk] for pk in self.primary_key)).in_(record_ids)
 
     def _get_validators(self, table: sa.Table, c: sa.Column[object]) -> list[FunctionState]:

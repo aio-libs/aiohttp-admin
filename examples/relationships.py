@@ -160,10 +160,12 @@ async def create_app() -> web.Application:
         manytomany_p2 = ManyToManyParent(name="Bar", value=3)
         manytomany_c1 = ManyToManyChild(name="Foo Child", value=5)
         manytomany_c2 = ManyToManyChild(name="Bar Child", value=6)
+        manytomany_c3 = ManyToManyChild(name="Baz Child", value=7)
         manytomany_p1.children.append(manytomany_c1)
         manytomany_p1.children.append(manytomany_c2)
         manytomany_p2.children.append(manytomany_c1)
         manytomany_p2.children.append(manytomany_c2)
+        manytomany_p2.children.append(manytomany_c3)
         sess.add(manytomany_p1)
         sess.add(manytomany_p2)
         sess.add(manytomany_c1)
@@ -199,8 +201,8 @@ async def create_app() -> web.Application:
             {"model": SAResource(engine, ManyToOneChild)},
             {"model": SAResource(engine, OneToOneParent), "repr": aiohttp_admin.data("name")},
             {"model": SAResource(engine, OneToOneChild)},
-            # {"model": SAResource(engine, ManyToManyParent)},
-            # {"model": SAResource(engine, ManyToManyChild)},
+            {"model": SAResource(engine, ManyToManyParent)},
+            {"model": SAResource(engine, ManyToManyChild)},
             {"model": SAResource(engine, CompositeForeignKeyChild),
              "repr": aiohttp_admin.data("description")},
             {"model": SAResource(engine, CompositeForeignKeyParent)}
