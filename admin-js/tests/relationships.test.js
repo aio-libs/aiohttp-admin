@@ -106,7 +106,7 @@ test("manytomany left displays", async () => {
 
     const firstGrid = await within(firstCells.at(-2)).findByRole("table");
     const firstHeaders = within(firstGrid).getAllByRole("columnheader");
-    await waitFor(() => firstHeaders[0].textContent.trim() != "");
+    await waitFor(() => firstHeaders[1].textContent.trim() != "");
     expect(firstHeaders.slice(1).map((e) => e.textContent)).toEqual(["Id", "Name", "Value"]);
     const firstRows = within(firstGrid).getAllByRole("row");
     expect(firstRows.length).toBe(3);
