@@ -41,7 +41,7 @@ async def test_valid_login_logout(admin_client: TestClient) -> None:
     h = {"Authorization": token}
     async with admin_client.get(get_one_url, params=p, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
     # Continue to test logout
     logout_url = admin_client.app[admin].router["logout"].url_for()
@@ -134,7 +134,7 @@ async def test_get_resource_with_permission(create_admin_client: _CreateClient,
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": "1"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
 
 async def test_get_fk_with_permission(create_admin_client: _CreateClient, login: _Login) -> None:
@@ -182,7 +182,7 @@ async def test_get_resource_with_wildcard_permission(create_admin_client: _Creat
     h = await login(admin_client)
     async with admin_client.get(url, params={"id": "1"}, headers=h) as resp:
         assert resp.status == 200
-        assert await resp.json() == {"data": {"id": "1", "data": {"id": 1}}}
+        assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
 
 async def test_get_resource_with_negative_permission(create_admin_client: _CreateClient,

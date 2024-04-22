@@ -172,5 +172,5 @@ def regex(value: str) -> RegexState:
 
 check_credentials_key = AppKey[Callable[[str, str], Awaitable[bool]]]("check_credentials")
 permission_re_key = AppKey("permission_re", re.Pattern[str])
-resources_key = AppKey("resources", list[Any])  # TODO(pydantic): AbstractAdminResource
+resources_key = AppKey("resources", dict[str, Any])  # TODO(pydantic): AbstractAdminResource
 state_key = AppKey("state", State)
