@@ -29,10 +29,14 @@ class DummyResource(AbstractAdminResource[tuple[str]]):
     async def get_many_ref(self, params: GetManyRefParams) -> tuple[list[Record], int]:  # pragma: no cover
         raise NotImplementedError()
 
-    async def update(self, record_id: tuple[str], data: Record, previous_data: Record, meta: Meta) -> Record:  # pragma: no cover
+    async def update(  # pragma: no cover
+        self, record_id: tuple[str], data: Record, previous_data: Record, meta: Meta
+    ) -> Record:
         raise NotImplementedError()
 
-    async def update_many(self, record_ids: Sequence[tuple[str]], data: Record, meta: Meta) -> list[tuple[str]]:  # pragma: no cover
+    async def update_many(  # pragma: no cover
+        self, record_ids: Sequence[tuple[str]], data: Record, meta: Meta
+    ) -> list[tuple[str]]:
         raise NotImplementedError()
 
     async def create(self, data: Record, meta: Meta) -> Record:  # pragma: no cover
@@ -41,5 +45,7 @@ class DummyResource(AbstractAdminResource[tuple[str]]):
     async def delete(self, record_id: tuple[str], previous_data: Record, meta: Meta) -> Record:  # pragma: no cover
         raise NotImplementedError()
 
-    async def delete_many(self, record_ids: Sequence[tuple[str]], meta: Meta) -> list[tuple[str]]:  # pragma: no cover
+    async def delete_many(  # pragma: no cover
+        self, record_ids: Sequence[tuple[str]], meta: Meta
+    ) -> list[tuple[str]]:
         raise NotImplementedError()
