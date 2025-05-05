@@ -445,7 +445,7 @@ const AiohttpAppBar = () => (
 );
 
 const App = (props) => {
-    const {aiohttpState, ...adminProps} = props;
+    const {aiohttpState, key, ...adminProps} = props;
     STATE = aiohttpState;
     const [loaded, setLoaded] = useState(STATE["js_module"] === null);
     if (!loaded) {
@@ -460,7 +460,7 @@ const App = (props) => {
     }
 
     return (
-        <Admin {...adminProps} dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+        <Admin key={key} {...adminProps} dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
                layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
             {permissions => createResources(STATE["resources"], permissions)}
         </Admin>
