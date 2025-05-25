@@ -445,7 +445,8 @@ const AiohttpAppBar = () => (
 );
 
 const App = (props) => {
-    const {aiohttpState, key, ...adminProps} = props;
+    const {aiohttpState, ...adminProps} = props;
+    const {key} = props;
     STATE = aiohttpState;
     const [loaded, setLoaded] = useState(STATE["js_module"] === null);
     if (!loaded) {
