@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy as sa
 from aiohttp import web
 from aiohttp.test_utils import TestClient
-from pytest_asyncio import AiohttpClient
+from pytest_aiohttp import AiohttpClient
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
 from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column, relationship
