@@ -174,7 +174,7 @@ jobs:
         path: requirements.txt
     - name: Run tests
       env:
-        NODE_OPTIONS: '--max_old_space_size=8192'
+        NODE_OPTIONS: '--max_old_space_size=16384'
       run: yarn test --coverage
       working-directory: admin-js/
     - name: Upload JS coverage
