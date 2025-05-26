@@ -9,10 +9,11 @@ from aiohttp.test_utils import TestClient
 from aiohttp_admin.types import comp, data, func
 from conftest import admin, db, model, model2
 
-_Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+_Client = TestClient[web.Request, web.Application]
+_Login = Callable[[_Client], Awaitable[dict[str, str]]]
 
 
-async def test_admin_view(admin_client: TestClient) -> None:
+async def test_admin_view(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["index"].url_for()
     async with admin_client.get(url) as resp:
@@ -45,7 +46,7 @@ async def test_admin_view(admin_client: TestClient) -> None:
     assert state["urls"] == {"token": "/admin/token", "logout": "/admin/logout"}
 
 
-async def test_list_pagination(admin_client: TestClient, login: _Login) -> None:
+async def test_list_pagination(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -78,7 +79,7 @@ async def test_list_pagination(admin_client: TestClient, login: _Login) -> None:
         assert page["total"] == 26
 
 
-async def test_list_filtering_by_pk(admin_client: TestClient, login: _Login) -> None:
+async def test_list_filtering_by_pk(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -95,7 +96,7 @@ async def test_list_filtering_by_pk(admin_client: TestClient, login: _Login) -> 
 
 
 @pytest.mark.xfail(reason="Need to implement #668 to make this work properly")
-async def test_list_text_like_filtering(admin_client: TestClient, login: _Login) -> None:
+async def test_list_text_like_filtering(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -110,7 +111,7 @@ async def test_list_text_like_filtering(admin_client: TestClient, login: _Login)
         assert await resp.json() == {"data": [{"id": "3"}, {"id": "13"}], "total": 2}
 
 
-async def test_get_one(admin_client: TestClient, login: _Login) -> None:
+async def test_get_one(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_get_one"].url_for()
@@ -120,7 +121,7 @@ async def test_get_one(admin_client: TestClient, login: _Login) -> None:
         assert await resp.json() == {"data": {"id": "1", "fk_id": "1", "data": {"id": 1}}}
 
 
-async def test_get_one_not_exists(admin_client: TestClient, login: _Login) -> None:
+async def test_get_one_not_exists(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_get_one"].url_for()
@@ -129,7 +130,7 @@ async def test_get_one_not_exists(admin_client: TestClient, login: _Login) -> No
         assert resp.status == 404
 
 
-async def test_get_many(admin_client: TestClient, login: _Login) -> None:
+async def test_get_many(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -145,7 +146,7 @@ async def test_get_many(admin_client: TestClient, login: _Login) -> None:
                                               {"id": "12", "fk_id": "12", "data": {"id": 12}}]}
 
 
-async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> None:
+async def test_get_many_not_exists(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -164,7 +165,7 @@ async def test_get_many_not_exists(admin_client: TestClient, login: _Login) -> N
         assert resp.status == 404
 
 
-async def test_get_many_ref(admin_client: TestClient, login: _Login) -> None:
+async def test_get_many_ref(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
 
@@ -178,7 +179,7 @@ async def test_get_many_ref(admin_client: TestClient, login: _Login) -> None:
         assert await resp.json() == {"data": [expected_record], "total": 1}
 
 
-async def test_get_many_ref_orm(admin_client: TestClient, login: _Login) -> None:
+async def test_get_many_ref_orm(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
 
@@ -193,7 +194,7 @@ async def test_get_many_ref_orm(admin_client: TestClient, login: _Login) -> None
         assert await resp.json() == {"data": [expected_record], "total": 1}
 
 
-async def test_create(admin_client: TestClient, login: _Login) -> None:
+async def test_create(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_create"].url_for()
@@ -208,7 +209,7 @@ async def test_create(admin_client: TestClient, login: _Login) -> None:
         assert r.id == 2
 
 
-async def test_create_duplicate_id(admin_client: TestClient, login: _Login) -> None:
+async def test_create_duplicate_id(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_create"].url_for()
@@ -217,7 +218,7 @@ async def test_create_duplicate_id(admin_client: TestClient, login: _Login) -> N
         assert resp.status == 400
 
 
-async def test_update(admin_client: TestClient, login: _Login) -> None:
+async def test_update(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
@@ -236,7 +237,7 @@ async def test_update(admin_client: TestClient, login: _Login) -> None:
         assert await sess.get(admin_client.app[model], 2) is None
 
 
-async def test_update_deleted_entity(admin_client: TestClient, login: _Login) -> None:
+async def test_update_deleted_entity(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
@@ -246,7 +247,7 @@ async def test_update_deleted_entity(admin_client: TestClient, login: _Login) ->
         assert resp.status == 404
 
 
-async def test_update_invalid_attributes(admin_client: TestClient, login: _Login) -> None:
+async def test_update_invalid_attributes(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update"].url_for()
@@ -257,7 +258,7 @@ async def test_update_invalid_attributes(admin_client: TestClient, login: _Login
         assert "foo" in await resp.text()
 
 
-async def test_update_many(admin_client: TestClient, login: _Login) -> None:
+async def test_update_many(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy2_update_many"].url_for()
@@ -275,7 +276,7 @@ async def test_update_many(admin_client: TestClient, login: _Login) -> None:
         assert r.msg == "ABC"
 
 
-async def test_update_many_deleted_entity(admin_client: TestClient, login: _Login) -> None:
+async def test_update_many_deleted_entity(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update_many"].url_for()
@@ -284,7 +285,7 @@ async def test_update_many_deleted_entity(admin_client: TestClient, login: _Logi
         assert resp.status == 404
 
 
-async def test_update_many_invalid_attributes(admin_client: TestClient, login: _Login) -> None:
+async def test_update_many_invalid_attributes(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_update_many"].url_for()
@@ -294,7 +295,7 @@ async def test_update_many_invalid_attributes(admin_client: TestClient, login: _
         assert "foo" in await resp.text()
 
 
-async def test_delete(admin_client: TestClient, login: _Login) -> None:
+async def test_delete(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_delete"].url_for()
@@ -309,7 +310,7 @@ async def test_delete(admin_client: TestClient, login: _Login) -> None:
         assert len(r.all()) == 0
 
 
-async def test_delete_entity_not_exists(admin_client: TestClient, login: _Login) -> None:
+async def test_delete_entity_not_exists(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_delete"].url_for()
@@ -318,7 +319,7 @@ async def test_delete_entity_not_exists(admin_client: TestClient, login: _Login)
         assert resp.status == 404
 
 
-async def test_delete_many(admin_client: TestClient, login: _Login) -> None:
+async def test_delete_many(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
@@ -338,7 +339,7 @@ async def test_delete_many(admin_client: TestClient, login: _Login) -> None:
         assert {m.id for m in models} == {1, 4, 6}
 
 
-async def test_delete_many_not_exists(admin_client: TestClient, login: _Login) -> None:
+async def test_delete_many_not_exists(admin_client: _Client, login: _Login) -> None:
     h = await login(admin_client)
     assert admin_client.app
     async with admin_client.app[db].begin() as sess:
