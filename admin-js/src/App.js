@@ -63,7 +63,7 @@ const _TimeInput = (props) => (<TimeInput format={(v) => v} parse={(v) => v} {..
 /** Reconfigure ReferenceInput to filter by the displayed repr field.
      Add referenceKeys prop to be able to update other fields for composite keys. */
 const _ReferenceInput = (props) => {
-    const {referenceKeys, ...innerProps} = props;
+    const {referenceKeys, validate, ...innerProps} = props;
     const {setValue} = useFormContext();
     const change = (value, record) => {
         for (let [this_k, foreign_k] of referenceKeys)
@@ -74,7 +74,7 @@ const _ReferenceInput = (props) => {
     const repr = STATE["resources"][ref]["repr"].replace(/^data\./, "");
     return (
         <ReferenceInput sort={{"field": repr, "order": "ASC"}} {...innerProps}>
-            <AutocompleteInput filterToQuery={s => ({[repr]: s})} label={props["label"]} onChange={change} validate={props["validate"]} />
+            <AutocompleteInput filterToQuery={s => ({[repr]: s})} label={props["label"]} onChange={change} validate={validate} />
         </ReferenceInput>
     );
 };
