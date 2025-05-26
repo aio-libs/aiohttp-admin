@@ -63,13 +63,14 @@ test("parent filter labels are correct", async () => {
 });
 
 test("filters work", async () => {
+    const user = userEvent.setup()
     const main = await screen.findByRole("main");
     const quickSearch = main.querySelector("form");
     const table = await within(main).findByRole("table");
     let rows = within(table).getAllByRole("row");
     expect(rows.length).toBeGreaterThan(2);
     const sb = within(quickSearch).getByRole("spinbutton", {"name": "Id"});
-    await userEvent.type(sb, "1");
+    await user.type(sb, "1");
 
     /*await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
     await sleep(0.5);
