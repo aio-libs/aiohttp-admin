@@ -7,7 +7,6 @@
     "react-admin": "4.16.7",
     "react-dom": "^18.2.0",
 
-    "react-router-dom": "6.23.0",
     "react-hook-form": "7.51.0",
     "@mui/icons-material": "5.16.2",
     "@mui/material": "5.16.2",
