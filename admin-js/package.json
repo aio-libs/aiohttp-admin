@@ -10,7 +10,8 @@
     "react-router-dom": "6.23.0",
     "react-hook-form": "7.51.0",
     "@mui/icons-material": "5.16.2",
-    "@mui/material": "5.16.2"
+    "@mui/material": "5.16.2",
+    "@emotion/styled": "5.16.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
