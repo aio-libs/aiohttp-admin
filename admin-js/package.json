@@ -23,11 +23,6 @@
     "ra-language-french": "4.16.7",
     "ra-no-code": "4.16.7",
     "ra-ui-materialui": "4.16.7",
-
-    "@mui/icons-material": "5.16.2",
-    "@mui/material": "5.16.2",
-    "@emotion/styled": "11.13.0",
-    "@emotion/react": "11.13.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.4.8",
