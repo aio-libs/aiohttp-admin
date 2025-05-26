@@ -70,13 +70,13 @@ test("filters work", async () => {
     let rows = within(table).getAllByRole("row");
     expect(rows.length).toBeGreaterThan(2);
     const sb = within(quickSearch).getByRole("spinbutton", {"name": "Id"});
-    await user.type(sb, "1");
+    user.type(sb, "1");
 
-    /*await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
+    await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
     await sleep(0.5);
     rows = within(table).getAllByRole("row");
     expect(rows.length).toBe(2);
-    expect(within(rows[1]).getAllByRole("cell")[1]).toHaveTextContent("1");*/
+    expect(within(rows[1]).getAllByRole("cell")[1]).toHaveTextContent("1");
 });
 
 test("enum filter works", async () => {
