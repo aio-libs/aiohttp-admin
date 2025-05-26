@@ -64,8 +64,8 @@ jobs:
     - name: Cache node modules
       uses: actions/cache@v4
       with:
-        key: node1-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
-        restore-keys: node-${{ hashFiles('admin-js/package.json') }}
+        key: node2-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        restore-keys: node2-${{ hashFiles('admin-js/package.json') }}
         path: |
           ${{ env.yarn_cache }}
           admin-js/node_modules
@@ -76,13 +76,13 @@ jobs:
       uses: actions/cache@v4
       id: cache_admin_js
       with:
-        key: yarn1-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
+        key: yarn2-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
           aiohttp_admin/static/*.map
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
-      run: yarn build --build-optimizer=true --aot=true
+      run: yarn build
       working-directory: admin-js/
 
   test:
@@ -108,7 +108,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn1-${{ hashFiles('admin-js/src/*') }}
+        key: yarn2-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
@@ -146,7 +146,7 @@ jobs:
     - name: Cache node modules
       uses: actions/cache@v4
       with:
-        key: node1-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        key: node2-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
         path: |
           ${{ env.yarn_cache }}
@@ -163,7 +163,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn1-${{ hashFiles('admin-js/src/*') }}
+        key: yarn2-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
