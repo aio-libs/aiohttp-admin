@@ -3,25 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "react": "^18.2.0",
+    "react": "18.2.0",
     "react-admin": "4.16.7",
-    "react-dom": "^18.2.0",
+    "react-dom": "18.2.0",
 
-    "react-hook-form": "7.51.0",
-    "@mui/icons-material": "5.16.2",
-    "@mui/material": "5.16.2",
-    "@emotion/styled": "11.13.0",
-    "@emotion/react": "11.13.0"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^15.0.0",
-    "@testing-library/user-event": "^14.5.1",
-    "@ungap/structured-clone": "^1.2",
-    "jest-fail-on-console": "^3.1.2",
-    "react-scripts": "^5.0.1"
-  },
-  "resolutions": {
     "create-react-admin": "4.16.7",
     "ra-core": "4.16.7",
     "ra-data-fakerest": "4.16.7",
@@ -38,16 +23,22 @@
     "ra-language-french": "4.16.7",
     "ra-no-code": "4.16.7",
     "ra-ui-materialui": "4.16.7",
-    "react": "18.3.1",
-    "react-admin": "4.16.7",
-    "react-dom": "18.3.1",
 
+    "react-hook-form": "7.51.0",
+    "@mui/icons-material": "5.16.2",
+    "@mui/material": "5.16.2",
+    "@emotion/styled": "11.13.0",
+    "@emotion/react": "11.13.0"
+  },
+  "devDependencies": {
     "@testing-library/jest-dom": "6.4.8",
     "@testing-library/react": "14.3.1",
     "@testing-library/user-event": "14.6.0",
     "@ungap/structured-clone": "1.2.1",
     "jest-fail-on-console": "3.2.0",
     "react-scripts": "5.0.1"
+  },
+  "resolutions": {
   },
   "scripts": {
     "start": "react-scripts start",
