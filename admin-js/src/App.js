@@ -445,7 +445,8 @@ const AiohttpAppBar = () => (
 );
 
 const App = (props) => {
-    STATE = props["aiohttpState"];
+    const {aiohttpState, ...adminProps} = props;
+    STATE = aiohttpState;
     const [loaded, setLoaded] = useState(STATE["js_module"] === null);
     if (!loaded) {
         // The inline comment skips the webpack import() and allows us to use the native
@@ -459,7 +460,7 @@ const App = (props) => {
     }
 
     return (
-        <Admin dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
+        <Admin {...adminProps} dataProvider={dataProvider} authProvider={authProvider} title={STATE["view"]["name"]}
                layout={(props) => <Layout {...props} appBar={AiohttpAppBar} />} disableTelemetry requireAuth>
             {permissions => createResources(STATE["resources"], permissions)}
         </Admin>
