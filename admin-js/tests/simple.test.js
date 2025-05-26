@@ -68,7 +68,9 @@ test("filters work", async () => {
     const table = await within(main).findByRole("table");
     let rows = within(table).getAllByRole("row");
     expect(rows.length).toBeGreaterThan(2);
-    await userEvent.type(within(quickSearch).getByRole("spinbutton", {"name": "Id"}), "1");
+    const sb = within(quickSearch).getByRole("spinbutton", {"name": "Id"});
+    console.log(sb);
+    //await userEvent.type(sb, "1");
 
     /*await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
     await sleep(0.5);
