@@ -64,7 +64,7 @@ jobs:
     - name: Cache node modules
       uses: actions/cache@v4
       with:
-        key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        key: node1-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
         path: |
           ${{ env.yarn_cache }}
@@ -76,7 +76,7 @@ jobs:
       uses: actions/cache@v4
       id: cache_admin_js
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
+        key: yarn1-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
           aiohttp_admin/static/*.map
@@ -108,7 +108,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        key: yarn1-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
@@ -146,7 +146,7 @@ jobs:
     - name: Cache node modules
       uses: actions/cache@v4
       with:
-        key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
+        key: node1-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
         path: |
           ${{ env.yarn_cache }}
@@ -163,7 +163,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        key: yarn1-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
