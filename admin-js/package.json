@@ -7,7 +7,8 @@
     "react-admin": "4.16.7",
     "react-dom": "^18.2.0",
 
-    "react-router-dom": "6.23.0"
+    "react-router-dom": "6.23.0",
+    "react-hook-form": "7.51.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
@@ -43,9 +44,7 @@
     "@testing-library/user-event": "14.6.0",
     "@ungap/structured-clone": "1.2.1",
     "jest-fail-on-console": "3.2.0",
-    "react-scripts": "5.0.1",
-
-    "react-router-dom": "6.23.0"
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
