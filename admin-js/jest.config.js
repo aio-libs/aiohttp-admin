@@ -9,4 +9,10 @@ module.exports = {
   testEnvironment: "jsdom",
   testEnvironmentOptions: {"url": "http://localhost:8080", "pretendToBeVisual": true},
   verbose: true,
+
+  globals: {
+    "ts-jest": {
+       isolatedModules: true
+    }
+  }
 };
