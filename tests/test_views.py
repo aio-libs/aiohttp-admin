@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 
 import pytest
 import sqlalchemy as sa
+from aiohttp import web
 from aiohttp.test_utils import TestClient
 
 from aiohttp_admin.types import comp, data, func
