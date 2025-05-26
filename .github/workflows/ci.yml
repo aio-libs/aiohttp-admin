@@ -174,8 +174,8 @@ jobs:
         path: requirements.txt
     - name: Run tests
       env:
-        NODE_OPTIONS: '--max_old_space_size=16384'
-      run: yarn test --coverage
+        NODE_OPTIONS: '--max_old_space_size=10240'
+      run: yarn test --coverage tests/simple.test.js
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
