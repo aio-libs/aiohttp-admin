@@ -52,7 +52,7 @@ jobs:
       contents: read # to fetch code (actions/checkout)
 
     name: Build JS with Yarn
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
     - name: Checkout
@@ -134,7 +134,7 @@ jobs:
   test-integration:
     name: Integration Test
     needs: yarn_build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
     - name: Checkout
