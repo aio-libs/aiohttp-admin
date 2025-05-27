@@ -70,7 +70,7 @@ test("filters work", async () => {
     let rows = within(table).getAllByRole("row");
     expect(rows.length).toBeGreaterThan(2);
     const sb = within(quickSearch).getByRole("spinbutton", {"name": "Id"});
-    console.log(sb);
+    console.log(sb.outerHTML);
     user.type(sb, "1");
 
     await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
