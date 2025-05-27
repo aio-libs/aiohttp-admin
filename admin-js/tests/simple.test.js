@@ -88,8 +88,8 @@ test("enum filter works", async () => {
     const currencySelect = within(quickSearch).getByRole("combobox", {"name": "Currency"});
     expect(within(table).getAllByRole("row").length).toBe(2);
     const record = within(table).getAllByRole("row")[1];
-    /*await userEvent.click(currencySelect);
-    await userEvent.click(await screen.findByRole("option", {"name": "GBP"}));
+    await userEvent.click(currencySelect);
+    /*await userEvent.click(await screen.findByRole("option", {"name": "GBP"}));
 
     expect(await within(main).findByText("No results found")).toBeInTheDocument();
     expect(within(main).queryByRole("table")).not.toBeInTheDocument();
