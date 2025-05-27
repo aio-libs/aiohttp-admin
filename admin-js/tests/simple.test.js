@@ -89,7 +89,9 @@ test("enum filter works", async () => {
     expect(within(table).getAllByRole("row").length).toBe(2);
     const record = within(table).getAllByRole("row")[1];
     await userEvent.click(currencySelect);
-    await userEvent.click(await screen.findByRole("option", {"name": "GBP"}));
+    const op = await screen.findByRole("option", {"name": "GBP"});
+    console.log(op.outerHTML);
+    await userEvent.click(op);
 
     /*expect(await within(main).findByText("No results found")).toBeInTheDocument();
     expect(within(main).queryByRole("table")).not.toBeInTheDocument();
