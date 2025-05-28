@@ -6,6 +6,7 @@ import pytest
 import sqlalchemy as sa
 from aiohttp import web
 from aiohttp.test_utils import TestClient
+from pytest_aiohttp import AiohttpClient
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
 from sqlalchemy.orm import DeclarativeBaseNoMeta, Mapped, mapped_column, relationship
@@ -15,6 +16,7 @@ from _auth import check_credentials
 from aiohttp_admin.backends.sqlalchemy import SAResource
 
 IdentityCallback = Callable[[Optional[str]], Awaitable[aiohttp_admin.UserDetails]]
+_Client = TestClient[web.Request, web.Application]
 
 
 class Base(DeclarativeBaseNoMeta):
@@ -56,9 +58,9 @@ def mock_engine() -> AsyncMock:
 
 @pytest.fixture
 def create_admin_client(
-    aiohttp_client: Callable[[web.Application], Awaitable[TestClient]]
-) -> Callable[[Optional[IdentityCallback]], Awaitable[TestClient]]:
-    async def admin_client(identity_callback: Optional[IdentityCallback] = None) -> TestClient:
+    aiohttp_client: AiohttpClient
+) -> Callable[[Optional[IdentityCallback]], Awaitable[_Client]]:
+    async def admin_client(identity_callback: Optional[IdentityCallback] = None) -> _Client:
         app = web.Application()
         app[model] = DummyModel
         app[model2] = Dummy2Model
@@ -96,13 +98,13 @@ def create_admin_client(
 
 
 @pytest.fixture
-async def admin_client(create_admin_client: Callable[[], Awaitable[TestClient]]) -> TestClient:
+async def admin_client(create_admin_client: Callable[[], Awaitable[_Client]]) -> _Client:
     return await create_admin_client()
 
 
 @pytest.fixture
-def login() -> Callable[[TestClient], Awaitable[dict[str, str]]]:
-    async def do_login(admin_client: TestClient) -> dict[str, str]:
+def login() -> Callable[[_Client], Awaitable[dict[str, str]]]:
+    async def do_login(admin_client: _Client) -> dict[str, str]:
         assert admin_client.app
         url = admin_client.app[admin].router["token"].url_for()
         login = {"username": "admin", "password": "admin123"}

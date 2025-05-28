@@ -3,16 +3,18 @@ from collections.abc import Awaitable, Callable
 from typing import Optional
 from unittest import mock
 
+from aiohttp import web
 from aiohttp.test_utils import TestClient
 
 from aiohttp_admin import Permissions, UserDetails
 from conftest import IdentityCallback, admin, db, model2
 
-_CreateClient = Callable[[IdentityCallback], Awaitable[TestClient]]
-_Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+_Client = TestClient[web.Request, web.Application]
+_CreateClient = Callable[[IdentityCallback], Awaitable[_Client]]
+_Login = Callable[[_Client], Awaitable[dict[str, str]]]
 
 
-async def test_no_token(admin_client: TestClient) -> None:
+async def test_no_token(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_get_list"].url_for()
     async with admin_client.get(url) as resp:
@@ -20,7 +22,7 @@ async def test_no_token(admin_client: TestClient) -> None:
         assert await resp.text() == "401: Unauthorized"
 
 
-async def test_invalid_token(admin_client: TestClient) -> None:
+async def test_invalid_token(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["dummy_get_one"].url_for()
     h = {"Authorization": "invalid"}
@@ -28,7 +30,7 @@ async def test_invalid_token(admin_client: TestClient) -> None:
         assert resp.status
 
 
-async def test_valid_login_logout(admin_client: TestClient) -> None:
+async def test_valid_login_logout(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["token"].url_for()
     login = {"username": "admin", "password": "admin123"}
@@ -52,7 +54,7 @@ async def test_valid_login_logout(admin_client: TestClient) -> None:
         assert resp.status == 401
 
 
-async def test_missing_token(admin_client: TestClient) -> None:
+async def test_missing_token(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["token"].url_for()
     login = {"username": "admin", "password": "admin123"}
@@ -69,7 +71,7 @@ async def test_missing_token(admin_client: TestClient) -> None:
         assert resp.status == 401
 
 
-async def test_missing_cookie(admin_client: TestClient) -> None:
+async def test_missing_cookie(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["token"].url_for()
     login = {"username": "admin", "password": "admin123"}
@@ -86,7 +88,7 @@ async def test_missing_cookie(admin_client: TestClient) -> None:
         assert resp.status == 401
 
 
-async def test_login_invalid_payload(admin_client: TestClient) -> None:
+async def test_login_invalid_payload(admin_client: _Client) -> None:
     assert admin_client.app
     url = admin_client.app[admin].router["token"].url_for()
     async with admin_client.post(url, json={"foo": "bar", "password": None}) as resp:
