@@ -73,6 +73,9 @@ jobs:
         path: |
           ${{ env.yarn_cache }}
           admin-js/node_modules
+    - name: Yarn install
+      run: yarn install
+      working-directory: admin-js/
     - name: Cache output files
       uses: actions/cache@v4
       id: cache_admin_js
@@ -81,10 +84,6 @@ jobs:
         path: |
           aiohttp_admin/static/admin.js
           aiohttp_admin/static/*.map
-    - name: Yarn install
-      if: steps.cache_admin_js.outputs.cache-hit != 'true'
-      run: yarn install
-      working-directory: admin-js/
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
       run: yarn build
@@ -182,7 +181,7 @@ jobs:
       with:
         path: requirements.txt
     - name: Run tests
-      run: yarn test --coverage tests/simple.test.js -t 'create form works'
+      run: yarn test --coverage tests/simple.test.js -t 'edit submit'
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
@@ -227,6 +226,10 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.11
+    - name: Disable man-db to speed up apt
+      run: |
+        echo 'set man-db/auto-update false' | sudo debconf-communicate >/dev/null
+        sudo dpkg-reconfigure man-db
     - name: Install yarn
       run: sudo apt install yarn -y
     - name: Yarn install
