@@ -69,7 +69,7 @@ jobs:
       uses: actions/cache@v4
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
-        restore-keys: node2-${{ hashFiles('admin-js/package.json') }}
+        restore-keys: node-${{ hashFiles('admin-js/package.json') }}
         path: |
           ${{ env.yarn_cache }}
           admin-js/node_modules
@@ -182,7 +182,7 @@ jobs:
       with:
         path: requirements.txt
     - name: Run tests
-      run: yarn test --coverage tests/simple.test.js -t 'reference input filter'
+      run: yarn test --coverage tests/simple.test.js -t 'export works'
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
