@@ -33,8 +33,6 @@
     "jest-fail-on-console": "3.1.2",
     "react-scripts": "5.0.1"
   },
-  "resolutions": {
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
