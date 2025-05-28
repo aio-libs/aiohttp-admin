@@ -57,12 +57,17 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Disable man-db to speed up apt
+      run: |
+        echo 'set man-db/auto-update false' | sudo debconf-communicate >/dev/null
+        sudo dpkg-reconfigure man-db
     - name: Install yarn
       run: sudo apt install yarn -y
     - name: Get yarn cache dir
       run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
       uses: actions/cache@v4
+      id: cache_node_modules
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
@@ -70,6 +75,7 @@ jobs:
           ${{ env.yarn_cache }}
           admin-js/node_modules
     - name: Yarn install
+      if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install
       working-directory: admin-js/
     - name: Cache output files
@@ -139,6 +145,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Disable man-db to speed up apt
+      run: |
+        echo 'set man-db/auto-update false' | sudo debconf-communicate >/dev/null
+        sudo dpkg-reconfigure man-db
     - name: Install yarn
       run: sudo apt install yarn -y
     - name: Get yarn cache dir
@@ -218,6 +228,10 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.11
+    - name: Disable man-db to speed up apt
+      run: |
+        echo 'set man-db/auto-update false' | sudo debconf-communicate >/dev/null
+        sudo dpkg-reconfigure man-db
     - name: Install yarn
       run: sudo apt install yarn -y
     - name: Yarn install

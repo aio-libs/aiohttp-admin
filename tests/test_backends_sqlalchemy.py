@@ -18,7 +18,8 @@ from aiohttp_admin.backends.sqlalchemy import FIELD_TYPES, SAResource, permissio
 from aiohttp_admin.types import comp, data, fk, func, regex
 from conftest import admin
 
-_Login = Callable[[TestClient], Awaitable[dict[str, str]]]
+_Client = TestClient[web.Request, web.Application]
+_Login = Callable[[_Client], Awaitable[dict[str, str]]]
 
 
 @pytest.fixture
@@ -98,7 +99,7 @@ def test_extra_props(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> N
 
 
 async def test_binary(
-    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login
 ) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
@@ -162,7 +163,7 @@ def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
 
 
 async def test_fk_output(
-    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login
 ) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
@@ -379,7 +380,7 @@ async def test_id_nonpk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -
 
 
 async def test_nonid_pk_api(
-    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login
 ) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
@@ -444,7 +445,7 @@ async def test_nonid_pk_api(
 
 
 async def test_datetime(
-    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login
 ) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
@@ -523,7 +524,7 @@ def test_permission_for(base: type[DeclarativeBase]) -> None:
 
 
 async def test_record_type(
-    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[TestClient]],
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login
 ) -> None:
     class TestModel(base):  # type: ignore[misc,valid-type]
