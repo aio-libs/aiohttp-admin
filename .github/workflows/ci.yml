@@ -181,7 +181,7 @@ jobs:
       with:
         path: requirements.txt
     - name: Run tests
-      run: yarn test --coverage tests/simple.test.js -t 'reference input'
+      run: yarn test --coverage tests/simple.test.js -t 'reference input label'
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
