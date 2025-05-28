@@ -154,8 +154,8 @@ test("reference input filter", async () => {
     const optionsInitial = within(resultsInitial).getAllByRole("option");
     expect(optionsInitial.map(e => e.textContent)).toEqual(["first", "with child"]);
 
-    /*await userEvent.click(within(resultsInitial).getByRole("option", {"name": "first"}));
-    await waitFor(() => expect(screen.queryByText("USD")).not.toBeInTheDocument());
+    await userEvent.click(within(resultsInitial).getByRole("option", {"name": "first"}));
+    /*await waitFor(() => expect(screen.queryByText("USD")).not.toBeInTheDocument());
     expect(await within(main).findByText("No results found")).toBeInTheDocument();
 
     await userEvent.type(input, "w");
