@@ -182,7 +182,7 @@ jobs:
       with:
         path: requirements.txt
     - name: Run tests
-      run: yarn test --coverage tests/simple.test.js -t 'export works'
+      run: yarn test --coverage tests/simple.test.js -t 'create form works'
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
