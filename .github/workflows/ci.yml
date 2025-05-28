@@ -67,6 +67,7 @@ jobs:
       run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
       uses: actions/cache@v4
+      id: cache_node_modules
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
@@ -74,6 +75,7 @@ jobs:
           ${{ env.yarn_cache }}
           admin-js/node_modules
     - name: Yarn install
+      if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install
       working-directory: admin-js/
     - name: Cache output files
@@ -181,7 +183,7 @@ jobs:
       with:
         path: requirements.txt
     - name: Run tests
-      run: yarn test --coverage tests/simple.test.js -t 'edit submit'
+      run: yarn test --coverage tests/simple.test.js -t 'reference input edit'
       working-directory: admin-js/
     - name: Upload JS coverage
       uses: codecov/codecov-action@v4
