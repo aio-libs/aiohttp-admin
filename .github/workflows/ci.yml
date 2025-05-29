@@ -74,13 +74,10 @@ jobs:
         path: |
           ${{ env.yarn_cache }}
           admin-js/node_modules
+          admin-js/yarn.lock
     - name: Yarn install
       if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install --production
-      working-directory: admin-js/
-    - name: Upgrade indirect yarn dependencies
-      if: steps.cache_node_modules.outputs.cache-hit != 'true'
-      run: yarn upgrade
       working-directory: admin-js/
     - run: ls admin-js/
     - name: Cache output files
