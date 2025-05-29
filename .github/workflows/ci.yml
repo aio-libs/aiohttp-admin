@@ -78,6 +78,10 @@ jobs:
       if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install --production
       working-directory: admin-js/
+    - name: Upgrade indirect yarn dependencies
+      if: steps.cache_node_modules.outputs.cache-hit != 'true'
+      run: yarn upgrade
+      working-directory: admin-js/
     - name: Cache output files
       uses: actions/cache@v4
       id: cache_admin_js
