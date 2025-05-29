@@ -93,7 +93,7 @@ jobs:
           aiohttp_admin/static/admin.js.map
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
-      run: yarn build --mode development
+      run: yarn build --minify false
       working-directory: admin-js/
 
   test:
@@ -240,10 +240,10 @@ jobs:
     - name: Install yarn
       run: sudo apt install yarn -y
     - name: Yarn install
-      run: yarn install
+      run: yarn install --production
       working-directory: admin-js/
     - name: Yarn build
-      run: yarn build
+      run: yarn build --production
       working-directory: admin-js/
     - name: Install dependencies
       run:
