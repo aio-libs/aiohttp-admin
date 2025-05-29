@@ -8,9 +8,13 @@ export default defineConfig({
         },
     },
     build: {
-        manifest: true,
+        outDir: "../aiohttp_admin/static/",
         rollupOptions: {
             input: "src/index.jsx",
+            output: {
+                file: "admin.js"
+            }
         },
+        sourcemap: true,
     },
 })
