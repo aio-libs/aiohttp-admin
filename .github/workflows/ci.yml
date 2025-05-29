@@ -78,6 +78,7 @@ jobs:
       if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install
       working-directory: admin-js/
+    - run: ls aiohttp_admin/static/
     - name: Cache output files
       uses: actions/cache@v4
       id: cache_admin_js
