@@ -39,7 +39,7 @@
     "vite": "6.2.6"
   },
   "scripts": {
-    "start": "vite",
+    "dev": "vite",
     "build": "vite build",
     "test": "jest"
   },
