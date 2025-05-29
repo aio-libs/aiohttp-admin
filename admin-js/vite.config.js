@@ -12,7 +12,6 @@ export default defineConfig({
         rollupOptions: {
             input: "src/index.jsx",
             output: {
-                file: "admin.js"
             }
         },
         sourcemap: true,
