@@ -116,7 +116,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
@@ -175,7 +175,8 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}
+        key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
+        restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
