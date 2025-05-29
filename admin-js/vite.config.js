@@ -12,6 +12,7 @@ export default defineConfig({
         rollupOptions: {
             input: "src/index.jsx",
             output: {
+                entryFileNames: "[name].js"
             }
         },
         sourcemap: true,
