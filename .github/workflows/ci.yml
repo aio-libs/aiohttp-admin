@@ -85,7 +85,7 @@ jobs:
         key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
-          aiohttp_admin/static/*.map
+          aiohttp_admin/static/admin.map
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
       run: yarn build
