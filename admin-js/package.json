@@ -35,7 +35,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
+    "build": "vite build",
     "test": "jest"
   },
   "eslintConfig": {
