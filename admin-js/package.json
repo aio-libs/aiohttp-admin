@@ -33,10 +33,9 @@
     "jest-fail-on-console": "3.1.2"
   },
   "scripts": {
-    "start": "create-react-admin start",
-    "build": "create-react-admin build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
-    "test": "jest",
-    "eject": "create-react-admin eject"
+    "start": "vite",
+    "build": "vite build && (rm ../aiohttp_admin/static/*.js.map || true) && mv build/static/js/main.*.js ../aiohttp_admin/static/admin.js && mv build/static/js/main.*.js.map ../aiohttp_admin/static/ && rm -rf build/",
+    "test": "jest"
   },
   "eslintConfig": {
     "extends": [
