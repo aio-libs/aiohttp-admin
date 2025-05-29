@@ -76,7 +76,7 @@ jobs:
           admin-js/node_modules
     - name: Yarn install
       if: steps.cache_node_modules.outputs.cache-hit != 'true'
-      run: yarn install
+      run: yarn install --production
       working-directory: admin-js/
     - name: Cache output files
       uses: actions/cache@v4
@@ -88,9 +88,8 @@ jobs:
           aiohttp_admin/static/admin.js.map
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
-      run: yarn build
+      run: yarn build --mode development
       working-directory: admin-js/
-    - run: ls aiohttp_admin/static/
 
   test:
     name: Test
