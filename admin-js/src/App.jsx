@@ -449,9 +449,9 @@ const App = (props) => {
     STATE = aiohttpState;
     const [loaded, setLoaded] = useState(STATE["js_module"] === null);
     if (!loaded) {
-        // The inline comment skips the webpack import() and allows us to use the native
+        // The inline comment skips the Vite import() and allows us to use the native
         // browser's import() function. Needed to dynamically import a module.
-        import(/* webpackIgnore: true */ STATE["js_module"]).then((mod) => {
+        import(/* @vite-ignore */ STATE["js_module"]).then((mod) => {
             Object.assign(COMPONENTS, mod.components);
             Object.assign(FUNCTIONS, mod.functions);
             setLoaded(true);
