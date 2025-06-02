@@ -116,7 +116,6 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}
-        restore-keys: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
