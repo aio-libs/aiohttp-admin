@@ -5,7 +5,7 @@ aiohttp-session[secure]==2.12.1
 aiosqlite==0.21.0
 cryptography==45.0.3
 pydantic==2.11.5
-pytest==8.3.5
+pytest==8.4.0
 pytest-aiohttp==1.1.0
 pytest-cov==6.1.1
 sqlalchemy==2.0.41
