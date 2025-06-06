@@ -14,5 +14,6 @@ export default defineConfig({
     },
     test: {
         environment: "jsdom",
+        environmentOptions: {"url": "http://localhost:8080", "pretendToBeVisual": true},
     }
 })
