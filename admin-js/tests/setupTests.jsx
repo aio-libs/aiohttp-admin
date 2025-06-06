@@ -6,7 +6,7 @@ import {memoryStore} from "react-admin";
 import {configure, render, screen} from "@testing-library/react";
 import * as structuredClone from "@ungap/structured-clone";
 
-const {App} = require("../src/App");
+import {App} from "../src/App";
 
 let pythonProcess;
 let STATE;
