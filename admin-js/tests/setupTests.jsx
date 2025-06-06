@@ -3,7 +3,7 @@ const {spawn} = require("child_process");
 import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 //import failOnConsole from "jest-fail-on-console";
 import {memoryStore} from "react-admin";
-import {beforeAll, beforeEach, expect} from "vitest";
+import {afterAll, beforeAll, beforeEach, expect} from "vitest";
 import {configure, render, screen} from "@testing-library/react";
 import * as structuredClone from "@ungap/structured-clone";
 
