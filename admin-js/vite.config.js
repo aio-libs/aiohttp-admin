@@ -19,6 +19,9 @@ export default defineConfig({
         },
         environment: "jsdom",
         environmentOptions: {"url": "http://localhost:8080", "pretendToBeVisual": true},
+        expect: {
+            requireAssertions: true
+        },
         //maxWorkers: 1,
         mockReset: true,
         restoreMocks: true,
