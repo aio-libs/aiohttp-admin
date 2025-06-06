@@ -5,7 +5,7 @@ import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 import {memoryStore} from "react-admin";
 import {afterAll, beforeAll, beforeEach, expect} from "vitest";
 import {configure, render, screen} from "@testing-library/react";
-import * as structuredClone from "@ungap/structured-clone";
+//import * as structuredClone from "@ungap/structured-clone";
 
 import {App} from "../src/App";
 
@@ -23,7 +23,7 @@ jest.mock("react-admin", () => {
 });*/
 
 // https://github.com/jsdom/jsdom/issues/3363#issuecomment-1387439541
-global.structuredClone = structuredClone.default;
+//global.structuredClone = structuredClone.default;
 
 // To render full-width
 window.matchMedia = (query) => ({
