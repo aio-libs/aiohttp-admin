@@ -79,6 +79,7 @@ jobs:
       if: steps.cache_node_modules.outputs.cache-hit != 'true'
       run: yarn install --production
       working-directory: admin-js/
+    - run: ls -l aiohttp_admin/static/
     - name: Cache output files
       uses: actions/cache@v4
       id: cache_admin_js
@@ -86,7 +87,7 @@ jobs:
         key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
         path: |
           aiohttp_admin/static/admin.js
-          aiohttp_admin/static/*.map
+          aiohttp_admin/static/admin.js.map
     - name: Yarn build
       if: steps.cache_admin_js.outputs.cache-hit != 'true'
       run: yarn build --minify false
@@ -174,7 +175,7 @@ jobs:
     - name: Restore cached JS files
       uses: actions/cache/restore@v4
       with:
-        key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
+        key: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
         path: |
           aiohttp_admin/static/admin.js
