@@ -25,6 +25,6 @@ export default defineConfig({
         //maxWorkers: 1,
         mockReset: true,
         restoreMocks: true,
-        setupFiles: "tests/setupTests.js",
+        setupFiles: "tests/setupTests.jsx",
     }
 })
