@@ -24,7 +24,7 @@ export default defineConfig({
         expect: {
             requireAssertions: true
         },
-        maxWorkers: 1,
+        fileParallelism: false,
         mockReset: true,
         restoreMocks: true,
         setupFiles: "tests/setupTests.jsx",
