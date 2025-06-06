@@ -28,8 +28,8 @@ global.structuredClone = structuredClone.default;
 // To render full-width
 window.matchMedia = (query) => ({
     matches: true,
-    addListener: () => {},
-    removeListener: () => {}
+    addEventListener: () => {},
+    removeEventListener: () => {}
 });
 
 // Ignore not implemented errors
