@@ -1,5 +1,4 @@
 import {defineConfig} from "vite";
-import react from "@vitejs/plugin-react";
 
 export default defineConfig({
     build: {
@@ -13,7 +12,6 @@ export default defineConfig({
         },
         sourcemap: true,
     },
-    plugins: [react()],
     test: {
         clearMocks: true,
         coverage: {
