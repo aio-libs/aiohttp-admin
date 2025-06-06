@@ -16,5 +16,6 @@ export default defineConfig({
         environment: "jsdom",
         environmentOptions: {"url": "http://localhost:8080", "pretendToBeVisual": true},
         maxWorkers: 1,
+        setupFiles: ["tests/setupTests.js"],
     }
 })
