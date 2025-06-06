@@ -13,6 +13,7 @@ export default defineConfig({
         sourcemap: true,
     },
     test: {
+        clearMocks: true,
         coverage: {
             exclude: [],
         },
