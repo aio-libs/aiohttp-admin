@@ -33,7 +33,8 @@ window.matchMedia = (query) => ({
 });
 
 // Fix relative URLs in fetch()
-location.replace("http://localhost:8080/");
+delete window.location;
+window.location = "http://localhost:8080/";
 
 // Ignore not implemented errors
 //window.scrollTo = jest.fn();
