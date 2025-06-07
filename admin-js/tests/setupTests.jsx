@@ -32,10 +32,6 @@ window.matchMedia = (query) => ({
     removeListener: () => {}
 });
 
-// Fix relative URLs in fetch()
-delete window.location;
-window.location = "http://localhost:8080/";
-
 // Ignore not implemented errors
 //window.scrollTo = jest.fn();
 
@@ -103,7 +99,7 @@ let login = {"username": "admin", "password": "admin"};
 global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
-    location.href = "/";
+    location.href = "http://localhost:8080/";
     localStorage.clear();
 
     if (STATE) {
