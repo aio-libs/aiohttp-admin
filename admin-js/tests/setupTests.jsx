@@ -100,7 +100,7 @@ global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
     delete window.location;
-    window.location = {"href": "/"};
+    window.location = new URL("http://localhost:8080/");
     localStorage.clear();
 
     if (STATE) {
