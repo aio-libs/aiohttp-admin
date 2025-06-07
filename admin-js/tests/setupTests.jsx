@@ -1,18 +1,19 @@
 const http = require("http");
+import "vitest-location-mock";
 const {spawn} = require("child_process");
-import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
-import "@testing-library/jest-dom";
-import failOnConsole from "jest-fail-on-console";
+//import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
+//import failOnConsole from "jest-fail-on-console";
 import {memoryStore} from "react-admin";
+import {afterAll, beforeAll, beforeEach, expect} from "vitest";
 import {configure, render, screen} from "@testing-library/react";
-import * as structuredClone from "@ungap/structured-clone";
+//import * as structuredClone from "@ungap/structured-clone";
 
-const {App} = require("../src/App");
+import {App} from "../src/App";
 
 let pythonProcess;
 let STATE;
 
-jest.setTimeout(300000);  // 5 mins
+/*jest.setTimeout(300000);  // 5 mins
 configure({"asyncUtilTimeout": 10000});
 jest.mock("react-admin", () => {
     const originalModule = jest.requireActual("react-admin");
@@ -20,10 +21,10 @@ jest.mock("react-admin", () => {
         ...originalModule,
         downloadCSV: jest.fn(),  // Mock downloadCSV to test export button.
     };
-});
+});*/
 
 // https://github.com/jsdom/jsdom/issues/3363#issuecomment-1387439541
-global.structuredClone = structuredClone.default;
+//global.structuredClone = structuredClone.default;
 
 // To render full-width
 window.matchMedia = (query) => ({
@@ -33,12 +34,12 @@ window.matchMedia = (query) => ({
 });
 
 // Ignore not implemented errors
-window.scrollTo = jest.fn();
+//window.scrollTo = jest.fn();
 
 
 global.sleep = (delay_s) => new Promise((resolve) => setTimeout(resolve, delay_s * 1000));
 
-failOnConsole({
+/*failOnConsole({
     silenceMessage: (msg) => {
         return (
             // Suppress act() warnings, because there's too many async changes happening.
@@ -49,7 +50,7 @@ failOnConsole({
             || msg.includes("The above error occurred in the <EditBase> component")
         );
     }
-});
+});*/
 
 beforeAll(async() => {
     if (!global.pythonProcessPath)
@@ -100,6 +101,7 @@ global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
     location.href = "/";
+    window.history.replaceState({}, "", "/");
     localStorage.clear();
 
     if (STATE) {

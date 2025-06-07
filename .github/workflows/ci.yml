@@ -162,6 +162,7 @@ jobs:
         path: |
           ${{ env.yarn_cache }}
           admin-js/node_modules
+          admin-js/yarn.lock
     - name: Yarn install
       run: yarn install
       working-directory: admin-js/
