@@ -99,8 +99,7 @@ let login = {"username": "admin", "password": "admin"};
 global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
-    delete window.location;
-    window.location = new URL("http://localhost:8080/");
+    window.history.replaceState({}, "", "/");
     localStorage.clear();
 
     if (STATE) {
