@@ -99,6 +99,7 @@ let login = {"username": "admin", "password": "admin"};
 global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
+    location.href = "/";
     window.history.replaceState({}, "", "/");
     localStorage.clear();
 
