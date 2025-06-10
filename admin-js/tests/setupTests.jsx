@@ -8,7 +8,7 @@ import {configure, render, screen} from "@testing-library/react";
 //import * as structuredClone from "@ungap/structured-clone";
 
 delete globalThis.fetch;
-import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
+await import("whatwg-fetch");
 
 import {App} from "../src/App";
 
