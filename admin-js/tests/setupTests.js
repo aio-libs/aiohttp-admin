@@ -1,6 +1,6 @@
 const http = require("http");
 const {spawn} = require("child_process");
-import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
+//import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 import "@testing-library/jest-dom";
 import failOnConsole from "jest-fail-on-console";
 import {memoryStore} from "react-admin";
