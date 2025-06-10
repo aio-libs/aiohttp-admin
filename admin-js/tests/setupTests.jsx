@@ -102,6 +102,7 @@ let login = {"username": "admin", "password": "admin"};
 global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
+    console.log("FOO");
     location.href = "/";
     localStorage.clear();
 
@@ -112,4 +113,5 @@ beforeEach(async () => {
         const profile = await screen.findByText(login["username"], {"exact": false});
         expect(profile).toHaveAccessibleName("Profile");
     }
+    console.log("BAR");
 });
