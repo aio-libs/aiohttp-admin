@@ -1,12 +1,14 @@
 const http = require("http");
 //import "vitest-location-mock";
 const {spawn} = require("child_process");
-import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 //import failOnConsole from "jest-fail-on-console";
 import {memoryStore} from "react-admin";
 import {afterAll, beforeAll, beforeEach, expect} from "vitest";
 import {configure, render, screen} from "@testing-library/react";
 //import * as structuredClone from "@ungap/structured-clone";
+
+delete globalThis.fetch;
+import "whatwg-fetch";  // https://github.com/jsdom/jsdom/issues/1724
 
 import {App} from "../src/App";
 
