@@ -103,7 +103,6 @@ global.setLogin = (username, password) => { login = {username, password}; };
 
 beforeEach(async () => {
     location.href = "/";
-    window.history.replaceState({}, "", "/");
     localStorage.clear();
 
     if (STATE) {
