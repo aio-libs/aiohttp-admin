@@ -21,9 +21,9 @@ export default defineConfig({
         },
         environment: "jsdom",
         environmentOptions: {
-            url: "http://localhost:8080",
+            url: "http://localhost:8081",
             pretendToBeVisual: true,
-            testURL: "http://localhost:8080"
+            testURL: "http://localhost:8081"
         },
         expect: {
             requireAssertions: true
