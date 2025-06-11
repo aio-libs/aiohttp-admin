@@ -107,9 +107,9 @@ beforeEach(async () => {
 
     if (STATE) {
         console.log("FOO");
-        //const resp = await fetch("http://localhost:8080/admin/token", {"method": "POST", "body": JSON.stringify(login)});
+        const resp = await fetch("/admin/token", {"method": "POST", "body": JSON.stringify(login)});
         console.log("BAR");
-        //localStorage.setItem("identity", resp.headers.get("X-Token"));
+        localStorage.setItem("identity", resp.headers.get("X-Token"));
         render(<App aiohttpState={STATE} store={memoryStore()} />);
         const profile = await screen.findByText(login["username"], {"exact": false});
         expect(profile).toHaveAccessibleName("Profile");
