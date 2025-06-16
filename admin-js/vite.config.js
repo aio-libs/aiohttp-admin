@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import {defineConfig} from "vite";
 
 export default defineConfig({
     build: {
@@ -12,4 +13,24 @@ export default defineConfig({
         },
         sourcemap: true,
     },
+    plugins: [react()],
+    test: {
+        clearMocks: true,
+        coverage: {
+            exclude: [],
+        },
+        environment: "jsdom",
+        environmentOptions: {
+            url: "http://localhost:8081",
+            pretendToBeVisual: true,
+            testURL: "http://localhost:8081"
+        },
+        expect: {
+            requireAssertions: true
+        },
+        fileParallelism: false,
+        mockReset: true,
+        restoreMocks: true,
+        setupFiles: "tests/setupTests.jsx",
+    }
 })

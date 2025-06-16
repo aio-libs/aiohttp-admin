@@ -1,3 +1,4 @@
+import {expect, test} from "vitest";
 import {within} from "@testing-library/dom";
 import {screen, waitFor} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
