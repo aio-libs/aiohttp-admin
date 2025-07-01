@@ -433,7 +433,7 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                 continue
 
             if isinstance(constr.sqltext, sa.BooleanClauseList):
-                if constr.sqltext.operator is not operator.and_:  # type: ignore[comparison-overlap]
+                if constr.sqltext.operator is not operator.and_:
                     continue
                 exprs = constr.sqltext.clauses
             else:
@@ -447,13 +447,13 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                     if left.expression is c:
                         if not isinstance(right, sa.BindParameter) or right.value is None:
                             continue
-                        if op is operator.ge:  # type: ignore[comparison-overlap]
+                        if op is operator.ge:
                             validators.append(func("minValue", (right.value,)))
-                        elif op is operator.gt:  # type: ignore[comparison-overlap]
+                        elif op is operator.gt:
                             validators.append(func("minValue", (right.value + 1,)))
-                        elif op is operator.le:  # type: ignore[comparison-overlap]
+                        elif op is operator.le:
                             validators.append(func("maxValue", (right.value,)))
-                        elif op is operator.lt:  # type: ignore[comparison-overlap]
+                        elif op is operator.lt:
                             validators.append(func("maxValue", (right.value - 1,)))
                     elif isinstance(left, sa.Function):
                         if left.name == "char_length":
@@ -461,9 +461,9 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                                 continue
                             if not isinstance(right, sa.BindParameter) or right.value is None:
                                 continue
-                            if op is operator.ge:  # type: ignore[comparison-overlap]
+                            if op is operator.ge:
                                 validators.append(func("minLength", (right.value,)))
-                            elif op is operator.gt:  # type: ignore[comparison-overlap]
+                            elif op is operator.gt:
                                 validators.append(func("minLength", (right.value + 1,)))
                 elif isinstance(expr, sa.Function):
                     if expr.name in ("regexp", "regexp_like"):
