@@ -1,5 +1,5 @@
 -e .
-aiohttp==3.12.14
+aiohttp==3.12.15
 aiohttp-security==0.5.0
 aiohttp-session[secure]==2.12.1
 aiosqlite==0.21.0
