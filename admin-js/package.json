@@ -7,7 +7,7 @@
     "react-admin": "4.16.7",
     "react-dom": "18.2.0",
     "terser": "5.43.1",
-    "vite": "7.0.6",
+    "vite": "7.1.1",
 
     "create-react-admin": "4.16.7",
     "ra-core": "4.16.7",
