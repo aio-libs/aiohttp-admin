@@ -7,6 +7,6 @@ cryptography==45.0.7
 pydantic==2.11.7
 pytest==8.4.2
 pytest-aiohttp==1.1.0
-pytest-cov==6.3.0
+pytest-cov==7.0.0
 sqlalchemy==2.0.43
 typing_extensions>=3.10; python_version<"3.12"
