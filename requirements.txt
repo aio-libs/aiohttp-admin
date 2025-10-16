@@ -3,7 +3,7 @@ aiohttp==3.13.0
 aiohttp-security==0.5.0
 aiohttp-session[secure]==2.12.1
 aiosqlite==0.21.0
-cryptography==46.0.2
+cryptography==46.0.3
 pydantic==2.12.2
 pytest==8.4.2
 pytest-aiohttp==1.1.0
