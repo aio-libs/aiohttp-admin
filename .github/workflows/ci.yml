@@ -66,7 +66,7 @@ jobs:
     - name: Get yarn cache dir
       run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache_node_modules
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
@@ -80,7 +80,7 @@ jobs:
       run: yarn install --production
       working-directory: admin-js/
     - name: Cache output files
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache_admin_js
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}-${{ hashFiles('admin-js/yarn.lock') }}
@@ -113,7 +113,7 @@ jobs:
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
     - name: Restore cached JS files
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
@@ -155,7 +155,7 @@ jobs:
     - name: Get yarn cache dir
       run: echo "yarn_cache=$(yarn cache dir)" >> "$GITHUB_ENV"
     - name: Cache node modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         key: node-${{ hashFiles('admin-js/package.json') }}-${{ github.run_id }}
         restore-keys: node-${{ hashFiles('admin-js/package.json') }}
@@ -172,7 +172,7 @@ jobs:
         cache: 'pip'
         cache-dependency-path: '**/requirements*.txt'
     - name: Restore cached JS files
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         key: yarn-${{ hashFiles('admin-js/src/*') }}
         fail-on-cache-miss: true
