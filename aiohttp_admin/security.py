@@ -94,16 +94,20 @@ class AdminAuthorizationPolicy(AbstractAuthorizationPolicy):
         except (TypeError, ValueError):
             raise TypeError("Context must be `(request, record)` or `(request, None)`")
 
-        permissions: Optional[Collection[str]] = request.get("aiohttpadmin_permissions")
+        permissions = request.get("aiohttpadmin_permissions")
         if permissions is None:
+            raw: Collection[str]
             if self._identity_callback is None:
-                permissions = (Permissions.all,)
+                raw = (Permissions.all,)
             else:
                 user = await self._identity_callback(identity)
-                permissions = user["permissions"]
-            # Cache permissions per request to avoid potentially dozens of DB calls.
+                raw = user["permissions"]
+            # Cache the parsed permissions per request to avoid both repeat DB calls
+            # and re-parsing the permission strings on every check (permits() runs
+            # O(records * fields) times per request).
+            permissions = permissions_as_dict(raw)
             request["aiohttpadmin_permissions"] = permissions
-        return has_permission(permission, permissions_as_dict(permissions), record)
+        return has_permission(permission, permissions, record)
 
 
 class TokenIdentityPolicy(SessionIdentityPolicy):
