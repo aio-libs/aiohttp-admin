@@ -1,6 +1,7 @@
 import json
 from collections.abc import Awaitable, Callable
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional, Union
 
 import pytest
@@ -324,6 +325,47 @@ def test_check_constraints(base: type[DeclarativeBase], mock_engine: AsyncEngine
     assert f["with_and"]["props"]["validate"] == [
         required, func("minValue", (8,)), func("maxValue", (11,))]
     assert f["with_or"]["props"]["validate"] == [required]
+
+
+def test_numeric_precision_bounds(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    class TestNum(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        pk: Mapped[int] = mapped_column(primary_key=True)
+        money: Mapped[Decimal] = mapped_column(sa.Numeric(5, 2))
+        whole: Mapped[Decimal] = mapped_column(sa.Numeric(4))
+        flt: Mapped[float] = mapped_column(sa.Float())
+        unbounded: Mapped[Decimal] = mapped_column(sa.Numeric())
+        constrained: Mapped[Decimal] = mapped_column(sa.Numeric(6, 2))
+
+        __table_args__ = (sa.CheckConstraint(constrained <= 10),)
+
+    r = SAResource(mock_engine, TestNum)
+    f = r.inputs
+    required = func("required", ())
+
+    # scale=2 -> step 0.01, bounds ±999.99 as validators and HTML min/max props.
+    assert f["money"]["props"]["step"] == 0.01
+    assert f["money"]["props"]["validate"] == [
+        required, func("maxValue", (999.99,)), func("minValue", (-999.99,))]
+    assert f["money"]["props"]["max"] == 999.99
+    assert f["money"]["props"]["min"] == -999.99
+
+    # scale defaults to 0 -> integer bounds, no step.
+    assert "step" not in f["whole"]["props"]
+    assert f["whole"]["props"]["validate"] == [
+        required, func("maxValue", (9999,)), func("minValue", (-9999,))]
+
+    # Float precision counts binary digits, not decimal -> no bounds or step.
+    assert "step" not in f["flt"]["props"]
+    assert f["flt"]["props"]["validate"] == [required]
+
+    # Numeric() without precision -> nothing to derive.
+    assert f["unbounded"]["props"]["validate"] == [required]
+
+    # An explicit CheckConstraint bound wins; only the missing side is filled in.
+    assert f["constrained"]["props"]["step"] == 0.01
+    assert f["constrained"]["props"]["validate"] == [
+        required, func("maxValue", (10,)), func("minValue", (-9999.99,))]
 
 
 async def test_nonid_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
