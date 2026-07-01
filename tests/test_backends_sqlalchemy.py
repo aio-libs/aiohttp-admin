@@ -59,6 +59,21 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     }
 
 
+def test_uuid_validator(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    import uuid as uuid_mod
+
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "dummy"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        token: Mapped[uuid_mod.UUID] = mapped_column(nullable=True)
+
+    r = SAResource(mock_engine, TestModel)
+    uuid_pattern = ("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+                    "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+    assert r.inputs["token"]["props"]["validate"] == [
+        func("regex", (regex(uuid_pattern),))]
+
+
 def test_table(mock_engine: AsyncEngine) -> None:
     dummy_table = sa.Table("dummy", sa.MetaData(),
                            sa.Column("id", sa.Integer, primary_key=True),
