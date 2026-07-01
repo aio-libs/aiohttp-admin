@@ -1,4 +1,5 @@
 import json
+import uuid
 from collections.abc import Awaitable, Callable
 from datetime import date, datetime
 from typing import Optional, Union
@@ -137,6 +138,45 @@ async def test_binary(
     async with admin_client.get(url, params={"id": 2}, headers=h) as resp:
         assert resp.status == 200
         assert await resp.json() == {"data": {"id": "2", "data": {"id": 2, "binary": "\x01�\x02"}}}
+
+
+async def test_uuid(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
+    login: _Login
+) -> None:
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "test"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        uid: Mapped[uuid.UUID]
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    db = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+    async with db.begin() as sess:
+        sess.add(TestModel(uid=uuid.UUID("12345678-1234-5678-1234-567812345678")))
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, TestModel)},)
+    }
+    app[admin] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    # UUID values must serialize (Encoder previously raised TypeError -> 500).
+    url = app[admin].router["test_get_one"].url_for()
+    async with admin_client.get(url, params={"id": 1}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": {"id": "1",
+                     "data": {"id": 1, "uid": "12345678-1234-5678-1234-567812345678"}}}
 
 
 def test_fk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
