@@ -40,7 +40,8 @@ test("parents are displayed", async () => {
 
     const rows = within(table).getAllByRole("row");
     const firstCells = within(rows[1]).getAllByRole("cell").slice(1, -1);
-    expect(firstCells.map((e) => e.textContent)).toEqual(["with child", "2/13/2023, 7:04:00 PM", "USD"]);
+    expect(firstCells.map((e) => e.textContent)).toEqual(
+        ["with child", new Date("2023-02-13T19:04:00").toLocaleString(), "USD"]);
     expect(within(firstCells[0]).getByRole("link")).toBeInTheDocument();
 });
 
@@ -68,7 +69,6 @@ test("filters work", async () => {
     const table = await within(main).findByRole("table");
     let rows = within(table).getAllByRole("row");
     expect(rows.length).toBeGreaterThan(2);
-    return;  // Broken now
     await userEvent.type(within(quickSearch).getByRole("spinbutton", {"name": "Id"}), "1");
 
     await waitFor(() => within(main).getByRole("button", {"name": "Add filter"}));
@@ -90,7 +90,6 @@ test("enum filter works", async () => {
     expect(within(table).getAllByRole("row").length).toBe(2);
     const record = within(table).getAllByRole("row")[1];
     await userEvent.click(currencySelect);
-    return;  // Broken now
     await userEvent.click(await screen.findByRole("option", {"name": "GBP"}));
 
     expect(await within(main).findByText("No results found")).toBeInTheDocument();
@@ -154,7 +153,6 @@ test("reference input filter", async () => {
     const optionsInitial = within(resultsInitial).getAllByRole("option");
     expect(optionsInitial.map(e => e.textContent)).toEqual(["first", "with child"]);
 
-    return;  // Broken now
     await userEvent.click(within(resultsInitial).getByRole("option", {"name": "first"}));
     await waitFor(() => expect(screen.queryByText("USD")).not.toBeInTheDocument());
     expect(await within(main).findByText("No results found")).toBeInTheDocument();
