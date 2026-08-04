@@ -40,8 +40,7 @@ test("parents are displayed", async () => {
 
     const rows = within(table).getAllByRole("row");
     const firstCells = within(rows[1]).getAllByRole("cell").slice(1, -1);
-    expect(firstCells.map((e) => e.textContent)).toEqual(
-        ["with child", new Date("2023-02-13T19:04:00").toLocaleString(), "USD"]);
+    expect(firstCells.map((e) => e.textContent)).toEqual(["with child", "2/13/2023, 7:04:00 PM", "USD"]);
     expect(within(firstCells[0]).getByRole("link")).toBeInTheDocument();
 });
 
