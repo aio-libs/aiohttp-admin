@@ -266,7 +266,7 @@ function createInputs(resource, name, perm_type, permissions) {
     return components;
 }
 
-function createBulkUpdates(resource, name, permissions) {
+function createBulkUpdates(resource, name, permissions, refresh) {
     let buttons = [];
     for (const [label, data] of Object.entries(resource["bulk_update"])) {
         let allowed = true;
@@ -277,7 +277,8 @@ function createBulkUpdates(resource, name, permissions) {
             }
         }
         if (allowed)
-            buttons.push(<BulkUpdateButton mutationMode="pessimistic" key={label} label={label} data={data} />);
+            buttons.push(<BulkUpdateButton mutationMode="pessimistic" key={label} label={label} data={data}
+                          mutationOptions={{onSettled: refresh}} />);
     }
     return buttons;
 }
@@ -294,13 +295,16 @@ const AiohttpList = (resource, name, permissions) => {
             <ExportButton />
         </TopToolbar>
     );
-    const BulkActionButtons = () => (
-        <>
-            {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions)}
-            <BulkExportButton />
-            {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton mutationMode="pessimistic" />}
-        </>
-    );
+    const BulkActionButtons = () => {
+        const refresh = useRefresh();
+        return (
+            <>
+                {hasPermission(`${name}.edit`, permissions) && createBulkUpdates(resource, name, permissions, refresh)}
+                <BulkExportButton />
+                {hasPermission(`${name}.delete`, permissions) && <BulkDeleteButton mutationMode="pessimistic" />}
+            </>
+        );
+    };
     const filters = createInputs(resource, name, "view", permissions);
     // Remove inputs with duplicate sources.
     const filterSources = filters.map(c => c["props"]["source"]);
