@@ -411,8 +411,9 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                           meta: Meta) -> list[tuple[Any, ...]]:
         async with self._db.begin() as conn:
             stmt = sa.delete(self._table).where(self._cmp_pk_many(record_ids))
-            stmt = stmt.returning(*(self._table.c[pk] for pk in self.primary_key))
-            return [tuple(row) for row in await conn.execute(stmt)]
+            result = await conn.execute(
+                stmt.returning(*(self._table.c[pk] for pk in self.primary_key)))
+            return [tuple(row) for row in result]
 
     def _cmp_pk(self, record_id: tuple[Any, ...]) -> Iterator[_SABoolExpression]:
         return (self._table.c[pk] == r_id for pk, r_id in zip(self.primary_key, record_id))
