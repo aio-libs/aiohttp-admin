@@ -106,9 +106,8 @@ beforeEach(async () => {
     localStorage.clear();
 
     if (STATE) {
-        console.log("FOO");
         const resp = await fetch("/admin/token", {"method": "POST", "body": JSON.stringify(login)});
-        console.log("BAR");
+        console.log(resp.headers.get("X-Token"));
         localStorage.setItem("identity", resp.headers.get("X-Token"));
         render(<App aiohttpState={STATE} store={memoryStore()} />);
         const profile = await screen.findByText(login["username"], {"exact": false});
