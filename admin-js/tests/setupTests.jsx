@@ -4,6 +4,7 @@ const {spawn} = require("child_process");
 //import failOnConsole from "jest-fail-on-console";
 import {memoryStore} from "react-admin";
 import {afterAll, beforeAll, beforeEach, expect} from "vitest";
+import "@testing-library/jest-dom/vitest";
 import {configure, render, screen} from "@testing-library/react";
 //import * as structuredClone from "@ungap/structured-clone";
 
@@ -107,7 +108,6 @@ beforeEach(async () => {
 
     if (STATE) {
         const resp = await fetch("/admin/token", {"method": "POST", "body": JSON.stringify(login)});
-        console.log(resp.headers.get("X-Token"));
         localStorage.setItem("identity", resp.headers.get("X-Token"));
         render(<App aiohttpState={STATE} store={memoryStore()} />);
         const profile = await screen.findByText(login["username"], {"exact": false});
