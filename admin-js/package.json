@@ -35,7 +35,7 @@
     "@testing-library/user-event": "14.6.6",
     "@ungap/structured-clone": "1.4.0",
     "jest": "30.4.2",
-    "jest-environment-jsdom": "30.4.1",
+    "jest-environment-jsdom": "30.5.0",
     "jest-fail-on-console": "3.3.4",
     "whatwg-fetch": "3.6.20"
   },
