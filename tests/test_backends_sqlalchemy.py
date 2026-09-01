@@ -59,6 +59,40 @@ def test_pk(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
     }
 
 
+def test_values_based_enum(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    """A values-based Enum (no member class) must not crash and yields string choices."""
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "dummy"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        status: Mapped[str] = mapped_column(sa.Enum("active", "inactive"))
+
+    r = SAResource(mock_engine, TestModel)
+    assert r.inputs["status"]["type"] == "SelectInput"
+    assert r.inputs["status"]["props"]["choices"] == (
+        {"id": "active", "name": "active"},
+        {"id": "inactive", "name": "inactive"})
+
+
+def test_class_based_enum(base: type[DeclarativeBase], mock_engine: AsyncEngine) -> None:
+    """A class-based Enum uses member values as ids and member names as labels."""
+    import enum
+
+    class Color(enum.Enum):
+        RED = 1
+        GREEN = 2
+
+    class TestModel(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "dummy"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        color: Mapped[Color] = mapped_column(nullable=False)
+
+    r = SAResource(mock_engine, TestModel)
+    assert r.inputs["color"]["type"] == "SelectInput"
+    assert r.inputs["color"]["props"]["choices"] == (
+        {"id": 1, "name": "RED"},
+        {"id": 2, "name": "GREEN"})
+
+
 def test_table(mock_engine: AsyncEngine) -> None:
     dummy_table = sa.Table("dummy", sa.MetaData(),
                            sa.Column("id", sa.Integer, primary_key=True),
