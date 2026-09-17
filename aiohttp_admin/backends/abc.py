@@ -4,6 +4,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from datetime import date, datetime, time
+from decimal import Decimal
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
@@ -43,6 +44,8 @@ class Encoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
         if isinstance(o, (date, time)):
             return str(o)
+        if isinstance(o, Decimal):
+            return float(o)
         if isinstance(o, Enum):
             return o.value
         if isinstance(o, bytes):
