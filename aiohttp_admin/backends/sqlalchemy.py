@@ -465,6 +465,10 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                                 validators.append(func("minLength", (right.value,)))
                             elif op is operator.gt:
                                 validators.append(func("minLength", (right.value + 1,)))
+                            elif op is operator.le:
+                                validators.append(func("maxLength", (right.value,)))
+                            elif op is operator.lt:
+                                validators.append(func("maxLength", (right.value - 1,)))
                 elif isinstance(expr, sa.Function):
                     if expr.name in ("regexp", "regexp_like"):
                         clauses = tuple(expr.clauses)
