@@ -13,7 +13,7 @@ from aiohttp import web
 from aiohttp_security import check_permission, permits
 from pydantic import Json
 
-from ..security import check, permissions_as_dict
+from ..security import check
 from ..types import ComponentState, InputState, fk, resources_key
 
 if sys.version_info >= (3, 10):
@@ -435,8 +435,8 @@ class AbstractAdminResource(ABC, Generic[_ID]):
         query["filter"] = merged_filter
 
         # Add filters from advanced permissions.
-        # The permissions will be cached on the request from a previous permissions check.
-        permissions = permissions_as_dict(request["aiohttpadmin_permissions"])
+        # The parsed permissions are cached on the request from a previous check.
+        permissions = request["aiohttpadmin_permissions"]
         filters = permissions.get(f"admin.{self.name}.view",
                                   permissions.get(f"admin.{self.name}.*", {}))
         for k, v in filters.items():
