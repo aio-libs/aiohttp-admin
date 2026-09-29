@@ -32,6 +32,10 @@ _SABoolExpression = sa.sql.roles.ExpressionElementRole[bool]
 
 logger = logging.getLogger(__name__)
 
+# Canonical hyphenated UUID form (8-4-4-4-12 hex), matching str(uuid.UUID(...)).
+_UUID_REGEX = ("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+               "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
 _FieldTypesValues = tuple[str, str, MPT[str, object], MPT[str, object]]
 FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldTypesValues] = MPT({
     sa.Boolean: ("BooleanField", "BooleanInput", MPT({}), MPT({})),
@@ -43,7 +47,7 @@ FIELD_TYPES: MPT[type[sa.types.TypeEngine[Any]], _FieldTypesValues] = MPT({
     sa.Numeric: ("NumberField", "NumberInput", MPT({}), MPT({})),
     sa.String: ("TextField", "TextInput", MPT({}), MPT({})),
     sa.Time: ("TimeField", "TimeInput", MPT({}), MPT({})),
-    sa.Uuid: ("TextField", "TextInput", MPT({}), MPT({})),  # TODO: validators
+    sa.Uuid: ("TextField", "TextInput", MPT({}), MPT({})),
     # TODO: Set fields for below types.
     # sa.sql.sqltypes._AbstractInterval: (),
     # sa.types._Binary: (),
@@ -427,6 +431,8 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
         max_length = getattr(c.type, "length", None)
         if max_length:
             validators.append(func("maxLength", (max_length,)))
+        if isinstance(c.type, sa.Uuid):
+            validators.append(func("regex", (regex(_UUID_REGEX),)))
 
         for constr in table.constraints:
             if not isinstance(constr, sa.CheckConstraint):
