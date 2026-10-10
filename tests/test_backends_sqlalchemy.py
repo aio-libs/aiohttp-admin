@@ -444,6 +444,98 @@ async def test_nonid_pk_api(
         assert await resp.json() == {"data": {"id": "5", "data": {"num": 5, "other": "that"}}}
 
 
+async def test_composite_pk_api(
+    base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
+    login: _Login
+) -> None:
+    class Compound(base):  # type: ignore[misc,valid-type]
+        __tablename__ = "compound"
+        id: Mapped[int] = mapped_column(primary_key=True)
+        other: Mapped[int] = mapped_column(primary_key=True)
+        msg: Mapped[str]
+
+    app = web.Application()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    db = async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+    async with db.begin() as sess:
+        sess.add(Compound(id=1, other=2, msg="a"))
+        sess.add(Compound(id=1, other=3, msg="b"))
+        sess.add(Compound(id=4, other=5, msg="c"))
+
+    schema: aiohttp_admin.Schema = {
+        "security": {
+            "check_credentials": check_credentials,
+            "secure": False
+        },
+        "resources": ({"model": SAResource(engine, Compound)},)
+    }
+    app[admin] = aiohttp_admin.setup(app, schema)
+
+    admin_client = await aiohttp_client(app)
+    assert admin_client.app
+    h = await login(admin_client)
+
+    url = app[admin].router["compound_get_list"].url_for()
+    p = {"pagination": json.dumps({"page": 1, "perPage": 10}),
+         "sort": json.dumps({"field": "other", "order": "ASC"}), "filter": "{}"}
+    async with admin_client.get(url, params=p, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": [
+            {"id": "1|2", "data": {"id": 1, "other": 2, "msg": "a"}},
+            {"id": "1|3", "data": {"id": 1, "other": 3, "msg": "b"}},
+            {"id": "4|5", "data": {"id": 4, "other": 5, "msg": "c"}}], "total": 3}
+
+    url = app[admin].router["compound_get_one"].url_for()
+    async with admin_client.get(url, params={"id": "1|2"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": {"id": "1|2", "data": {"id": 1, "other": 2, "msg": "a"}}}
+
+    url = app[admin].router["compound_get_many"].url_for()
+    async with admin_client.get(url, params={"ids": '["1|2", "1|3"]'}, headers=h) as resp:
+        assert resp.status == 200
+        body = await resp.json()
+        assert {row["id"]: row["data"] for row in body["data"]} == {
+            "1|2": {"id": 1, "other": 2, "msg": "a"},
+            "1|3": {"id": 1, "other": 3, "msg": "b"}}
+
+    url = app[admin].router["compound_update"].url_for()
+    p1 = {"id": "1|2", "data": json.dumps({"id": "1|2", "data": {"msg": "z"}}),
+          "previousData": json.dumps({"id": "1|2", "data": {}})}
+    async with admin_client.put(url, params=p1, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": {"id": "1|2", "data": {"id": 1, "other": 2, "msg": "z"}}}
+
+    url = app[admin].router["compound_update_many"].url_for()
+    p_upd = {"ids": '["1|2", "1|3"]', "data": json.dumps({"msg": "bulk"})}
+    async with admin_client.put(url, params=p_upd, headers=h) as resp:
+        assert resp.status == 200
+        body = await resp.json()
+        assert sorted(body["data"]) == ["1|2", "1|3"]
+
+    url = app[admin].router["compound_get_one"].url_for()
+    async with admin_client.get(url, params={"id": "1|2"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": {"id": "1|2", "data": {"id": 1, "other": 2, "msg": "bulk"}}}
+    async with admin_client.get(url, params={"id": "1|3"}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {
+            "data": {"id": "1|3", "data": {"id": 1, "other": 3, "msg": "bulk"}}}
+
+    url = app[admin].router["compound_delete_many"].url_for()
+    async with admin_client.delete(url, params={"ids": '["4|5"]'}, headers=h) as resp:
+        assert resp.status == 200
+        assert await resp.json() == {"data": ["4|5"]}
+
+    url = app[admin].router["compound_get_one"].url_for()
+    async with admin_client.get(url, params={"id": "4|5"}, headers=h) as resp:
+        assert resp.status == 404
+
+
 async def test_datetime(
     base: DeclarativeBase, aiohttp_client: Callable[[web.Application], Awaitable[_Client]],
     login: _Login

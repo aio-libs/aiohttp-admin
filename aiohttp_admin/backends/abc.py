@@ -413,7 +413,7 @@ class AbstractAdminResource(ABC, Generic[_ID]):
     @final
     def _convert_ids(self, ids: Sequence[_ID]) -> tuple[str, ...]:
         """Convert IDs to correct output format."""
-        return tuple(str(i) for i in ids)
+        return tuple("|".join(str(part) for part in i) for i in ids)
 
     def _process_list_query(self, query: _ListQuery, request: web.Request) -> None:
         # When sort order refers to "id", this should be translated to primary key.
