@@ -4,6 +4,7 @@ import logging
 import operator
 import sys
 from collections.abc import Callable, Coroutine, Iterator, Sequence
+from decimal import Decimal
 from types import MappingProxyType as MPT
 from typing import Any, Literal, Optional, TypeVar, Union, cast
 
@@ -234,6 +235,9 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                 show = c is not table.autoincrement_column
                 inp_props["validate"] = self._get_validators(table, c)
                 if inp == "NumberInput":
+                    if (isinstance(c.type, sa.Numeric)
+                            and not isinstance(c.type, sa.Float) and c.type.scale):
+                        inp_props["step"] = float(Decimal(10) ** -c.type.scale)
                     for v in inp_props["validate"]:
                         if v["name"] == "minValue":
                             inp_props["min"] = v["args"][0]
@@ -473,5 +477,20 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                         if clauses[1].value is None:
                             continue
                         validators.append(func("regex", (regex(clauses[1].value),)))
+
+        # Derive value bounds from Numeric precision/scale (the range the DB will
+        # accept). Float precision counts binary digits, not decimal, so skip it.
+        # Explicit CheckConstraint bounds take precedence over the type-wide range.
+        if isinstance(c.type, sa.Numeric) and not isinstance(c.type, sa.Float):
+            precision = c.type.precision
+            if precision is not None:
+                scale = c.type.scale or 0
+                bound = Decimal(10) ** (precision - scale) - Decimal(10) ** (-scale)
+                value = int(bound) if scale == 0 else float(bound)
+                names = {v["name"] for v in validators}
+                if "maxValue" not in names:
+                    validators.append(func("maxValue", (value,)))
+                if "minValue" not in names:
+                    validators.append(func("minValue", (-value,)))
 
         return validators
