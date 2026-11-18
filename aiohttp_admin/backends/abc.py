@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from datetime import date, datetime, time
 from enum import Enum
+from uuid import UUID
 from functools import cached_property, partial
 from types import MappingProxyType
 from typing import Any, Generic, Literal, Optional, TypeVar, final
@@ -47,6 +48,8 @@ class Encoder(json.JSONEncoder):
             return o.value
         if isinstance(o, bytes):
             return o.decode(errors="replace")
+        if isinstance(o, UUID):
+            return str(o)
 
         return super().default(o)
 
