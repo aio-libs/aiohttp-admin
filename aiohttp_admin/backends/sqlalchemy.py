@@ -211,8 +211,14 @@ class SAResource(AbstractAdminResource[tuple[Any, ...]]):
                 inp = "NullableBooleanInput"
 
             if isinstance(c.type, sa.Enum):
-                props["choices"] = tuple({"id": e.value, "name": e.name}
-                                         for e in c.type.python_type)
+                if c.type.enum_class is None:
+                    # Values-based Enum (e.g. sa.Enum("a", "b")): no member class,
+                    # the stored value is the string itself.
+                    props["choices"] = tuple({"id": e, "name": e}
+                                             for e in c.type.enums)
+                else:
+                    props["choices"] = tuple({"id": e.value, "name": e.name}
+                                             for e in c.type.enum_class)
 
             length = getattr(c.type, "length", 0)
             if length is None or length > 31:
