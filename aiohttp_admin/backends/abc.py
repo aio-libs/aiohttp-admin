@@ -3,7 +3,7 @@ import json
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from enum import Enum
 from functools import cached_property, partial
 from types import MappingProxyType
@@ -41,7 +41,7 @@ INPUT_TYPES = MappingProxyType({
 
 class Encoder(json.JSONEncoder):
     def default(self, o: object) -> Any:
-        if isinstance(o, (date, time)):
+        if isinstance(o, (date, time, timedelta)):
             return str(o)
         if isinstance(o, Enum):
             return o.value
